@@ -23,7 +23,7 @@ EXPORT(_start_mips)		# (2/6)
 	li      a3, 3
 	/* use 'addiu  sp, sp, <x>' to push a proper-sized frame onto the stack */
 	# WRONG!!! Stack grow to lower address!!! >:(
-	subiu   sp, sp, 24	# (3/6)
+	subu   sp, sp, 24	# (3/6)
 	lw      t1, var
 	li      t2, 5
 	/* use 'sw  t1, <x>(sp)' to store t1 at the proper place of the stack */
