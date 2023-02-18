@@ -6,10 +6,11 @@ LD             := $(CROSS_COMPILE)ld
 LDFLAGS        += -$(ENDIAN) -G 0 -static -n -nostdlib --fatal-warnings
 INCLUDES       := -I./include
 
-gxemul_flags   += -T         # halt on non-existant memory accesses
-gxemul_flags   += -C R3000   # try to emulate a mips r3000 CPU.
-gxemul_flags   += -M 64      # emulate 64 MBs of physical RAM
-gxemul_flags   += -E testmips# try to emulate machine type testmips
+gxemul_flags   += -T				# halt on non-existant memory accesses
+gxemul_flags   += -C R3000			# try to emulate a mips r3000 CPU.
+gxemul_flags   += -M 64				# emulate 64 MBs of physical RAM
+# gxemul_flags   += -E testmips		# try to emulate machine type testmips (Error)
+gxemul_flags   += -E oldtestmips	# try to emulate machine type testmips (Fixed)
 
 gxemul_files   += $(target)
 
