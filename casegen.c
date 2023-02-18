@@ -35,6 +35,10 @@ int get_num(char *str_num, int *num) {
 	return *num > 0;
 }
 
+/*
+** argv[1]: operator
+** argv[2]: number of cases
+*/
 int main(int argc, char **argv) {
 	int num;
 	if (argc != 3 || !is_op_legal(argv[1]) || !get_num(argv[2], &num)) {
