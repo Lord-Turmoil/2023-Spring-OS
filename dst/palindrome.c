@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <string.h>
 
 int IsPalindrome(int number);
 int main()
@@ -26,8 +25,10 @@ int IsPalindrome(int number)
 	char* back;
 
 	sprintf(buffer, "%d", number);
-	front = buffer;
-	back = buffer + strlen(buffer) - 1;
+	front = back = buffer;
+	while (*back)
+		++back;
+	--back;
 	while (front < back)
 	{
 		if (*front != *back)
