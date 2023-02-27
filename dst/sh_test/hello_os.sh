@@ -15,7 +15,7 @@ while read line; do
 	elif (($i==512)); then
 		echo $line >> $output
 	elif (($i==1024)); then
-		echo -n $line >> $output
+		echo $line >> $output
 	fi
 done < $input
 
