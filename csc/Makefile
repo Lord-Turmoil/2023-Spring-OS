@@ -1,7 +1,9 @@
-.PHONY: clean
+.PHONY: out clean
 
-out: code/main.o code/fibo.o
-	@cd ./code && make
+out:
+	cd ./code && make
+	cd ..
+	gcc ./code/fibo.o ./code/main.o -o fibo
 	
 clean:
-	@cd code && make clean
+	cd ./code && make clean
