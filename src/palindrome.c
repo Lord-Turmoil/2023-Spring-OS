@@ -1,12 +1,18 @@
 #include <stdio.h>
-int main() {
+
+int main()
+{
 	int n;
 	scanf("%d", &n);
 
-	if () {
+	if ()
+	{
 		printf("Y\n");
-	} else {
+	}
+	else
+	{
 		printf("N\n");
 	}
+
 	return 0;
 }
