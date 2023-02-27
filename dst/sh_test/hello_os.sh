@@ -3,6 +3,7 @@
 input=$1
 output=$2
 i=0
+IFS=$'\n'
 while read line; do
 	i=$(($i+1))
 	if (($i==8)); then
@@ -14,7 +15,7 @@ while read line; do
 	elif (($i==512)); then
 		echo $line >> $output
 	elif (($i==1024)); then
-		echo $line >> $output
+		echo -n $line >> $output
 	fi
 done < $input
 
