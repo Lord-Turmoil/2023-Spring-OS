@@ -1,3 +1,5 @@
+
+
 #!/bin/bash
 
 input=$1
@@ -20,4 +22,3 @@ while read line; do
 	fi
 	i=$(($i+1))
 done < $input
-
