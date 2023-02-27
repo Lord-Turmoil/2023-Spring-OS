@@ -16,6 +16,7 @@ while read line; do
 		echo $line >> $output
 	elif (($i==1024)); then
 		echo $line >> $output
+		break;
 	fi
 done < $input
 
