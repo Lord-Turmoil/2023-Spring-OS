@@ -94,8 +94,8 @@
 
 #define KERNBASE 0x80010000
 
-#define KSTACKTOP (ULIM + PDMAP)
 #define ULIM 0x80000000
+#define KSTACKTOP (ULIM + PDMAP)
 
 #define UVPT (ULIM - PDMAP)
 #define UPAGES (UVPT - PDMAP)
