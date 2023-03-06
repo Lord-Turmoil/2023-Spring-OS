@@ -1,10 +1,5 @@
-# Make Exercise
+# Resource
 
 -----
 
-Exercise for `Make`.
-
-_Under construction..._
-
-_Added in web terminal._
-
+For some resources.
