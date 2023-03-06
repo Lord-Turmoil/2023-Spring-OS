@@ -2,3 +2,7 @@ case_*
 out
 casegen
 calc
+
+*.o
+fibo
+palindrome
