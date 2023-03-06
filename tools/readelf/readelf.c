@@ -1,6 +1,8 @@
 #include "elf.h"
 #include <stdio.h>
 
+// #define _INTERNAL
+
 /* Overview:
  *   Check whether specified buffer is valid ELF data.
  *
@@ -51,12 +53,14 @@ int readelf(const void* binary, size_t size)
 	sh_entry_size = ehdr->e_shentsize;
 	sh_table = binary + ehdr->e_shoff;
 
+#ifdef _INTERNAL
 	printf("\t# size = %zd\n", size);
 	printf("\t# ehdr->e_shoff = %u\n", ehdr->e_shoff);
 	printf("\t# sh_entry_size  = %u\n", sh_entry_size);
 	printf("\t# sh_entry_count = %u\n", sh_entry_count);
 	printf("\t# binary   = %p\n", binary);
 	printf("\t# sh_table = %p\n", sh_table);
+#endif
 
 	// For each section header, output its index and the section address.
 	// The index should start from 0.
@@ -67,7 +71,7 @@ int readelf(const void* binary, size_t size)
 		Elf32_Addr addr;
 
 		/* Exercise 1.1: Your code here. (2/2) */
-		shdr = (Elf32_Shdr*)(sh_table - i * sh_entry_size);
+		shdr = ((Elf32_Shdr*)sh_table) - (sh_entry_count - i);
 		addr = shdr->sh_addr;
 
 		printf("%d:0x%x\n", i, addr);
