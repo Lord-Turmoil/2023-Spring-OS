@@ -71,7 +71,7 @@ int readelf(const void* binary, size_t size)
 		Elf32_Addr addr;
 
 		/* Exercise 1.1: Your code here. (2/2) */
-		shdr = ((Elf32_Shdr*)sh_table) - (sh_entry_count - i);
+		shdr = ((Elf32_Shdr*)sh_table) + i;
 		addr = shdr->sh_addr;
 
 		printf("%d:0x%x\n", i, addr);
