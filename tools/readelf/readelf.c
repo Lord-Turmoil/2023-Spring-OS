@@ -97,3 +97,4 @@ int readelf(const void* binary, size_t size)
 * |   table   |  |- We are here!
 * \___________/  /
 *               <- binary + shoff + sh_entry_size * sh_entry_count
+*/
