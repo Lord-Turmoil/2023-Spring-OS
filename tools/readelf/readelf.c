@@ -86,15 +86,20 @@ int readelf(const void* binary, size_t size)
 * Here, we only read section header table, we didn't really
 * go 'upwards' to read the real sections.
 * |           |
-* |-----------|
+* |___________|
 * | section 0 |
-* |-----------|
+* |___________|
 * | section 1 |
-* |-----------|
+* |___________|
 * |    ...    |
-* |-----------| <- binary + shoff
-* |  section  |  \
-* |   table   |  |- We are here!
+* |___________| <- binary + shoff
+* |  Shdr 0   |  \
+* |-----------|  |
+* |  Shdr 1   |  | Section Table (We are here!)
+* |-----------|  | 
+* |  Shdr 2   |  | All section headers are here!!!
+* |-----------|  |
+* |  ......   |  |
 * \___________/  /
 *               <- binary + shoff + sh_entry_size * sh_entry_count
 */
