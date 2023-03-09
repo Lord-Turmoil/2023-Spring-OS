@@ -1,3 +1,7 @@
+# $< : first dependency
+# $@ : target name
+# $^ : all dependencies
+
 %.o: %.c
 	$(CC) -c $<
 
