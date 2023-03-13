@@ -108,7 +108,7 @@ void page_init(void)
 	/* Step 1: Initialize page_free_list. */
 	/* Hint: Use macro `LIST_INIT` defined in include/queue.h. */
 	/* Exercise 2.3: Your code here. (1/4) */
-	LIST_INIT(page_free_list);
+	LIST_INIT(&page_free_list);
 
 	/* Step 2: Align `freemem` up to multiple of BY2PG. */
 	/* Exercise 2.3: Your code here. (2/4) */
@@ -117,16 +117,24 @@ void page_init(void)
 	/* Step 3: Mark all memory below `freemem` as used (set `pp_ref` to 1) */
 	/* Exercise 2.3: Your code here. (3/4) */
 	u_long i;
-	for (i = 0; i < npages; i++)
+	for (i = 0; i < npage; i++)
 	{
-		if (page2pa(pages[i]) < freemem)
+		if (page2kva(&pages[i]) < freemem)
 			pages[i].pp_ref = 1;
+		else
+			break;
 	}
 
 	/* Step 4: Mark the other memory as free. */
 	/* Exercise 2.3: Your code here. (4/4) */
-	for (i; i < npages; i++)
+
+	printk("i = %ld\n", i);
+
+	for (i; i < npage; i++)
+	{
+		LIST_INSERT_HEAD(&page_free_list, &pages[i], pp_link);
 		pages[i].pp_ref = 0;
+	}
 }
 
 /* Overview:
@@ -148,7 +156,7 @@ int page_alloc(struct Page** new)
 	struct Page* pp;
 
 	/* Exercise 2.4: Your code here. (1/2) */
-	if (LIST_EMPTY(page_free_list))
+	if (LIST_EMPTY(&page_free_list))
 		return -E_NO_MEM;
 	pp = page_free_list.lh_first;
 
@@ -157,7 +165,7 @@ int page_alloc(struct Page** new)
 	/* Step 2: Initialize this page with zero.
 	 * Hint: use `memset`. */
 	 /* Exercise 2.4: Your code here. (2/2) */
-	memset(page2kva(pp), 0, PAGE_SIZE);
+	memset((void*)page2kva(pp), 0, PAGE_SIZE);
 
 	*new = pp;
 	return 0;
@@ -174,7 +182,7 @@ void page_free(struct Page* pp)
 	assert(pp->pp_ref == 0);
 	/* Just insert it into 'page_free_list'. */
 	/* Exercise 2.5: Your code here. */
-	LIST_INSERT_HEAD(page_free_list, pp, pp_link);
+	LIST_INSERT_HEAD(&page_free_list, pp, pp_link);
 }
 
 /* Overview:
