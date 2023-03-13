@@ -94,7 +94,7 @@
 
 /*
  * Return the next element of the list element named "elm".
- * "filed" is the member identifier in the list element whose type
+ * "field" is the member identifier in the list element whose type
  * is LIST_ENTRY(type).
  */
 #define LIST_NEXT(elm, field) ((elm)->field.le_next)
@@ -131,14 +131,14 @@
  * Step 3: assign 'listelm.next' from a proper value.
  * Step 4: assign 'elm.pre' from a proper value.
  */
+/* Exercise 2.2: Your code here. */
 #define LIST_INSERT_AFTER(listelm, elm, field)                             \
-	/* Exercise 2.2: Your code here. */                                    \
 	do {                                                                   \
-		LIST_NEXT(elm, filed) = LIST_NEXT(listelm, filed)                  \
-		if (LIST_NEXT(listelm, filed))                                     \
-			LIST_PREV(LIST_NEXT(listelm, field)) = &LIST_NEXT(elm, field); \
+		LIST_NEXT(elm, field) = LIST_NEXT(listelm, field);                 \
+		if (LIST_NEXT(listelm, field))                                     \
+			LIST_PREV(LIST_NEXT(listelm, field), field) = &LIST_NEXT(elm, field); \
 		LIST_NEXT(listelm, field) = (elm);                                 \
-		LIST_PREV(elm, field) = &LIST_NEXT(listelm, filed);                \
+		LIST_PREV(elm, field) = &LIST_NEXT(listelm, field);                \
 	} while (0)
 
 /*
@@ -152,7 +152,7 @@
 #define LIST_INSERT_BEFORE(listelm, elm, field)                                                    \
 	do {                                                 \
 		(elm)->field.le_prev = (listelm)->field.le_prev; \
-		LIST_NEXT((elm), field) = (listelm);             \   
+		LIST_NEXT((elm), field) = (listelm);             \
 		*LIST_PREV(listelm, field) = (elm);              \
 		LIST_PREV(listelm) = &LIST_NEXT(elm, field);     \
 	} while (0)
