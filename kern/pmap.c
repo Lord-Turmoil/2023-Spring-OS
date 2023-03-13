@@ -108,16 +108,25 @@ void page_init(void)
 	/* Step 1: Initialize page_free_list. */
 	/* Hint: Use macro `LIST_INIT` defined in include/queue.h. */
 	/* Exercise 2.3: Your code here. (1/4) */
+	LIST_INIT(page_free_list);
 
 	/* Step 2: Align `freemem` up to multiple of BY2PG. */
 	/* Exercise 2.3: Your code here. (2/4) */
+	freemem = ROUND(freemem, BY2PG);
 
 	/* Step 3: Mark all memory below `freemem` as used (set `pp_ref` to 1) */
 	/* Exercise 2.3: Your code here. (3/4) */
+	u_long i;
+	for (i = 0; i < npages; i++)
+	{
+		if (page2pa(pages[i]) < freemem)
+			pages[i].pp_ref = 1;
+	}
 
 	/* Step 4: Mark the other memory as free. */
 	/* Exercise 2.3: Your code here. (4/4) */
-
+	for (i; i < npages; i++)
+		pages[i].pp_ref = 0;
 }
 
 /* Overview:
