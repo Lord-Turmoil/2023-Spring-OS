@@ -15,7 +15,7 @@ void mips_init() {
 	printk("init.c:\tmips_init() is called\n");
 
 	// lab2:
-	// mips_detect_memory();
+	mips_detect_memory();
 	// mips_vm_init();
 	// page_init();
 
