@@ -25,10 +25,47 @@ struct Page {
 extern struct Page *pages;
 extern struct Page_list page_free_list;
 
+/*
+ * Expand result of Page_list.
+ * 
+struct Page_list
+{
+	struct Page* lh_first;
+};
+
+struct Page
+{
+	Page_LIST_entry_t pp_link;
+	u_short pp_ref;
+};
+
+struct Page_LIST_entry_t
+{
+	struct Page* le_next;
+	struct Page** le_prev;
+};
+
+----- Combine them all
+
+struct Page_list
+{
+	struct Page
+	{
+		struct Page_LIST_entry_t
+		{
+			struct Page* le_next;
+			struct Page** le_prev;
+		} pp_link;
+		u_short pp_ref;
+	}*lh_first;
+};
+*/
+
 static inline u_long page2ppn(struct Page *pp) {
 	return pp - pages;
 }
 
+// Page size = (1 << PGSHIFT) bits
 static inline u_long page2pa(struct Page *pp) {
 	return page2ppn(pp) << PGSHIFT;
 }
