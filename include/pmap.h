@@ -61,15 +61,18 @@ struct Page_list
 };
 */
 
+// page to physical page number
 static inline u_long page2ppn(struct Page *pp) {
 	return pp - pages;
 }
 
 // Page size = (1 << PGSHIFT) bits
+// page to page address
 static inline u_long page2pa(struct Page *pp) {
 	return page2ppn(pp) << PGSHIFT;
 }
 
+// page address to page
 static inline struct Page *pa2page(u_long pa) {
 	if (PPN(pa) >= npage) {
 		panic("pa2page called with invalid pa: %x", pa);
@@ -77,6 +80,7 @@ static inline struct Page *pa2page(u_long pa) {
 	return &pages[PPN(pa)];
 }
 
+// page to kernel virtual address
 static inline u_long page2kva(struct Page *pp) {
 	return KADDR(page2pa(pp));
 }
