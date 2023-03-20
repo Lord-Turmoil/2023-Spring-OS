@@ -1,4 +1,6 @@
 #include <types.h>
+#include <stdarg.h>
+#include <print.h>
 
 void *memcpy(void *dst, const void *src, size_t n) {
 	void *dstaddr = dst;
@@ -95,3 +97,35 @@ int strcmp(const char *p, const char *q) {
 
 	return 0;
 }
+
+
+typedef struct tag_context
+{
+	char* buf;
+	size_t cnt;
+} context_t;
+
+static void soutput(void* data, const char* buf, size_t len)
+{
+	context_t* ctx = (context_t*)data;
+	for (size_t i = 0; i < len; i++)
+		ctx->buf[ctx->cnt++] = buf[i];
+}
+
+int sprintf(char* buf, const char* fmt, ...)
+{
+	context_t ctx;
+	va_list ap;
+
+	ctx.buf = buf;
+	ctx.cnt = 0;
+
+	va_start(ap, fmt);
+	vprintfmt(soutput, (void*)(&ctx), fmt, ap);
+	va_end(ap);
+
+	ctx.buf[ctx.cnt] = '\0';
+
+	return (int)ctx.cnt;
+}
+
