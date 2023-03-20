@@ -11,18 +11,18 @@
 #include <generated/init_override.h>
 #else
 
-#define _INTERNAL
+// #define _INTERNAL
 
 void mips_init() {
 	printk("init.c:\tmips_init() is called\n");
 
 #ifdef _INTERNAL
 	printk("\n");
-	printk("%%[flags][width][length]<specifier>: [%-10ld]\n", 75159);
-	printk("%%[flags][width][length]<specifier>: [%010ld]\n", -75159);
-	printk("%%[flags][width][------]<specifier>: [%-10x]\n", 66);
-	printk("%%[flags][-----][length]<specifier>: [%-lX]\n", 66);
-	printk("%%[-----][width][length]<specifier>: [%10lo]\n", 66);
+	printk("%%[flags][width][length]<specifier>: [%-10R]\n", 75159, -96888);
+	printk("%%[flags][width][length]<specifier>: [%010R]\n", -75159, 96888);
+	printk("%%[flags][width][------]<specifier>: [%-10R]\n", 33, 33);
+	printk("%%[flags][-----][length]<specifier>: [%-lR]\n", 66, 77);
+	printk("%%[-----][width][length]<specifier>: [%10R]\n", 66, 99);
 	printk("%%[flags][-----][------]<specifier>: [%10O]\n", 66);
 	printk("%%[-----][width][------]<specifier>: [%10u]\n", 66);
 	printk("%%[-----][-----][length]<specifier>: [%lU]\n", 66);
