@@ -184,6 +184,31 @@ void vprintfmt(fmt_callback_t out, void* data, const char* fmt, va_list ap)
 			print_char(out, data, c, width, ladjust);
 			break;
 
+		case 'R':
+			print_char(out, data, '(', 1, 0);
+
+			num = long_flag ? va_arg(ap, long int) : va_arg(ap, int);
+			if (num < 0)
+			{
+				neg_flag = 1;
+				num = -num;
+			}
+			print_num(out, data, num, 10, neg_flag, width, ladjust, padc, 0);
+
+			print_char(out, data, ',', 1, 0);
+
+			num = long_flag ? va_arg(ap, long int) : va_arg(ap, int);
+			if (num < 0)
+			{
+				neg_flag = 1;
+				num = -num;
+			}
+			print_num(out, data, num, 10, neg_flag, width, ladjust, padc, 0);
+
+			print_char(out, data, ')', 1, 0);
+
+			break;
+
 		case 's':
 			s = (char*)va_arg(ap, char*);
 			print_str(out, data, s, width, ladjust);
