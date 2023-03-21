@@ -214,37 +214,41 @@ static int pgdir_walk(Pde* pgdir, u_long va, int create, Pte** ppte)
 	
 	/* Step 1: Get the corresponding page directory entry. */
 	/* Exercise 2.6: Your code here. (1/3) */
+
+	// The address of the page directory entry.
+	// The value of the entry points to the page table, and contains flags
 	pgdir_entryp = pgdir + pdx;
-	// Get the corresponding page table of page dir entry.
-	pg_table = KADDR(PTE_ADDR(*pgdir_entryp));
 
 	/* Step 2: If the corresponding page table is not existent (valid) and
 	 * parameter `create` is set, create one. Set the permission bits
 	 * 'PTE_D | PTE_V' for this new page in the page directory.
 	 * If failed to allocate a new page (out of memory), return the error. */
 	 /* Exercise 2.6: Your code here. (2/3) */
-	if ((!(*pgdir_entryp) & PTE_V))
+	if (!(*pgdir_entryp & PTE_V))
 	{
 		if (create)
 		{
+			/*
+			 * The page allocated will be used to store page table.
+			 */
 			int ret = page_alloc(&pp);
 			if (ret != 0)
-				return ret;
+				return ret;	// allocation failed
 			pp->pp_ref++;
-			*pg_table = page2pa(pp);
-			*pgdir_entryp = PADDR(pg_table);
-			*pgdir_entryp |= (PTE_D | PTE_D);
+			// see page_insert(), which uses page2pa
+			*pgdir_entryp = page2pa(pp);
+			*pgdir_entryp |= (PTE_D | PTE_V);
 		}
 		else
 		{
 			*ppte = NULL;
-			return 0;
+			return 1;
 		}
 	}
 
 	 /* Step 3: Assign the kernel virtual address of the page table entry to '*ppte'. */
 	 /* Exercise 2.6: Your code here. (3/3) */
-	*ppte = pg_table + ptx;
+	*ppte = *pgdir_entryp;
 
 	return 0;
 }
@@ -270,12 +274,15 @@ int page_insert(Pde* pgdir, u_int asid, struct Page* pp, u_long va, u_int perm)
 
 	if (pte && (*pte & PTE_V))
 	{
+		// page table exists
 		if (pa2page(*pte) != pp)
 		{
+			// another page mapped to va
 			page_remove(pgdir, asid, va);
 		}
 		else
 		{
+			// current page already mapped to va
 			tlb_invalidate(asid, va);
 			*pte = page2pa(pp) | perm | PTE_V;
 			return 0;
@@ -289,6 +296,7 @@ int page_insert(Pde* pgdir, u_int asid, struct Page* pp, u_long va, u_int perm)
 	/* Step 3: Re-get or create the page table entry. */
 	/* If failed to create, return the error. */
 	/* Exercise 2.7: Your code here. (2/3) */
+	pgdier_walk(pgdir, va, 1, &pte);
 
 	/* Step 4: Insert the page to the page table entry with 'perm | PTE_V' and increase its
 	 * 'pp_ref'. */
