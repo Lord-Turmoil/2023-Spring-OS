@@ -67,7 +67,7 @@ static inline u_long page2ppn(struct Page *pp) {
 }
 
 // Page size = (1 << PGSHIFT) bits
-// page to page address
+// page to physical address
 static inline u_long page2pa(struct Page *pp) {
 	return page2ppn(pp) << PGSHIFT;
 }
