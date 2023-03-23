@@ -128,8 +128,6 @@ void page_init(void)
 	/* Step 4: Mark the other memory as free. */
 	/* Exercise 2.3: Your code here. (4/4) */
 
-	printk("i = %ld\n", i);
-
 	for (i; i < npage; i++)
 	{
 		LIST_INSERT_HEAD(&page_free_list, &pages[i], pp_link);
@@ -251,7 +249,7 @@ static int pgdir_walk(Pde* pgdir, u_long va, int create, Pte** ppte)
 
 	 /* Step 3: Assign the kernel virtual address of the page table entry to '*ppte'. */
 	 /* Exercise 2.6: Your code here. (3/3) */
-	*ppte = (Pte*)PTE_ADDR(*pgdir_entryp) + ptx;
+	*ppte = (Pte*)KADDR(PTE_ADDR(*pgdir_entryp)) + ptx;
 	
 	return 0;
 }
