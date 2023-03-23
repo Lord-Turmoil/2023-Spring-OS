@@ -150,23 +150,23 @@
  * technically unnecessary.
  */
 #define LIST_INSERT_BEFORE(listelm, elm, field)                                                    \
-	do {                                                 \
-		(elm)->field.le_prev = (listelm)->field.le_prev; \
-		LIST_NEXT((elm), field) = (listelm);             \
-		*LIST_PREV(listelm, field) = (elm);              \
-		LIST_PREV(listelm) = &LIST_NEXT(elm, field);     \
+	do {     \
+		LIST_PREV(elm, field) = LIST_PREV(listelm, field) \
+		LIST_NEXT((elm), field) = (listelm);              \
+		*LIST_PREV(listelm, field) = (elm);               \
+		LIST_PREV(listelm) = &LIST_NEXT(elm, field);      \
 	} while (0)
 
 /*
  * Insert the element "elm" at the head of the list named "head".
  * The "field" name is the link element as above.
  */
-#define LIST_INSERT_HEAD(head, elm, field)                                \
-	do {                                                                  \
-		if ((LIST_NEXT((elm), field) = LIST_FIRST((head))) != NULL)       \
-			LIST_FIRST((head))->field.le_prev = &LIST_NEXT((elm), field); \
-		LIST_FIRST((head)) = (elm);                                       \
-		LIST_PREV(elm, field) = &LIST_FIRST((head));                      \
+#define LIST_INSERT_HEAD(head, elm, field)                               \
+	do {                                                                 \
+		if ((LIST_NEXT(elm, field) = LIST_FIRST(head)) != NULL)          \
+			LIST_PREV(LIST_FIRST(head), field) = &LIST_NEXT(elm, field); \
+		LIST_FIRST((head)) = (elm);                                      \
+		LIST_PREV(elm, field) = &LIST_FIRST((head));                     \
 	} while (0)
 
 /*
