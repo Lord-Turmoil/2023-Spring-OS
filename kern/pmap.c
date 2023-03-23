@@ -299,11 +299,14 @@ int page_insert(Pde* pgdir, u_int asid, struct Page* pp, u_long va, u_int perm)
 	/* Step 3: Re-get or create the page table entry. */
 	/* If failed to create, return the error. */
 	/* Exercise 2.7: Your code here. (2/3) */
-	pgdier_walk(pgdir, va, 1, &pte);
+	if (pgdir_walk(pgdir, va, 1, &pte) != 0)
+		return -E_NO_MEM;
 
 	/* Step 4: Insert the page to the page table entry with 'perm | PTE_V' and increase its
 	 * 'pp_ref'. */
 	 /* Exercise 2.7: Your code here. (3/3) */
+	*pte = page2pa(pp) | perm | PTE_V;
+	pp->pp_ref++;
 
 	return 0;
 }
@@ -372,6 +375,7 @@ void page_remove(Pde* pgdir, u_int asid, u_long va)
 	/* Step 3: Flush TLB. */
 	*pte = 0;
 	tlb_invalidate(asid, va);
+
 	return;
 }
 

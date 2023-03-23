@@ -4,11 +4,13 @@ LEAF(tlb_out)
 .set noreorder
 	mfc0    t0, CP0_ENTRYHI
 	mtc0    a0, CP0_ENTRYHI
-	nop
+	
 	/* Step 1: Use 'tlbp' to probe TLB entry */
 	/* Exercise 2.8: Your code here. (1/2) */
-
 	nop
+	tlbp
+	nop
+
 	/* Step 2: Fetch the probe result from CP0.Index */
 	mfc0    t1, CP0_INDEX
 .set reorder
@@ -17,8 +19,10 @@ LEAF(tlb_out)
 	mtc0    zero, CP0_ENTRYHI
 	mtc0    zero, CP0_ENTRYLO0
 	nop
+
 	/* Step 3: Use 'tlbwi' to write CP0.EntryHi/Lo into TLB at CP0.Index  */
 	/* Exercise 2.8: Your code here. (2/2) */
+	tlbwi
 
 .set reorder
 
@@ -42,8 +46,10 @@ NESTED(do_tlb_refill, 0, zero)
 	mtc0    v0, CP0_ENTRYLO0
 	// See <IDT R30xx Family Software Reference Manual> Chapter 6-8
 	nop
+
 	/* Hint: use 'tlbwr' to write CP0.EntryHi/Lo into a random tlb entry. */
 	/* Exercise 2.10: Your code here. */
+	tlbwr
 
 	jr      ra
 END(do_tlb_refill)
