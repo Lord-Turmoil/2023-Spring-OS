@@ -166,18 +166,18 @@
 		if ((LIST_NEXT((elm), field) = LIST_FIRST((head))) != NULL)       \
 			LIST_FIRST((head))->field.le_prev = &LIST_NEXT((elm), field); \
 		LIST_FIRST((head)) = (elm);                                       \
-		(elm)->field.le_prev = &LIST_FIRST((head));                       \
+		LIST_PREV(elm, field) = &LIST_FIRST((head));                      \
 	} while (0)
 
 /*
  * Remove the element "elm" from the list.
  * The "field" name is the link element as above.
  */
-#define LIST_REMOVE(elm, field)                                            \
-	do {                                                                   \
-		if (LIST_NEXT((elm), field) != NULL)                               \
-			LIST_NEXT((elm), field)->field.le_prev = (elm)->field.le_prev; \
-		*(elm)->field.le_prev = LIST_NEXT((elm), field);                   \
+#define LIST_REMOVE(elm, field)                                                \
+	do {                                                                       \
+		if (LIST_NEXT((elm), field) != NULL)                                   \
+			LIST_PREV(LIST_NEXT((elm), field), field) = LIST_PREV(elm, field); \
+		*LIST_PREV(elm, field) = LIST_NEXT((elm), field);                      \
 	} while (0)
 
 /*
