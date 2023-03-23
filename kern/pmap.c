@@ -205,7 +205,6 @@ void page_free(struct Page* pp)
 static int pgdir_walk(Pde* pgdir, u_long va, int create, Pte** ppte)
 {
 	Pde* pgdir_entryp;
-	Pte* pg_table;
 
 	struct Page* pp;
 
@@ -233,7 +232,11 @@ static int pgdir_walk(Pde* pgdir, u_long va, int create, Pte** ppte)
 			 */
 			int ret = page_alloc(&pp);
 			if (ret != 0)
+			{
+				ppte = NULL;
 				return ret;	// allocation failed
+			}
+
 			pp->pp_ref++;
 			// see page_insert(), which uses page2pa
 			*pgdir_entryp = page2pa(pp);
@@ -248,8 +251,8 @@ static int pgdir_walk(Pde* pgdir, u_long va, int create, Pte** ppte)
 
 	 /* Step 3: Assign the kernel virtual address of the page table entry to '*ppte'. */
 	 /* Exercise 2.6: Your code here. (3/3) */
-	*ppte = *pgdir_entryp;
-
+	*ppte = (Pte*)PTE_ADDR(*pgdir_entryp) + ptx;
+	
 	return 0;
 }
 
