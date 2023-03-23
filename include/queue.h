@@ -150,7 +150,7 @@
  * technically unnecessary.
  */
 #define LIST_INSERT_BEFORE(listelm, elm, field)                                                    \
-	do {     \
+	do {                                                  \
 		LIST_PREV(elm, field) = LIST_PREV(listelm, field) \
 		LIST_NEXT((elm), field) = (listelm);              \
 		*LIST_PREV(listelm, field) = (elm);               \
@@ -199,77 +199,78 @@
 		qual type *tqe_next;	   /* next element */                     \
 		qual type *qual *tqe_prev; /* address of previous next element */ \
 	}
+
 #define TAILQ_ENTRY(type) _TAILQ_ENTRY(struct type, )
 
 /*
  * Tail queue functions.
  */
-#define TAILQ_INIT(head)                                                                           \
-	do {                                                                                       \
-		(head)->tqh_first = NULL;                                                          \
-		(head)->tqh_last = &(head)->tqh_first;                                             \
+#define TAILQ_INIT(head)                        \
+	do {                                        \
+		(head)->tqh_first = NULL;               \
+		(head)->tqh_last = &(head)->tqh_first;  \
 	} while (/*CONSTCOND*/ 0)
 
 #define TAILQ_INSERT_HEAD(head, elm, field)                                                        \
 	do {                                                                                       \
-		if (((elm)->field.tqe_next = (head)->tqh_first) != NULL)                           \
-			(head)->tqh_first->field.tqe_prev = &(elm)->field.tqe_next;                \
-		else                                                                               \
-			(head)->tqh_last = &(elm)->field.tqe_next;                                 \
-		(head)->tqh_first = (elm);                                                         \
-		(elm)->field.tqe_prev = &(head)->tqh_first;                                        \
+		if (((elm)->field.tqe_next = (head)->tqh_first) != NULL)        \
+			(head)->tqh_first->field.tqe_prev = &(elm)->field.tqe_next; \
+		else                                                            \
+			(head)->tqh_last = &(elm)->field.tqe_next;                  \
+		(head)->tqh_first = (elm);                                      \
+		(elm)->field.tqe_prev = &(head)->tqh_first;                     \
 	} while (/*CONSTCOND*/ 0)
 
 #define TAILQ_INSERT_TAIL(head, elm, field)                                                        \
-	do {                                                                                       \
-		(elm)->field.tqe_next = NULL;                                                      \
-		(elm)->field.tqe_prev = (head)->tqh_last;                                          \
-		*(head)->tqh_last = (elm);                                                         \
-		(head)->tqh_last = &(elm)->field.tqe_next;                                         \
+	do {                                           \
+		(elm)->field.tqe_next = NULL;              \
+		(elm)->field.tqe_prev = (head)->tqh_last;  \
+		*(head)->tqh_last = (elm);                 \
+		(head)->tqh_last = &(elm)->field.tqe_next; \
 	} while (/*CONSTCOND*/ 0)
 
-#define TAILQ_INSERT_AFTER(head, listelm, elm, field)                                              \
-	do {                                                                                       \
-		if (((elm)->field.tqe_next = (listelm)->field.tqe_next) != NULL)                   \
-			(elm)->field.tqe_next->field.tqe_prev = &(elm)->field.tqe_next;            \
-		else                                                                               \
-			(head)->tqh_last = &(elm)->field.tqe_next;                                 \
-		(listelm)->field.tqe_next = (elm);                                                 \
-		(elm)->field.tqe_prev = &(listelm)->field.tqe_next;                                \
+#define TAILQ_INSERT_AFTER(head, listelm, elm, field)                       \
+	do {                                                                    \
+		if (((elm)->field.tqe_next = (listelm)->field.tqe_next) != NULL)    \
+			(elm)->field.tqe_next->field.tqe_prev = &(elm)->field.tqe_next; \
+		else                                                                \
+			(head)->tqh_last = &(elm)->field.tqe_next;                      \
+		(listelm)->field.tqe_next = (elm);                                  \
+		(elm)->field.tqe_prev = &(listelm)->field.tqe_next;                 \
 	} while (/*CONSTCOND*/ 0)
 
-#define TAILQ_INSERT_BEFORE(listelm, elm, field)                                                   \
-	do {                                                                                       \
-		(elm)->field.tqe_prev = (listelm)->field.tqe_prev;                                 \
-		(elm)->field.tqe_next = (listelm);                                                 \
-		*(listelm)->field.tqe_prev = (elm);                                                \
-		(listelm)->field.tqe_prev = &(elm)->field.tqe_next;                                \
+#define TAILQ_INSERT_BEFORE(listelm, elm, field)            \
+	do {                                                    \
+		(elm)->field.tqe_prev = (listelm)->field.tqe_prev;  \
+		(elm)->field.tqe_next = (listelm);                  \
+		*(listelm)->field.tqe_prev = (elm);                 \
+		(listelm)->field.tqe_prev = &(elm)->field.tqe_next; \
 	} while (/*CONSTCOND*/ 0)
 
-#define TAILQ_REMOVE(head, elm, field)                                                             \
-	do {                                                                                       \
-		if (((elm)->field.tqe_next) != NULL)                                               \
-			(elm)->field.tqe_next->field.tqe_prev = (elm)->field.tqe_prev;             \
-		else                                                                               \
-			(head)->tqh_last = (elm)->field.tqe_prev;                                  \
-		*(elm)->field.tqe_prev = (elm)->field.tqe_next;                                    \
+#define TAILQ_REMOVE(head, elm, field)                                     \
+	do {                                                                   \
+		if (((elm)->field.tqe_next) != NULL)                               \
+			(elm)->field.tqe_next->field.tqe_prev = (elm)->field.tqe_prev; \
+		else                                                               \
+			(head)->tqh_last = (elm)->field.tqe_prev;                      \
+		*(elm)->field.tqe_prev = (elm)->field.tqe_next;                    \
 	} while (/*CONSTCOND*/ 0)
 
-#define TAILQ_FOREACH(var, head, field)                                                            \
+#define TAILQ_FOREACH(var, head, field) \
 	for ((var) = ((head)->tqh_first); (var); (var) = ((var)->field.tqe_next))
 
-#define TAILQ_FOREACH_REVERSE(var, head, headname, field)                                          \
-	for ((var) = (*(((struct headname *)((head)->tqh_last))->tqh_last)); (var);                \
+#define TAILQ_FOREACH_REVERSE(var, head, headname, field)                       \
+	for ((var) = (*(((struct headname *)((head)->tqh_last))->tqh_last)); (var); \
 	     (var) = (*(((struct headname *)((var)->field.tqe_prev))->tqh_last)))
 
-#define TAILQ_CONCAT(head1, head2, field)                                                          \
-	do {                                                                                       \
-		if (!TAILQ_EMPTY(head2)) {                                                         \
-			*(head1)->tqh_last = (head2)->tqh_first;                                   \
-			(head2)->tqh_first->field.tqe_prev = (head1)->tqh_last;                    \
-			(head1)->tqh_last = (head2)->tqh_last;                                     \
-			TAILQ_INIT((head2));                                                       \
-		}                                                                                  \
+#define TAILQ_CONCAT(head1, head2, field)                           \
+	do {                                                            \
+		if (!TAILQ_EMPTY(head2)) {                                  \
+			*(head1)->tqh_last = (head2)->tqh_first;                \
+			(head2)->tqh_first->field.tqe_prev = (head1)->tqh_last; \
+			(head1)->tqh_last = (head2)->tqh_last;                  \
+			TAILQ_INIT((head2));                                    \
+		}                                                           \
 	} while (/*CONSTCOND*/ 0)
 
 /*
