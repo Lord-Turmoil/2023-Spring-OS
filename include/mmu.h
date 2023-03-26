@@ -124,37 +124,38 @@ extern u_long npage;
 typedef u_long Pde;
 typedef u_long Pte;
 
-#define PADDR(kva)                                                                                 \
-	({                                                                                         \
-		u_long a = (u_long)(kva);                                                          \
-		if (a < ULIM)                                                                      \
-			panic("PADDR called with invalid kva %08lx", a);                           \
-		a - ULIM;                                                                          \
+#define PADDR(kva)                                           \
+	({                                                       \
+		u_long a = (u_long)(kva);                            \
+		if (a < ULIM)                                        \
+			panic("PADDR called with invalid kva %08lx", a); \
+		a - ULIM;                                            \
 	})
 
 // translates from physical address to kernel virtual address
-#define KADDR(pa)                                                                                  \
-	({                                                                                         \
-		u_long ppn = PPN(pa);                                                              \
-		if (ppn >= npage) {                                                                \
-			panic("KADDR called with invalid pa %08lx", (u_long)pa);                   \
-		}                                                                                  \
-		(pa) + ULIM;                                                                       \
+#define KADDR(pa)                                                    \
+	({                                                               \
+		u_long ppn = PPN(pa);                                        \
+		if (ppn >= npage) {                                          \
+			panic("KADDR called with invalid pa %08lx", (u_long)pa); \
+		}                                                            \
+		(pa) + ULIM;                                                 \
 	})
 
-#define assert(x)                                                                                  \
-	do {                                                                                       \
-		if (!(x)) {                                                                        \
-			panic("assertion failed: %s", #x);                                         \
-		}                                                                                  \
+#define assert(x)                              \
+	do {                                       \
+		if (!(x)) {                            \
+			panic("assertion failed: %s", #x); \
+		}                                      \
 	} while (0)
 
-#define TRUP(_p)                                                                                   \
-	({                                                                                         \
-		typeof((_p)) __m_p = (_p);                                                         \
-		(u_int) __m_p > ULIM ? (typeof(_p))ULIM : __m_p;                                   \
+#define TRUP(_p)                                         \
+	({                                                   \
+		typeof((_p)) __m_p = (_p);                       \
+		(u_int) __m_p > ULIM ? (typeof(_p))ULIM : __m_p; \
 	})
 
 extern void tlb_out(u_int entryhi);
+
 #endif //!__ASSEMBLER__
 #endif // !_MMU_H_
