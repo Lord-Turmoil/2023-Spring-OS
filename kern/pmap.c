@@ -226,6 +226,7 @@ static int pgdir_walk(Pde* pgdir, u_long va, int create, Pte** ppte)
 		if (create)
 		{
 			/*
+			 * Here, we want to construct a page for page table.
 			 * The page allocated will be used to store page table.
 			 */
 			int ret = page_alloc(&pp);
@@ -237,6 +238,11 @@ static int pgdir_walk(Pde* pgdir, u_long va, int create, Pte** ppte)
 
 			pp->pp_ref++;
 			// see page_insert(), which uses page2pa
+			/*
+			 * The content of pgdir_entryp (*pgdir_entryp) points to the base
+			 * physical address of page table, and since it only takes 20 bits,
+			 * the remaining 12 bits are used for permissions.
+			 */
 			*pgdir_entryp = page2pa(pp);
 			*pgdir_entryp |= (PTE_D | PTE_V);
 		}
@@ -247,9 +253,11 @@ static int pgdir_walk(Pde* pgdir, u_long va, int create, Pte** ppte)
 		}
 	}
 
-	 /* Step 3: Assign the kernel virtual address of the page table entry to '*ppte'. */
-	 /* Exercise 2.6: Your code here. (3/3) */
-	*ppte = (Pte*)KADDR(PTE_ADDR(*pgdir_entryp)) + ptx;
+	/* Step 3: Assign the kernel virtual address of the page table entry to '*ppte'. */
+	/* Exercise 2.6: Your code here. (3/3) */
+	
+	// KADDR is for the access of kernel.
+	*ppte = (Pte*)KADDR(PTE_ADDR(*pgdir_entryp) + ptx);
 	
 	return 0;
 }
@@ -273,6 +281,14 @@ int page_insert(Pde* pgdir, u_int asid, struct Page* pp, u_long va, u_int perm)
 	/* Step 1: Get corresponding page table entry. */
 	pgdir_walk(pgdir, va, 0, &pte);
 
+	/*
+	 * pte is the address of page table entry, and just like *pgdir_entryp, the
+	 * content of pte (*pte) contains the physical address of a page (4K, lowest
+	 * 12 bits are 0) and permission bits. Then, after we get the physical
+	 * address, we can combine that with inner page offset (lowest 12 bits in va)
+	 * to access the memory.
+	 */
+
 	if (pte && (*pte & PTE_V))
 	{
 		// page table exists
@@ -286,6 +302,7 @@ int page_insert(Pde* pgdir, u_int asid, struct Page* pp, u_long va, u_int perm)
 			// current page already mapped to va
 			tlb_invalidate(asid, va);
 			*pte = page2pa(pp) | perm | PTE_V;
+			// *pte |= (perm | PTE_V);
 			return 0;
 		}
 	}
