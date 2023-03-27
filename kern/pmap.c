@@ -252,6 +252,17 @@ static int pgdir_walk(Pde* pgdir, u_long va, int create, Pte** ppte)
 	
 	// KADDR is for the access of kernel.
 	*ppte = (Pte*)KADDR(PTE_ADDR(*pgdir_entryp)) + ptx;
+	/*
+	 * Must not be this! If so, KADDR will add offset to the address of
+	 * type Pte*, which will cause 4 times of offset!
+	 *
+	ppte = (Pte*)KADDR((Pte*)PTE_ADDR(*pgdir_entryp) + ptx);
+	 *
+	 * An alternate way is to add pointer offset manually.
+	 *
+	ppte = (Pte*)KADDR(PTE_ADDR(*pgdir_entryp) + (ptx << 2));
+	 *
+	 */
 	
 	return 0;
 }
