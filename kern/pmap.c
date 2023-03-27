@@ -113,19 +113,16 @@ void page_init(void)
 
 	/* Step 3: Mark all memory below `freemem` as used (set `pp_ref` to 1) */
 	/* Exercise 2.3: Your code here. (3/4) */
-	u_long i;
-	for (i = 0; i < npage; i++)
+	u_long allocated_pages = page2ppn(pa2page(PADDR(freemem)));
+	for (u_long i = 0; i < allocated_pages; i++)
 	{
-		if (page2kva(&pages[i]) < freemem)
-			pages[i].pp_ref = 1;
-		else
-			break;
+		pages[i].pp_ref = 1;
 	}
 
 	/* Step 4: Mark the other memory as free. */
 	/* Exercise 2.3: Your code here. (4/4) */
 
-	for (i; i < npage; i++)
+	for (u_long i = allocated_pages; i < npage; i++)
 	{
 		LIST_INSERT_HEAD(&page_free_list, &pages[i], pp_link);
 		pages[i].pp_ref = 0;
