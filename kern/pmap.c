@@ -15,12 +15,6 @@ static u_long freemem;
 
 struct Page_list page_free_list; /* Free list of physical pages */
 
-/*
- * In MIPS R3000 page 80
- * Page size is fixed to 4Kbytes = 512 B
- */
-static const size_t PAGE_SIZE = BY2PG / 8;
-
 /* Overview:
  *   Read memory size from DEV_MP to initialize 'memsize' and calculate the corresponding 'npage'
  *   value.
@@ -32,11 +26,11 @@ void mips_detect_memory()
 
 	/* Step 2: Calculate the corresponding 'npage' value. */
 	/* Exercise 2.1: Your code here. */
-	npage = memsize / PAGE_SIZE;
+	npage = memsize / BY2PG;
 
 	printk("Memory size: %lu KiB, number of pages: %lu\n", memsize / 1024, npage);
 	/*
-	 * Memory size: 65536 KiB, number of pages: 131072
+	 * Memory size: 65536 KiB, number of pages: 16384
 	 */
 }
 
@@ -166,7 +160,7 @@ int page_alloc(struct Page** new)
 	/* Step 2: Initialize this page with zero.
 	 * Hint: use `memset`. */
 	 /* Exercise 2.4: Your code here. (2/2) */
-	memset((void*)page2kva(pp), 0, PAGE_SIZE);
+	memset((void*)page2kva(pp), 0, BY2PG);
 
 	*new = pp;
 
