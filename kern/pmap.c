@@ -35,6 +35,9 @@ void mips_detect_memory()
 	npage = memsize / PAGE_SIZE;
 
 	printk("Memory size: %lu KiB, number of pages: %lu\n", memsize / 1024, npage);
+	/*
+	 * Memory size: 65536 KiB, number of pages: 131072
+	 */
 }
 
 /* Overview:
@@ -257,7 +260,7 @@ static int pgdir_walk(Pde* pgdir, u_long va, int create, Pte** ppte)
 	/* Exercise 2.6: Your code here. (3/3) */
 	
 	// KADDR is for the access of kernel.
-	*ppte = (Pte*)KADDR(PTE_ADDR(*pgdir_entryp) + ptx);
+	*ppte = (Pte*)KADDR(PTE_ADDR(*pgdir_entryp)) + ptx;
 	
 	return 0;
 }
