@@ -630,15 +630,21 @@ void swap_init()
 	}
 }
 
+u_long swap_pg_id = 0;
+
 static void _swap_out(Pde* pgdir, u_int asid)
 {
-	 struct Page* pp = pa2page(SWAP_PAGE_BASE);
+	 if (swap_pg_id >= SWAP_NPAGE)
+		  swap_pg_id = 0;
+
+	 u_long va = SWAP_PAGE_BASE + swap_pg_id * BY2PG;
+	 struct Page* pp = pa2page(va);
 	 u_long ppn = page2ppn(pp);
 	 Pte* pte;
 	 Pte* pte_entryp;
 	 u_char* da = disk_alloc();
 
-	 pgdir_walk(pgdir, SWAP_PAGE_BASE, 0, &pte);
+	 pgdir_walk(pgdir, va, 0, &pte);
 	 panic_on(pte != NULL);
 	 for (int i = 0; i < 1024; i++)
 	 {
@@ -651,10 +657,11 @@ static void _swap_out(Pde* pgdir, u_int asid)
 			   *pte_entryp |= PTE_SWP;	// set PTE_SWAP
 			   *pte_entryp &= 0xfff;	// clear high 20 bits
 			   *pte_entryp |= ((u_long)da >> PGSHIFT) << PGSHIFT;
+			   tlb_invalidate(asid, PTE_ADDR(*pte_entryp));
 		  }
 	 }
 
-	 tlb_invalidate(asid, SWAP_PAGE_BASE);
+	 // tlb_invalidate(asid, va);
 	 memcpy(da, (void*)page2kva(pp), BY2PG);
 
 	 LIST_INSERT_HEAD(&page_free_swapable_list, pp, pp_link);
@@ -687,7 +694,7 @@ static int is_swapped(Pde *pgdir, u_long va)
 	Pte* pte;
 
 	pgdir_walk(pgdir, va, 0, &pte);
-	if (pte && (*pte & PTE_V) && (*pte & PTE_SWP))
+	if (pte && !(*pte & PTE_V) && (*pte & PTE_SWP))
 		 return 1;
 
 	return 0;
@@ -726,7 +733,7 @@ static void swap(Pde *pgdir, u_int asid, u_long va)
 
 	_swap_in_aux(pte, da, pp);
 
-	tlb_invalidate(asid, page2kva(pp));
+	tlb_invalidate(asid, page2pa(pp));
 	disk_free(da);
 }
 
