@@ -610,3 +610,54 @@ void page_check(void)
 
 	printk("page_check() succeeded!\n");
 }
+
+
+static const int PAGE_ENT_CNT = 1024;
+
+static u_int _page_perm_stat_pgtbl(Pte* pgtbl, u_long ppn, u_int perm_mask)
+{
+	Pte* pgtbl_entryp;
+	u_long pa_entry;
+	u_int cnt = 0;
+
+	for (int i = 0; i < PAGE_ENT_CNT; i++)
+	{
+		pgtbl_entryp = pgtbl + i;
+		if (!(*pgtbl_entryp & PTE_V))
+			 continue;
+		// printk("*pgtbl_entryp = %x\n", *pgtbl_entryp);	
+		pa_entry = *pgtbl_entryp;
+		if (((PTE_ADDR(pa_entry) >> PGSHIFT) == ppn) && ((pa_entry & perm_mask) == perm_mask))
+		{
+	   		cnt++;
+			// printk("%lu - %u\n", ppn, perm_mask);
+		}
+	}
+
+	return cnt;
+}
+
+static u_int _page_perm_stat_pgdir(Pde* pgdir, u_long ppn, u_int perm_mask)
+{
+	Pde* pgdir_entryp;
+	Pte* pgtbl;
+	u_int cnt = 0;
+
+	for (int i = 0; i < PAGE_ENT_CNT; i++)
+	{
+		pgdir_entryp = pgdir + i;
+		if (!(*pgdir_entryp & PTE_V))
+			continue;
+		// printk("*pgdir_entryp = %x\n", *pgdir_entryp);
+		pgtbl = (Pte*)KADDR(PTE_ADDR(*pgdir_entryp));
+		cnt += _page_perm_stat_pgtbl(pgtbl, ppn, perm_mask);
+	}
+
+	return cnt;
+}
+
+u_int page_perm_stat(Pde *pgdir, struct Page *pp, u_int perm_mask)
+{
+	return _page_perm_stat_pgdir(pgdir, page2ppn(pp), perm_mask);
+}
+
