@@ -76,7 +76,7 @@ static void map_segment(Pde* pgdir, u_int asid, u_long pa, u_long va, u_int size
 	assert(size % BY2PG == 0);
 
 	/* Step 1: Map virtual address space to physical address space. */
-	for (int i = 0; i < size; i += BY2PG)
+	for (u_int i = 0; i < size; i += BY2PG)
 	{
 		/*
 		 * Hint:
@@ -85,7 +85,7 @@ static void map_segment(Pde* pgdir, u_int asid, u_long pa, u_long va, u_int size
 		 *  Use 'pa2page' to get the 'struct Page *' of the physical address.
 		 */
 		 /* Exercise 3.2: Your code here. */
-
+		page_insert(pgdir, asid, pa2page(pa + i), va + i, perm | PTE_V);
 	}
 }
 
