@@ -8,7 +8,7 @@
 
 #define LOG2NENV 10
 #define NENV (1 << LOG2NENV)
-#define ENVX(envid) ((envid) & (NENV - 1))
+#define ENVX(envid) ((envid) & (NENV - 1))	// = envid % (NENV)
 
 // Values of env_status in struct Env
 #define ENV_FREE 0
@@ -17,14 +17,20 @@
 
 struct Env {
 	struct Trapframe env_tf;  // Saved registers
+	
 	LIST_ENTRY(Env) env_link; // Free list
-	u_int env_id;		  // Unique environment identifier
-	u_int env_asid;		  // ASID
-	u_int env_parent_id;	  // env_id of this env's parent
-	u_int env_status;	  // Status of the environment
-	Pde *env_pgdir;		  // Kernel virtual address of page dir
+	
+	u_int env_id;		      // Unique environment identifier
+	u_int env_asid;		      // ASID
+	u_int env_parent_id;      // env_id of this env's parent
+	u_int env_status;         // Status of the environment
+
+	Pde *env_pgdir;           // Kernel virtual address of page dir
+	
 	TAILQ_ENTRY(Env) env_sched_link;
+	
 	u_int env_pri;
+	
 	// Lab 4 IPC
 	u_int env_ipc_value;   // data value sent to us
 	u_int env_ipc_from;    // envid of the sender
@@ -41,17 +47,26 @@ struct Env {
 
 LIST_HEAD(Env_list, Env);
 TAILQ_HEAD(Env_sched_list, Env);
+
 extern struct Env *curenv;		     // the current env
 extern struct Env_sched_list env_sched_list; // runnable env list
 
 void env_init(void);
-int env_alloc(struct Env **e, u_int parent_id);
+int  env_alloc(struct Env **e, u_int parent_id);
 void env_free(struct Env *);
+
 struct Env *env_create(const void *binary, size_t size, int priority);
 void env_destroy(struct Env *e);
 
 int envid2env(u_int envid, struct Env **penv, int checkperm);
+
+/*
+ * __attribute((noreturn)) indicates that this function does not return by
+ * executing the return statement or by reaching the end of the function
+ * body.
+ */
 void env_run(struct Env *e) __attribute__((noreturn));
+
 void enable_irq(void);
 
 void env_check(void);
