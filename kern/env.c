@@ -219,19 +219,24 @@ static int env_setup_vm(struct Env* e)
 	 */
 	struct Page* p;
 	try(page_alloc(&p));
+	
 	/* Exercise 3.3: Your code here. */
+	p->pp_ref++;
+	e->env_pgdir = page2kva(p);
 
 	/* Step 2: Copy the template page directory 'base_pgdir' to 'e->env_pgdir'. */
 	/* Hint:
 	 *   As a result, the address space of all envs is identical in [UTOP, UVPT).
 	 *   See include/mmu.h for layout.
 	 */
-	memcpy(e->env_pgdir + PDX(UTOP), base_pgdir + PDX(UTOP),
+	memcpy(e->env_pgdir + PDX(UTOP),
+		   base_pgdir + PDX(UTOP),
 		   sizeof(Pde) * (PDX(UVPT) - PDX(UTOP)));
 
 	/* Step 3: Map its own page table at 'UVPT' with readonly permission.
 	 * As a result, user programs can read its page table through 'UVPT' */
 	e->env_pgdir[PDX(UVPT)] = PADDR(e->env_pgdir) | PTE_V;
+
 	return 0;
 }
 
@@ -261,10 +266,12 @@ int env_alloc(struct Env** new, u_int parent_id)
 
 	/* Step 1: Get a free Env from 'env_free_list' */
 	/* Exercise 3.4: Your code here. (1/4) */
+	e = LIST_FIRST(env_free_list, env_link);
 
 	/* Step 2: Call a 'env_setup_vm' to initialize the user address space for
 	 * this new Env. */
 	/* Exercise 3.4: Your code here. (2/4) */
+	env_setup_vm(e);
 
 	/* Step 3: Initialize these fields for the new Env with appropriate values:
 	 *   'env_user_tlb_mod_entry' (lab4), 'env_runs' (lab6), 'env_id' (lab3),
@@ -274,9 +281,14 @@ int env_alloc(struct Env** new, u_int parent_id)
 	 *   Use 'asid_alloc' to allocate a free asid.
 	 *   Use 'mkenvid' to allocate a free envid.
 	 */
-	e->env_user_tlb_mod_entry = 0; // for lab4
-	e->env_runs = 0;	       // for lab6
+
 	/* Exercise 3.4: Your code here. (3/4) */
+	e->env_user_tlb_mod_entry = 0; // for lab4
+	e->env_runs = 0;               // for lab6
+	e->env_id = mkenvid(e);
+	panic_on(asid_alloc(&(e->env_asid)));
+	e->env_parent_id = parent_id;
+
 
 	/* Step 4: Initialize the sp and 'cp0_status' in 'e->env_tf'. */
 	// Timer interrupt (STATUS_IM4) will be enabled.
@@ -286,8 +298,10 @@ int env_alloc(struct Env** new, u_int parent_id)
 
 	/* Step 5: Remove the new Env from env_free_list. */
 	/* Exercise 3.4: Your code here. (4/4) */
+	LIST_REMOVE(e, env_link);
 
 	*new = e;
+
 	return 0;
 }
 
