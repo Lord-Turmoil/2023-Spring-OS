@@ -732,12 +732,12 @@ static void swap(Pde* pgdir, u_int asid, u_long va)
 				continue;
 			if (PPN(pgtbl[ptx]) == PPN(da))
 			{
-				u_long va = (pdx << PDSHIFT) | (ptx << PGSHIFT);
+				u_long vaddr = (pdx << PDSHIFT) | (ptx << PGSHIFT);
 				u_long perm = PTE_PERM(pgtbl[ptx]);
 				PTE_SET(perm, PTE_V);
 				PTE_CLR(perm, PTE_SWP);
 				pgtbl[ptx] = page2pa(pp) | perm;
-				tlb_invalidate(asid, va);
+				tlb_invalidate(asid, vaddr);
 			}
 		}
 	}
