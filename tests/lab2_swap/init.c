@@ -98,6 +98,7 @@ static void swap_test() {
 
 	for (int i = 0; i < 2 * SWAP_NPAGE; i++) {
 		u_long va = TEST_VA_START + i * BY2PG;
+		// printk("%2d: %s - %s\n", i, kuseg(va), s[i]);
 		ensure(strcmp(kuseg(va), s[i]) == 0, "Content[%d] Wrong!", i);
 	}
 
