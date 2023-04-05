@@ -666,8 +666,8 @@ struct Page* swap_alloc(Pde* pgdir, u_int asid)
 				{
 					u_long va = (pdx << PDSHIFT) | (ptx << PGSHIFT);
 					u_long perm = PTE_PERM(perm);
-					perm &= ~PTE_V;
-					perm |= PTE_SWP;
+					PTE_CLR(perm, PTE_V);
+					PTE_SET(perm, PTE_SWP);
 					pgtbl[ptx] = PTE_ADDR(da) | perm;
 					tlb_invalidate(asid, va);
 				}
