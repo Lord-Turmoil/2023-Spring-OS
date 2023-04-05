@@ -649,7 +649,6 @@ struct Page* swap_alloc(Pde* pgdir, u_int asid)
 		struct Page* pp = pa2page(SWAP_PAGE_BASE);
 		u_char* da = disk_alloc();
 		
-		Pte* pgtbl;
 		for (int pdx = 0; pdx < PAGE_ENTRY_CNT; pdx++)
 		{
 			if (!(pgdir[pdx] & PTE_V))
@@ -658,7 +657,7 @@ struct Page* swap_alloc(Pde* pgdir, u_int asid)
 			 * The address of page table is kernel address, but the 
 			 * content of page table entry is physical address.
 			 */
-			pgtbl = (Pte*)KADDR(PTE_ADDR(pgdir[pdx]));
+			Pte* pgtbl = (Pte*)KADDR(PTE_ADDR(pgdir[pdx]));
 			for (int ptx = 0; ptx < PAGE_ENTRY_CNT; ptx++)
 			{
 				if (!(pgtbl[ptx] & PTE_V))
@@ -666,7 +665,7 @@ struct Page* swap_alloc(Pde* pgdir, u_int asid)
 				if (PPN(pgtbl[ptx]) == page2ppn(pp))
 				{
 					u_long va = (pdx << PDSHIFT) | (ptx << PGSHIFT);
-					u_long perm = pgtbl[ptx] & 0xfff;
+					u_long perm = PTE_PERM(perm);
 					perm &= ~PTE_V;
 					perm |= PTE_SWP;
 					pgtbl[ptx] = PTE_ADDR(da) | perm;
@@ -709,24 +708,37 @@ static void swap(Pde* pgdir, u_int asid, u_long va)
 	struct Page* pp = swap_alloc(pgdir, asid);
 	Pte* pte;
 
+	/*
+	 * Find the pte corresponding to given va.
+	 * Notice that, this va is one of the pte that mapped to the swapped out
+	 * page, while all pte(s) that mapped to the swapped page contains the
+	 * da we want.
+	 */
 	page_lookup(pgdir, va, &pte);
 	assert(pte);
 
 	u_char* da = (u_char*)PTE_ADDR(*pte);
 	memcpy((void*)page2kva(pp), da, BY2PG);
-	for (int i = 0; i < 1; i++)
+
+	for (int pdx = 0; pdx < PAGE_ENTRY_CNT; pdx++)
 	{
-		Pte* pte_entryp = pte + i;
+		if (!(pgdir[pdx] & PTE_V))
+			continue;
 
-		if ((*pte_entryp & PTE_SWP) && !(*pte_entryp & PTE_V) && (PTE_ADDR(*pte_entryp) == (u_long)da))
+		Pte* pgtbl = KADDR(PTE_ADDR(pgdir[pdx]));
+		for (int ptx = 0; ptx < PAGE_ENTRY_CNT; ptx++)
 		{
-			*pte_entryp |= PTE_V;
-			*pte_entryp &= ~PTE_SWP;
-
-			*pte_entryp &= 0xfff;
-			*pte_entryp |= page2pa(pp);
-
-			tlb_invalidate(asid, va + i * BY2PG);
+			if (!((pgtbl[ptx] & PTE_SWP) && !(pgtbl[ptx] & PTE_V)))
+				continue;
+			if (PPN(pgtbl[ptx]) == PPN(da))
+			{
+				u_long va = (pdx << PDSHIFT) | (ptx << PGSHIFT);
+				u_long perm = PTE_PERM(pgtbl[ptx]);
+				PTE_SET(perm, PTE_V);
+				PTE_CLR(perm, PTE_SWP);
+				pgtbl[ptx] = page2pa(pp) | perm;
+				tlb_invalidate(asid, va);
+			}
 		}
 	}
 

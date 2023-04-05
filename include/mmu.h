@@ -13,11 +13,19 @@
 // This can be used to get PTE address from PDE.
 #define PTE_ADDR(pte) ((u_long)(pte) & ~0xFFF)
 
+// This can be used to get PTE permission bits.
+#define PTE_PERM(va) ((u_long)(va) & 0xFFF)
+
 // Page number field of an address
 #define PPN(va) (((u_long)(va)) >> 12)
 #define VPN(va) (((u_long)(va)) >> 12)
 
+
 /* Page Table/Directory Entry flags */
+
+#define PTE_SET(va, perm) ((va) = (u_long)(va) | (perm))
+#define PTE_CLR(va, perm) ((va) = (u_long)(va) & (~(perm)))
+
 
 // Global bit. When the G bit in a TLB entry is set, that TLB entry will match solely on the VPN
 // field, regardless of whether the TLB entry’s ASID field matches the value in EntryHi.
