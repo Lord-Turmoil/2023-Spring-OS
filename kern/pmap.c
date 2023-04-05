@@ -707,7 +707,7 @@ static void swap(Pde* pgdir, u_int asid, u_long va)
 	struct Page* pp = swap_alloc(pgdir, asid);
 	Pte* pte;
 
-	page_lookup(pgdir, va, &pte);
+	pgdir_walk(pgdir, va, 0, &pte);
 	assert(pte);
 
 	u_char* da = (u_char*)PTE_ADDR(*pte);
