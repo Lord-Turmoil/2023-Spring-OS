@@ -692,7 +692,7 @@ static int is_swapped(Pde* pgdir, u_long va)
 	/* Your Code Here (2/3) */
 	Pte* pte;
 
-	va = ROUNDDOWN(va, BY2PG);
+	// va = ROUNDDOWN(va, BY2PG);
 	pgdir_walk(pgdir, va, 0, &pte);
 
 	return pte && (*pte & PTE_SWP) && !(*pte & PTE_V);
@@ -703,7 +703,7 @@ static void swap(Pde* pgdir, u_int asid, u_long va)
 	// printk("INVOKE: swap()\n");
 
 	/* Your Code Here (3/3) */
-	va = ROUNDDOWN(va, BY2PG);
+	// va = ROUNDDOWN(va, BY2PG);
 	struct Page* pp = swap_alloc(pgdir, asid);
 	Pte* pte;
 
