@@ -725,7 +725,7 @@ static void swap(Pde* pgdir, u_int asid, u_long va)
 		if (!(pgdir[pdx] & PTE_V))
 			continue;
 
-		Pte* pgtbl = KADDR(PTE_ADDR(pgdir[pdx]));
+		Pte* pgtbl = (Pte*)KADDR(PTE_ADDR(pgdir[pdx]));
 		for (int ptx = 0; ptx < PAGE_ENTRY_CNT; ptx++)
 		{
 			if (!((pgtbl[ptx] & PTE_SWP) && !(pgtbl[ptx] & PTE_V)))
