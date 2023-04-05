@@ -709,12 +709,12 @@ static void swap(Pde* pgdir, u_int asid, u_long va)
 	struct Page* pp = swap_alloc(pgdir, asid);
 	Pte* pte;
 
-	pgdir_walk(pgdir, va, 0, &pte);
+	page_lookup(pgdir, va, &pte);
 	assert(pte);
 
 	u_char* da = (u_char*)PTE_ADDR(*pte);
 	memcpy((void*)page2kva(pp), da, BY2PG);
-	for (int i = 0; i < PAGE_ENTRY_CNT; i++)
+	for (int i = 0; i < 1; i++)
 	{
 		Pte* pte_entryp = pte + i;
 
