@@ -14,9 +14,10 @@
  *   2. Use variable 'env_sched_list', which contains and only contains all runnable envs.
  *   3. You shouldn't use any 'return' statement because this function is 'noreturn'.
  */
-void schedule(int yield) {
+void schedule(int yield)
+{
 	static int count = 0; // remaining time slices of current env
-	struct Env *e = curenv;
+	struct Env* e = curenv;
 
 	/* We always decrease the 'count' by 1.
 	 *
@@ -34,6 +35,19 @@ void schedule(int yield) {
 	 * You may want to use macros below:
 	 *   'TAILQ_FIRST', 'TAILQ_REMOVE', 'TAILQ_INSERT_TAIL'
 	 */
-	/* Exercise 3.12: Your code here. */
+	 /* Exercise 3.12: Your code here. */
+	count--;
 
+	if (yield || (count <= 0) || !e || e->env_status != ENV_RUNNABLE)
+	{
+		panic_on(TAILQ_EMPTY(&env_sched_list));
+
+		if (e && e->env_status == ENV_RUNNABLE)
+			TAILQ_INSERT_TAIL(&env_sched_list, e, env_shed_link);
+		e = TAILQ_FIRST(&env_sched_list);
+		TAILQ_REMOVE(&env_sched_list, e, env_shed_link);
+		count = e->env_pri;
+	}
+	
+	env_run(e);
 }

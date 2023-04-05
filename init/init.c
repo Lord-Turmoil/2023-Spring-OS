@@ -20,11 +20,11 @@ void mips_init() {
 	page_init();
 
 	// lab3:
-	// env_init();
+	env_init();
 
 	// lab3:
-	// ENV_CREATE_PRIORITY(user_bare_loop, 1);
-	// ENV_CREATE_PRIORITY(user_bare_loop, 2);
+	ENV_CREATE_PRIORITY(user_bare_loop, 1);
+	ENV_CREATE_PRIORITY(user_bare_loop, 2);
 
 	// lab4:
 	// ENV_CREATE(user_tltest);

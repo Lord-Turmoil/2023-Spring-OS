@@ -5,6 +5,7 @@
 #include <pmap.h>
 #include <printk.h>
 #include <sched.h>
+#include <error.h>
 
 // The maximum number of available ASIDs.
 // Our bitmap requires this to be a multiple of 32.
@@ -158,8 +159,6 @@ int envid2env(u_int envid, struct Env** penv, int checkperm)
  */
 void env_init(void)
 {
-	int i;
-
 	/* Step 1: Initialize 'env_free_list' with 'LIST_INIT' and 'env_sched_list'
 	 * with 'TAILQ_INIT'. */
 	/* Exercise 3.1: Your code here. (1/2) */
@@ -219,10 +218,10 @@ static int env_setup_vm(struct Env* e)
 	 */
 	struct Page* p;
 	try(page_alloc(&p));
-	
+
 	/* Exercise 3.3: Your code here. */
 	p->pp_ref++;
-	e->env_pgdir = page2kva(p);
+	e->env_pgdir = (Pde*)page2kva(p);
 
 	/* Step 2: Copy the template page directory 'base_pgdir' to 'e->env_pgdir'. */
 	/* Hint:
@@ -261,17 +260,22 @@ static int env_setup_vm(struct Env* e)
  */
 int env_alloc(struct Env** new, u_int parent_id)
 {
-	int r;
+	// printk("INVOKE: env_alloc()\n");
+
 	struct Env* e;
 
 	/* Step 1: Get a free Env from 'env_free_list' */
 	/* Exercise 3.4: Your code here. (1/4) */
-	e = LIST_FIRST(env_free_list, env_link);
+	
+	// Check whether there is free Env first!
+	if (LIST_EMPTY(&env_free_list))
+		return -E_NO_FREE_ENV;
+	e = LIST_FIRST(&env_free_list);
 
 	/* Step 2: Call a 'env_setup_vm' to initialize the user address space for
 	 * this new Env. */
 	/* Exercise 3.4: Your code here. (2/4) */
-	env_setup_vm(e);
+	try(env_setup_vm(e));
 
 	/* Step 3: Initialize these fields for the new Env with appropriate values:
 	 *   'env_user_tlb_mod_entry' (lab4), 'env_runs' (lab6), 'env_id' (lab3),
@@ -327,11 +331,11 @@ static int load_icode_mapper(
 	size_t len)
 {
 	struct Env* env = (struct Env*)data;
-	struct Page* p;
-	int r;
+	struct Page* pp;
 
 	/* Step 1: Allocate a page with 'page_alloc'. */
 	/* Exercise 3.5: Your code here. (1/2) */
+	try(page_alloc(&pp));
 
 	/* Step 2: If 'src' is not NULL, copy the 'len' bytes started at 'src' into
 	 *'offset' at this page. */
@@ -339,11 +343,11 @@ static int load_icode_mapper(
 	if (src != NULL)
 	{
 		/* Exercise 3.5: Your code here. (2/2) */
-
+		memcpy((void*)(page2kva(pp) + offset), src, len);
 	}
 
 	/* Step 3: Insert 'p' into 'env->env_pgdir' at 'va' with 'perm'. */
-	return page_insert(env->env_pgdir, env->env_asid, p, va, perm);
+	return page_insert(env->env_pgdir, env->env_asid, pp, va, perm);
 }
 
 /* Overview:
@@ -381,7 +385,12 @@ static void load_icode(struct Env* e, const void* binary, size_t size)
 
 	/* Step 3: Set 'e->env_tf.cp0_epc' to 'ehdr->e_entry'. */
 	/* Exercise 3.6: Your code here. */
+	e->env_tf.cp0_epc = ehdr->e_entry;
 
+	/*
+	 * epc stores the value of PC, which is where the program starts to
+	 * execute on start or resume.
+	 */
 }
 
 /* Overview:
@@ -395,16 +404,21 @@ static void load_icode(struct Env* e, const void* binary, size_t size)
 struct Env* env_create(const void* binary, size_t size, int priority)
 {
 	struct Env* e;
+
 	/* Step 1: Use 'env_alloc' to alloc a new env, with 0 as 'parent_id'. */
 	/* Exercise 3.7: Your code here. (1/3) */
+	env_alloc(&e, 0);
 
 	/* Step 2: Assign the 'priority' to 'e' and mark its 'env_status' as
 	 * runnable. */
 	/* Exercise 3.7: Your code here. (2/3) */
+	e->env_pri = priority;
 
 	/* Step 3: Use 'load_icode' to load the image from 'binary', and insert 'e'
 	 * into 'env_sched_list' using 'TAILQ_INSERT_HEAD'. */
 	 /* Exercise 3.7: Your code here. (3/3) */
+	load_icode(e, binary, size);
+	TAILQ_INSERT_HEAD(&env_sched_list, e, env_sched_link);
 
 	return e;
 }
@@ -536,6 +550,7 @@ void env_run(struct Env* e)
 	/* Step 3: Change 'cur_pgdir' to 'curenv->env_pgdir', switching to its
 	 * address space. */
 	/* Exercise 3.8: Your code here. (1/2) */
+	cur_pgdir = curenv->env_pgdir;
 
 	/* Step 4: Use 'env_pop_tf' to restore the curenv's saved context (registers)
 	 * and return/go to user mode.
@@ -546,7 +561,7 @@ void env_run(struct Env* e)
 	 * thus not returning to the kernel caller, making 'env_run' a 'noreturn'
 	 * function as well. */
 	 /* Exercise 3.8: Your code here. (2/2) */
-
+	env_pop_tf(&curenv->env_tf, curenv->env_asid);
 }
 
 void env_check()
