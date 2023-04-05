@@ -29,7 +29,7 @@ struct Env {
 	
 	TAILQ_ENTRY(Env) env_sched_link;
 	
-	u_int env_pri;
+	u_int env_pri;         // schedule priority
 	
 	// Lab 4 IPC
 	u_int env_ipc_value;   // data value sent to us
