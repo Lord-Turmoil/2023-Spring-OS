@@ -720,6 +720,21 @@ static void swap(Pde* pgdir, u_int asid, u_long va)
 	u_char* da = (u_char*)PTE_ADDR(*pte);
 	memcpy((void*)page2kva(pp), da, BY2PG);
 
+	for (int ptx = 0; ptx < PAGE_ENTRY_CNT; ptx++)
+	{
+		if (!((pte[ptx] & PTE_SWP) && !(pte[ptx] & PTE_V)))
+			continue;
+		if (PPN(pte[ptx]) == PPN(da))
+		{
+			u_long perm = PTE_PERM(pte[ptx]);
+			PTE_SET(perm, PTE_V);
+			PTE_CLR(perm, PTE_SWP);
+			pte[ptx] = page2pa(pp) | perm;
+			tlb_invalidate(asid, va + (ptx << PGSHIFT));
+		}
+	}
+
+	/*
 	for (int pdx = 0; pdx < PAGE_ENTRY_CNT; pdx++)
 	{
 		if (!(pgdir[pdx] & PTE_V))
@@ -741,6 +756,7 @@ static void swap(Pde* pgdir, u_int asid, u_long va)
 			}
 		}
 	}
+	*/
 
 	disk_free(da);
 }
