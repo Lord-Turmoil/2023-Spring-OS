@@ -639,6 +639,7 @@ void swap_init()
 }
 
 // Interface for 'Passive Swap Out'
+u_long candidate_swap_va = SWAP_PAGE_BASE;
 struct Page* swap_alloc(Pde* pgdir, u_int asid)
 {
 	// Step 1: Ensure free page
@@ -646,8 +647,12 @@ struct Page* swap_alloc(Pde* pgdir, u_int asid)
 	{
 		// printk("Not enough free swappable page\n");
 		
+		if (candidate_swap_va >= SWAP_PAGE_END)
+			candidate_swap_va = SWAP_PAGE_BASE;
+
 		/* Your Code Here (1/3) */
-		struct Page* pp = pa2page(SWAP_PAGE_BASE);
+		struct Page* pp = pa2page(candidate_swap_va);
+		candidate_swap_va += BY2PG;
 		u_char* da = disk_alloc();
 		
 		Pte* pte;
@@ -665,7 +670,7 @@ struct Page* swap_alloc(Pde* pgdir, u_int asid)
 				*pte_entryp &= 0xfff;
 				*pte_entryp |= PTE_ADDR(da);
 
-				tlb_invalidate(asid, KADDR(SWAP_PAGE_BASE + i * BY2PG));
+				tlb_invalidate(asid, KADDR(candidate_swap_va + i * BY2PG));
 			}
 		}
 
