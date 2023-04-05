@@ -620,7 +620,6 @@ void page_check(void)
 ** lab02-extra-off
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
-
 struct Page_list page_free_swappable_list;
 static u_char* disk_alloc();
 static void disk_free(u_char* pdisk);
@@ -650,28 +649,34 @@ struct Page* swap_alloc(Pde* pgdir, u_int asid)
 		struct Page* pp = pa2page(SWAP_PAGE_BASE);
 		u_char* da = disk_alloc();
 		
-
-
-		Pte* pte;
-		pgdir_walk(pgdir, page2kva(pp), 0, &pte);
-		assert(pte);
-
-		for (int i = 0; i < PAGE_ENTRY_CNT; i++)
+		Pte* pgtbl;
+		for (int pdx = 0; pdx < PAGE_ENTRY_CNT; pdx++)
 		{
-			Pte* pte_entryp = pte + i;
-			if ((*pte_entryp & PTE_V) && (PTE_ADDR(*pte_entryp) == page2pa(pp)))
+			if (!(pgdir[pdx] & PTE_V))
+				continue;
+			/*
+			 * The address of page table is kernel address, but the 
+			 * content of page table entry is physical address.
+			 */
+			pgtbl = (Pte*)KADDR(PTE_ADDR(pgdir[pdx]));
+			for (int ptx = 0; ptx < PAGE_ENTRY_CNT; ptx++)
 			{
-				*pte_entryp &= ~PTE_V;
-				*pte_entryp |= PTE_SWP;
-			
-				*pte_entryp &= 0xfff;
-				*pte_entryp |= PTE_ADDR(da);
-
-				tlb_invalidate(asid, KADDR(SWAP_PAGE_BASE + i * BY2PG));
+				if (!(pgtbl[ptx] & PTE_V))
+					continue;
+				if (PPN(pgtbl[ptx]) == page2ppn(pp))
+				{
+					u_long va = (pdx << PDSHIFT) | (ptx << PGSHIFT);
+					u_long perm = pgtbl[ptx] & 0xfff;
+					perm &= ~PTE_V;
+					perm |= PTE_SWP;
+					pgtbl[ptx] = PTE_ADDR(da) | perm;
+					tlb_invalidate(asid, va);
+				}
 			}
 		}
 
 		memcpy(da, (void*)page2kva(pp), BY2PG);
+
 		LIST_INSERT_HEAD(&page_free_swappable_list, pp, pp_link);
 	}
 
