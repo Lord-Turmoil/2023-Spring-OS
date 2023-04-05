@@ -649,7 +649,6 @@ struct Page* swap_alloc(Pde* pgdir, u_int asid)
 		struct Page* pp = pa2page(SWAP_PAGE_BASE);
 		u_char* da = disk_alloc();
 		
-		/*
 		for (int pdx = 0; pdx < PAGE_ENTRY_CNT; pdx++)
 		{
 			if (!(pgdir[pdx] & PTE_V))
@@ -665,34 +664,9 @@ struct Page* swap_alloc(Pde* pgdir, u_int asid)
 				if (PPN(pgtbl[ptx]) == page2ppn(pp))
 				{
 					u_long va = (pdx << PDSHIFT) | (ptx << PGSHIFT);
-					u_long perm = PTE_PERM(perm);
+					u_long perm = PTE_PERM(pgtbl[ptx]);
 					PTE_CLR(perm, PTE_V);
 					PTE_SET(perm, PTE_SWP);
-					pgtbl[ptx] = PTE_ADDR(da) | perm;
-					tlb_invalidate(asid, va);
-				}
-			}
-		}
-		*/
-		for (int pdx = 0; pdx < PAGE_ENTRY_CNT; pdx++)
-		{
-			if (!(pgdir[pdx] & PTE_V))
-				continue;
-			/*
-			 * The address of page table is kernel address, but the
-			 * content of page table entry is physical address.
-			 */
-			Pte* pgtbl = (Pte*)KADDR(PTE_ADDR(pgdir[pdx]));
-			for (int ptx = 0; ptx < PAGE_ENTRY_CNT; ptx++)
-			{
-				if (!(pgtbl[ptx] & PTE_V))
-					continue;
-				if (PPN(pgtbl[ptx]) == page2ppn(pp))
-				{
-					u_long va = (pdx << PDSHIFT) | (ptx << PGSHIFT);
-					u_long perm = pgtbl[ptx] & 0xfff;
-					perm &= ~PTE_V;
-					perm |= PTE_SWP;
 					pgtbl[ptx] = PTE_ADDR(da) | perm;
 					tlb_invalidate(asid, va);
 				}
@@ -745,23 +719,6 @@ static void swap(Pde* pgdir, u_int asid, u_long va)
 	u_char* da = (u_char*)PTE_ADDR(*pte);
 	memcpy((void*)page2kva(pp), da, BY2PG);
 
-	/*
-	for (int ptx = 0; ptx < PAGE_ENTRY_CNT; ptx++)
-	{
-		if (!((pte[ptx] & PTE_SWP) && !(pte[ptx] & PTE_V)))
-			continue;
-		if (PPN(pte[ptx]) == PPN(da))
-		{
-			u_long perm = PTE_PERM(pte[ptx]);
-			PTE_SET(perm, PTE_V);
-			PTE_CLR(perm, PTE_SWP);
-			pte[ptx] = page2pa(pp) | perm;
-			tlb_invalidate(asid, va + (ptx << PGSHIFT));
-		}
-	}
-	*/
-	
-	/*
 	for (int pdx = 0; pdx < PAGE_ENTRY_CNT; pdx++)
 	{
 		if (!(pgdir[pdx] & PTE_V))
@@ -783,24 +740,6 @@ static void swap(Pde* pgdir, u_int asid, u_long va)
 			}
 		}
 	}
-	*/
-	for (int i = 0; i < PAGE_ENTRY_CNT; i++)
-	{
-		Pte* pte_entryp = pte + i;
-
-		if ((*pte_entryp & PTE_SWP) && !(*pte_entryp & PTE_V) && (PTE_ADDR(*pte_entryp) == (u_long)da))
-		{
-			*pte_entryp |= PTE_V;
-			*pte_entryp &= ~PTE_SWP;
-
-			*pte_entryp &= 0xfff;
-			*pte_entryp |= page2pa(pp);
-
-			tlb_invalidate(asid, va + i * BY2PG);
-		}
-	}
-
-	
 
 	disk_free(da);
 }
