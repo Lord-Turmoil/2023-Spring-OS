@@ -182,8 +182,8 @@ void page_free(struct Page* pp)
 }
 
 /* Overview:
- *   Given 'pgdir', a pointer to a page directory, 'pgdir_walk' returns a pointer to the page table
- *   entry (with permission PTE_D|PTE_V) for virtual address 'va'.
+ *   Given 'pgdir', a pointer to a page directory, 'pgdir_walk' returns a pointer
+ *   to the page table entry (with permission PTE_D|PTE_V) for virtual address 'va'.
  *
  * Pre-Condition:
  *   'pgdir' is a two-level page table structure.
@@ -637,45 +637,63 @@ void swap_init()
 	}
 }
 
+
+static void ensure_free_page(Pde* pgdir, u_int asid)
+{
+	// Select a page to swap out to disk.
+	struct Page* pp = pa2page(SWAP_PAGE_BASE);
+
+	// Allocate swap page on disk.
+	u_char* da = disk_alloc();
+
+	/*
+	 * Traverse all page entries of current process, which can be
+	 * accessed via the page directory.
+	 */
+	for (int pdx = 0; pdx < PAGE_ENTRY_CNT; pdx++)
+	{
+		if (!(pgdir[pdx] & PTE_V))
+			continue;
+		/*
+		 * The address of page table is kernel address, but the 
+		 * content of page table entry is physical address.
+		 */
+		Pte* pgtbl = (Pte*)KADDR(PTE_ADDR(pgdir[pdx]));
+		for (int ptx = 0; ptx < PAGE_ENTRY_CNT; ptx++)
+		{
+			if (!(pgtbl[ptx] & PTE_V))
+				continue;
+			if (PPN(pgtbl[ptx]) == page2ppn(pp))
+			{
+				u_long va = (pdx << PDSHIFT) | (ptx << PGSHIFT);
+				u_long perm = PTE_PERM(pgtbl[ptx]);
+				perm = PTE_CLR(perm, PTE_V);
+				perm = PTE_SET(perm, PTE_SWP);
+				pgtbl[ptx] = PTE_ADDR(da) | perm;
+
+				/*
+				 * The 'va' in tlb_invalidate() is the address that the
+				 * pte is mapped to, which is used in pgdir_walk() to
+				 * create or find the corresponding 'pte'.
+				 */
+				tlb_invalidate(asid, va);
+			}
+		}
+	}
+
+	memcpy(da, (void*)page2kva(pp), BY2PG);
+
+	LIST_INSERT_HEAD(&page_free_swappable_list, pp, pp_link);
+}
+
 // Interface for 'Passive Swap Out'
 struct Page* swap_alloc(Pde* pgdir, u_int asid)
 {
 	// Step 1: Ensure free page
 	if (LIST_EMPTY(&page_free_swappable_list))
 	{
-		// printk("Not enough free swappable page\n");
-		
 		/* Your Code Here (1/3) */
-		struct Page* pp = pa2page(SWAP_PAGE_BASE);
-		u_char* da = disk_alloc();
-		
-		for (int pdx = 0; pdx < PAGE_ENTRY_CNT; pdx++)
-		{
-			if (!(pgdir[pdx] & PTE_V))
-				continue;
-			
-			// The address of page table is kernel address, but the 
-			// content of page table entry is physical address.
-			Pte* pgtbl = (Pte*)KADDR(PTE_ADDR(pgdir[pdx]));
-			for (int ptx = 0; ptx < PAGE_ENTRY_CNT; ptx++)
-			{
-				if (!(pgtbl[ptx] & PTE_V))
-					continue;
-				if (PPN(pgtbl[ptx]) == page2ppn(pp))
-				{
-					u_long va = (pdx << PDSHIFT) | (ptx << PGSHIFT);
-					u_long perm = PTE_PERM(pgtbl[ptx]);
-					PTE_CLR(perm, PTE_V);
-					PTE_SET(perm, PTE_SWP);
-					pgtbl[ptx] = PTE_ADDR(da) | perm;
-					tlb_invalidate(asid, va);
-				}
-			}
-		}
-
-		memcpy(da, (void*)page2kva(pp), BY2PG);
-
-		LIST_INSERT_HEAD(&page_free_swappable_list, pp, pp_link);
+		ensure_free_page(pgdir, asid);
 	}
 
 	// Step 2: Get a free page and clear it
@@ -692,7 +710,6 @@ static int is_swapped(Pde* pgdir, u_long va)
 	/* Your Code Here (2/3) */
 	Pte* pte;
 
-	// va = ROUNDDOWN(va, BY2PG);
 	pgdir_walk(pgdir, va, 0, &pte);
 
 	return pte && (*pte & PTE_SWP) && !(*pte & PTE_V);
@@ -703,7 +720,8 @@ static void swap(Pde* pgdir, u_int asid, u_long va)
 	// printk("INVOKE: swap()\n");
 
 	/* Your Code Here (3/3) */
-	// va = ROUNDDOWN(va, BY2PG);
+	va = ROUNDDOWN(va, BY2PG);
+
 	struct Page* pp = swap_alloc(pgdir, asid);
 	Pte* pte;
 
@@ -733,8 +751,8 @@ static void swap(Pde* pgdir, u_int asid, u_long va)
 			{
 				u_long vaddr = (pdx << PDSHIFT) | (ptx << PGSHIFT);
 				u_long perm = PTE_PERM(pgtbl[ptx]);
-				PTE_SET(perm, PTE_V);
-				PTE_CLR(perm, PTE_SWP);
+				perm = PTE_SET(perm, PTE_V);
+				perm = PTE_CLR(perm, PTE_SWP);
 				pgtbl[ptx] = page2pa(pp) | perm;
 				tlb_invalidate(asid, vaddr);
 			}

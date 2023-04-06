@@ -23,8 +23,8 @@
 
 /* Page Table/Directory Entry flags */
 
-#define PTE_SET(va, perm) ((va) = (u_long)(va) | (perm))
-#define PTE_CLR(va, perm) ((va) = (u_long)(va) & (~(perm)))
+#define PTE_SET(va, perm) ((u_long)(va) | (perm))
+#define PTE_CLR(va, perm) ((u_long)(va) & (~(perm)))
 
 
 // Global bit. When the G bit in a TLB entry is set, that TLB entry will match solely on the VPN
