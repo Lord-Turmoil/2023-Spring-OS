@@ -18,6 +18,7 @@ LEAF(tlb_out)
 .set noreorder
 	mtc0    zero, CP0_ENTRYHI
 	mtc0    zero, CP0_ENTRYLO0
+	mtc0    zero, CP0_ENTRYLO1
 	nop
 
 	/* Step 3: Use 'tlbwi' to write CP0.EntryHi/Lo into TLB at CP0.Index  */
