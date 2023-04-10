@@ -294,17 +294,14 @@ int page_insert(Pde* pgdir, u_int asid, struct Page* pp, u_long va, u_int perm)
 	 * to access the memory.
 	 */
 
-	if (pte && (*pte & PTE_V))
+	if (pte && (*pte & PTE_V))		// page table exists
 	{
-		// page table exists
-		if (pa2page(*pte) != pp)
+		if (pa2page(*pte) != pp)	// another page mapped to va
 		{
-			// another page mapped to va
 			page_remove(pgdir, asid, va);
 		}
-		else
+		else						// current va already mapped to page
 		{
-			// current page already mapped to va
 			tlb_invalidate(asid, va);
 			*pte = page2pa(pp) | perm | PTE_V;
 			// *pte |= (perm | PTE_V);
