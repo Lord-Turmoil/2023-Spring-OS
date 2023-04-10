@@ -40,8 +40,8 @@ void mips_init() {
 	// ENV_CREATE(user_devtst);
 
 	// lab3:
-	// kclock_init();
-	// enable_irq();
+	kclock_init();
+	enable_irq();
 
 	while (1) {
 	}
