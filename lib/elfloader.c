@@ -68,5 +68,6 @@ int elf_load_seg(Elf32_Phdr* ph, const void* bin, elf_mapper_t map_page, void* d
 		}
 		i += BY2PG;
 	}
+
 	return 0;
 }
