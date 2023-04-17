@@ -270,7 +270,7 @@ int env_alloc(struct Env** new, u_int parent_id)
 	// Check whether there is free Env first!
 	if (LIST_EMPTY(&env_free_list))
 	{
-		*new = NULL
+		*new = NULL;
 		return -E_NO_FREE_ENV;
 	}
 	e = LIST_FIRST(&env_free_list);
