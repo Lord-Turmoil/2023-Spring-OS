@@ -101,8 +101,13 @@ static void map_segment(Pde* pgdir, u_int asid, u_long pa, u_long va, u_int size
  */
 u_int mkenvid(struct Env* e)
 {
+	/*
+	 * Why left shift 11 bits?
+	 */
 	static u_int i = 0;
+
 	return ((++i) << (1 + LOG2NENV)) | (e - envs);
+
 }
 
 /* Overview:
@@ -128,7 +133,29 @@ int envid2env(u_int envid, struct Env** penv, int checkperm)
 	 *   You may want to use 'ENVX'.
 	 */
 	 /* Exercise 4.3: Your code here. (1/2) */
+	if (envid == 0)
+		e = *curenv;
+	else
+		e = &envs[ENVX(envid)];
 
+	/*
+	 * We get envid from this function:
+	
+	u_int mkenvid(struct Env* e)
+	{
+		static u_int i = 0;
+		return ((++i) << (1 + LOG2NENV)) | (e - envs);
+	}
+	 * ?? Why mkenvid make (++i) left shift 11 bits?
+	 * 
+	 * We have 1024 Envs, and the low 10 bits are to present the physical offset
+	 * of a env to the base address envs. If we have more than 1024 Envs, the high
+	 * 22 bits are to ensure uniqueness of Env.
+	 * 
+	 * Here, we get e by the lowest 10 bits from envid, and ignores the high bits.
+	 * Thus make two different Envs with same low 10 bits possible. (Perhaps 
+	 * because of a out of date Env. or more likely, a bad envid.
+	 */
 	if (e->env_status == ENV_FREE || e->env_id != envid)
 	{
 		return -E_BAD_ENV;
@@ -141,9 +168,15 @@ int envid2env(u_int envid, struct Env** penv, int checkperm)
 	 *   If violated, return '-E_BAD_ENV'.
 	 */
 	 /* Exercise 4.3: Your code here. (2/2) */
+	if (checkperm)
+	{
+		if (!((e == curenv) || (e->env_parent_id = curenv->env_id)))
+			return -E_BAD_ENV;
+	}
 
 	 /* Step 3: Assign 'e' to '*penv'. */
 	* penv = e;
+
 	return 0;
 }
 
