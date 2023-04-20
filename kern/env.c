@@ -139,13 +139,14 @@ int envid2env(u_int envid, struct Env** penv, int checkperm)
 		e = &envs[ENVX(envid)];
 
 	/*
-	 * We get envid from this function:
+	 * We get envid from env.c:mkenvid(struct Env* e)
 	
 	u_int mkenvid(struct Env* e)
 	{
 		static u_int i = 0;
 		return ((++i) << (1 + LOG2NENV)) | (e - envs);
 	}
+	
 	 * ?? Why mkenvid make (++i) left shift 11 bits?
 	 * 
 	 * We have 1024 Envs, and the low 10 bits are to present the physical offset
