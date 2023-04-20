@@ -264,18 +264,25 @@ int sys_mem_unmap(u_int envid, u_int va)
 int sys_exofork(void)
 {
 	struct Env* e;
-
 	/* Step 1: Allocate a new env using 'env_alloc'. */
 	/* Exercise 4.9: Your code here. (1/4) */
+	env_alloc(&e, curenv->env_id);
 
-	/* Step 2: Copy the current Trapframe below 'KSTACKTOP' to the new env's 'env_tf'. */
+	/* Step 2: Copy the current Trapframe below 'KSTACKTOP' to the new env's
+	   'env_tf'. */
 	/* Exercise 4.9: Your code here. (2/4) */
+	e->env_tf = *((struct Trapframe*)KSTACKTOP - 1);
 
-	/* Step 3: Set the new env's 'env_tf.regs[2]' to 0 to indicate the return value in child. */
+	/* Step 3: Set the new env's 'env_tf.regs[2]' to 0 to indicate the return
+	   value in child. */
 	/* Exercise 4.9: Your code here. (3/4) */
+	// $v0 = $2
+	e->env_tf.regs[2] = 0;
 
 	/* Step 4: Set up the new env's 'env_status' and 'env_pri'.  */
 	/* Exercise 4.9: Your code here. (4/4) */
+	e->env_status = ENV_NOT_RUNNABLE;
+	e->env_pri = curenv->env_pri;
 
 	return e->env_id;
 }
