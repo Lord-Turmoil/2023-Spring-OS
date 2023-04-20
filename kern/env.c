@@ -134,7 +134,15 @@ int envid2env(u_int envid, struct Env** penv, int checkperm)
 	 */
 	 /* Exercise 4.3: Your code here. (1/2) */
 	if (envid == 0)
-		e = *curenv;
+	{
+		/*
+		* If envid is zero, this function will degenerate to get current
+		* env only. If not, envid is bound to be different from e->env_id, since
+		* env id won't be zero. Hence, we must return here.
+		*/
+		*penv = curenv;
+		return 0;
+	}
 	else
 		e = &envs[ENVX(envid)];
 
@@ -168,15 +176,15 @@ int envid2env(u_int envid, struct Env** penv, int checkperm)
 	 * the specified env, i.e. 'e' is either 'curenv' or its immediate child.
 	 *   If violated, return '-E_BAD_ENV'.
 	 */
-	 /* Exercise 4.3: Your code here. (2/2) */
+	/* Exercise 4.3: Your code here. (2/2) */
 	if (checkperm)
 	{
-		if (!((e == curenv) || (e->env_parent_id = curenv->env_id)))
-			return -E_BAD_ENV;
+		if (!((e->env_id == curenv->env_id) || (e->env_parent_id == curenv->env_id)))
+			return -E_BAD_ENV;	
 	}
 
-	 /* Step 3: Assign 'e' to '*penv'. */
-	* penv = e;
+	/* Step 3: Assign 'e' to '*penv'. */
+	*penv = e;
 
 	return 0;
 }
