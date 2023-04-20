@@ -65,7 +65,7 @@ void __attribute__((noreturn)) sys_yield(void)
 {
 	// Hint: Just use 'schedule' with 'yield' set.
 	/* Exercise 4.7: Your code here. */
-
+	schedule(1);
 }
 
 /* Overview:
@@ -234,12 +234,17 @@ int sys_mem_unmap(u_int envid, u_int va)
 
 	/* Step 1: Check if 'va' is a legal user virtual address using 'is_illegal_va'. */
 	/* Exercise 4.6: Your code here. (1/2) */
+	if (is_illegal_va(va))
+		return -E_INVAL;
 
 	/* Step 2: Convert the envid to its corresponding 'struct Env *' using 'envid2env'. */
 	/* Exercise 4.6: Your code here. (2/2) */
+	if (envid2env(envid, &e, 1) != 0)
+		return -E_BAD_ENV;
 
 	/* Step 3: Unmap the physical page at 'va' in the address space of 'envid'. */
 	page_remove(e->env_pgdir, e->env_asid, va);
+
 	return 0;
 }
 
