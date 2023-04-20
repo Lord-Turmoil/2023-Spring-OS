@@ -142,24 +142,24 @@ void page_init(void)
  *
  * Hint: Use LIST_FIRST and LIST_REMOVE defined in include/queue.h.
  */
-int page_alloc(struct Page** new)
+int page_alloc(struct Page** pp)
 {
 	/* Step 1: Get a page from free memory. If fails, return the error code.*/
-	struct Page* pp;
+	struct Page* newPage;
 
 	/* Exercise 2.4: Your code here. (1/2) */
 	if (LIST_EMPTY(&page_free_list))
 		return -E_NO_MEM;
-	pp = page_free_list.lh_first;
+	newPage = page_free_list.lh_first;
 
-	LIST_REMOVE(pp, pp_link);
+	LIST_REMOVE(newPage, pp_link);
 
 	/* Step 2: Initialize this page with zero.
 	 * Hint: use `memset`. */
 	 /* Exercise 2.4: Your code here. (2/2) */
-	memset((void*)page2kva(pp), 0, BY2PG);
+	memset((void*)page2kva(newPage), 0, BY2PG);
 
-	*new = pp;
+	*pp = newPage;
 
 	return 0;
 }
