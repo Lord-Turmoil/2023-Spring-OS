@@ -105,9 +105,11 @@ int sys_set_tlb_mod_entry(u_int envid, u_int func)
 	/* Step 1: Convert the envid to its corresponding 'struct Env *' using
 	   'envid2env'. */
 	/* Exercise 4.12: Your code here. (1/2) */
+	try(envid2env(envid, &env, 1));
 
 	/* Step 2: Set its 'env_user_tlb_mod_entry' to 'func'. */
 	/* Exercise 4.12: Your code here. (2/2) */
+	env->env_user_tlb_mod_entry = func;
 
 	return 0;
 }
@@ -160,8 +162,7 @@ int sys_mem_alloc(u_int envid, u_int va, u_int perm)
 	   using 'envid2env'. */
 	/* Hint: **Always** validate the permission in syscalls! */
 	/* Exercise 4.4: Your code here. (2/3) */
-	if (envid2env(envid, &env, 1) != 0)
-		return -E_BAD_ENV;
+	try(envid2env(envid, &env, 1));
 
 	/* Step 3: Allocate a physical page using 'page_alloc'. */
 	/* Exercise 4.4: Your code here. (3/3) */
@@ -198,13 +199,11 @@ int sys_mem_map(u_int srcid, u_int srcva, u_int dstid, u_int dstva, u_int perm)
 
 	/* Step 2: Convert the 'srcid' to its corresponding 'struct Env *' using 'envid2env'. */
 	/* Exercise 4.5: Your code here. (2/4) */
-	if (envid2env(srcid, &srcenv, 1) != 0)
-		return -E_BAD_ENV;
+	try(envid2env(srcid, &srcenv, 1));
 
 	/* Step 3: Convert the 'dstid' to its corresponding 'struct Env *' using 'envid2env'. */
 	/* Exercise 4.5: Your code here. (3/4) */
-	if (envid2env(dstid, &dstenv, 1) != 0)
-		return -E_BAD_ENV;
+	try(envid2env(dstid, &dstenv, 1));
 
 	/* Step 4: Find the physical page mapped at 'srcva' in the address space of 'srcid'. */
 	/* Return -E_INVAL if 'srcva' is not mapped. */
@@ -238,8 +237,7 @@ int sys_mem_unmap(u_int envid, u_int va)
 
 	/* Step 2: Convert the envid to its corresponding 'struct Env *' using 'envid2env'. */
 	/* Exercise 4.6: Your code here. (2/2) */
-	if (envid2env(envid, &e, 1) != 0)
-		return -E_BAD_ENV;
+	try(envid2env(envid, &e, 1));
 
 	/* Step 3: Unmap the physical page at 'va' in the address space of 'envid'. */
 	page_remove(e->env_pgdir, e->env_asid, va);
@@ -296,8 +294,8 @@ int sys_exofork(void)
  *   Returns the original error if underlying calls fail.
  *
  * Hint:
- *   The invariant that 'env_sched_list' contains and only contains all runnable envs should be
- *   maintained.
+ *   The invariant that 'env_sched_list' contains and only contains all runnable
+ *   envs should be maintained.
  */
 int sys_set_env_status(u_int envid, u_int status)
 {
@@ -305,15 +303,24 @@ int sys_set_env_status(u_int envid, u_int status)
 
 	/* Step 1: Check if 'status' is valid. */
 	/* Exercise 4.14: Your code here. (1/3) */
+	if (!((env->env_status == ENV_RUNNABLE) || (env->env_status == ENV_NOT_RUNNABLE)))
+		return -E_INVAL;
+
 
 	/* Step 2: Convert the envid to its corresponding 'struct Env *' using 'envid2env'. */
 	/* Exercise 4.14: Your code here. (2/3) */
+	try(envid2env(envid, &env, 1));
 
 	/* Step 3: Update 'env_sched_list' if the 'env_status' of 'env' is being changed. */
 	/* Exercise 4.14: Your code here. (3/3) */
+	if (status == ENV_RUNNABLE)
+		TAILQ_INSERT_TAIL(&env_sched_list, env, env_sched_link);
+	else
+		TAILQ_REMOVE(&env_sched_list, env, env_sched_link);
 
 	/* Step 4: Set the 'env_status' of 'env'. */
 	env->env_status = status;
+
 	return 0;
 }
 

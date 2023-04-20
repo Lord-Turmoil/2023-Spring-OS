@@ -60,8 +60,9 @@ Pte _do_tlb_refill(u_long va, u_int asid)
 #if !defined(LAB) || LAB >= 4
 /* Overview:
  *   This is the TLB Mod exception handler in kernel.
- *   Our kernel allows user programs to handle TLB Mod exception in user mode, so we copy its
- *   context 'tf' into UXSTACK and modify the EPC to the registered user exception entry.
+ *   Our kernel allows user programs to handle TLB Mod exception in user mode, so
+ *   we copy its context 'tf' into UXSTACK and modify the EPC to the registered
+ *   user exception entry.
  *
  * Hints:
  *   'env_user_tlb_mod_entry' is the user space entry registered using
@@ -86,7 +87,7 @@ void do_tlb_mod(struct Trapframe* tf)
 		tf->regs[29] -= sizeof(tf->regs[4]);
 		// Hint: Set 'cp0_epc' in the context 'tf' to 'curenv->env_user_tlb_mod_entry'.
 		/* Exercise 4.11: Your code here. */
-
+		tf->cp0_epc = curenv->env_user_tlb_mod_entry;
 	}
 	else
 	{

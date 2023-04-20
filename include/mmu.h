@@ -22,6 +22,10 @@
 #define PPN(va) (((u_long)(va)) >> 12)
 #define VPN(va) (((u_long)(va)) >> 12)
 
+#define PPD(va) (((u_long)(va)) >> 22)
+#define VPD(va) (((u_long)(va)) >> 22)
+
+
 
 /* Page Table/Directory Entry flags */
 
