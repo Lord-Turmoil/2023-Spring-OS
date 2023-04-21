@@ -60,7 +60,6 @@ u_int sys_getenvid(void)
  * Hint:
  *   This function will never return.
  */
- // void sys_yield(void);
 void __attribute__((noreturn)) sys_yield(void)
 {
 	// Hint: Just use 'schedule' with 'yield' set.
@@ -216,6 +215,7 @@ int sys_mem_map(u_int srcid, u_int srcva, u_int dstid, u_int dstva, u_int perm)
 	return page_insert(dstenv->env_pgdir, dstenv->env_asid, pp, dstva, perm);
 }
 
+
 /* Overview:
  *   Unmap the physical page mapped at 'va' in the address space of 'envid'.
  *   If no physical page is mapped there, this function silently succeeds.
@@ -250,8 +250,8 @@ int sys_mem_unmap(u_int envid, u_int va)
  *
  * Post-Condition:
  *   Returns the child's envid on success, and
- *   - The new env's 'env_tf' is copied from the kernel stack, except for $v0 set to 0 to indicate
- *     the return value in child.
+ *   - The new env's 'env_tf' is copied from the kernel stack, except for $v0 set
+ *     to 0 to indicate the return value in child.
  *   - The new env's 'env_status' is set to 'ENV_NOT_RUNNABLE'.
  *   - The new env's 'env_pri' is copied from 'curenv'.
  *   Returns the original error if underlying calls fail.
@@ -262,9 +262,10 @@ int sys_mem_unmap(u_int envid, u_int va)
 int sys_exofork(void)
 {
 	struct Env* e;
+	
 	/* Step 1: Allocate a new env using 'env_alloc'. */
 	/* Exercise 4.9: Your code here. (1/4) */
-	env_alloc(&e, curenv->env_id);
+	try(env_alloc(&e, curenv->env_id));
 
 	/* Step 2: Copy the current Trapframe below 'KSTACKTOP' to the new env's
 	   'env_tf'. */
@@ -368,7 +369,8 @@ void sys_panic(char* msg)
 }
 
 /* Overview:
- *   Wait for a message (a value, together with a page if 'dstva' is not 0) from other envs.
+ *   Wait for a message (a value, together with a page if 'dstva' is not 0) from
+ *   other envs.
  *   'curenv' is blocked until a message is sent.
  *
  * Post-Condition:
@@ -397,7 +399,7 @@ int sys_ipc_recv(u_int dstva)
 
 	 /* Step 5: Give up the CPU and block until a message is received. */
 	((struct Trapframe*)KSTACKTOP - 1)->regs[2] = 0;
-	schedule(1);
+	schedule(1);	// with yeild set
 }
 
 /* Overview:
@@ -410,23 +412,23 @@ int sys_ipc_recv(u_int dstva)
  *   - 'env_ipc_from' is set to the sender's envid.
  *   - 'env_ipc_value' is set to the 'value'.
  *   - 'env_status' is set to 'ENV_RUNNABLE' again to recover from 'ipc_recv'.
- *   - if 'srcva' is not NULL, map 'env_ipc_dstva' to the same page mapped at 'srcva' in 'curenv'
- *     with 'perm'.
+ *   - if 'srcva' is not NULL, map 'env_ipc_dstva' to the same page mapped at
+ *     'srcva' in 'curenv' with 'perm'.
  *
- *   Return -E_IPC_NOT_RECV if the target has not been waiting for an IPC message with
- *   'sys_ipc_recv'.
+ *   Return -E_IPC_NOT_RECV if the target has not been waiting for an IPC message
+ *   with 'sys_ipc_recv'.
  *   Return the original error when underlying calls fail.
  */
 int sys_ipc_try_send(u_int envid, u_int value, u_int srcva, u_int perm)
 {
 	struct Env* e;
 	struct Page* p;
-
+ 
 	/* Step 1: Check if 'srcva' is either zero or a legal address. */
 	/* Exercise 4.8: Your code here. (4/8) */
 	if ((srcva != 0) && is_illegal_va(srcva))
 		return -E_INVAL;
-
+	
 	/* Step 2: Convert 'envid' to 'struct Env *e'. */
 	/* This is the only syscall where the 'envid2env' should be used with 'checkperm' UNSET,
 	 * because the target env is not restricted to 'curenv''s children. */
@@ -548,13 +550,13 @@ void* syscall_table[MAX_SYSNO] = {
 };
 
 /* Overview:
- *   Call the function in 'syscall_table' indexed at 'sysno' with arguments from user context and
- * stack.
+ *   Call the function in 'syscall_table' indexed at 'sysno' with arguments from
+ * user context and stack.
  *
  * Hint:
  *   Use sysno from $a0 to dispatch the syscall.
- *   The possible arguments are stored at $a1, $a2, $a3, [$sp + 16 bytes], [$sp + 20 bytes] in
- *   order.
+ *   The possible arguments are stored at $a1, $a2, $a3, [$sp + 16 bytes],
+ * [$sp + 20 bytes] in order.
  *   Number of arguments cannot exceed 5.
  */
 void do_syscall(struct Trapframe* tf)

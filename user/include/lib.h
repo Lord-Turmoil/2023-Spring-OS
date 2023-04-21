@@ -57,6 +57,14 @@ int syscall_mem_map(u_int srcid, void *srcva, u_int dstid, void *dstva, u_int pe
 int syscall_mem_unmap(u_int envid, void *va);
 
 __attribute__((always_inline)) inline static int syscall_exofork(void) {
+	/*
+	 * fork will create a new process, and when it is called, a new child
+	 * process will be created USING PARENT'S Trapframe! So when the child
+	 * starts to run, it will start right here (actually in `msyscall`).
+	 * Since we altered the return value of the new process to 0 (value of $v0),
+	 * the child process will then return 0, instead of its process id returned
+	 * in parent process.
+	 */
 	return msyscall(SYS_exofork, 0, 0, 0, 0, 0);
 }
 

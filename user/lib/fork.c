@@ -14,14 +14,15 @@
  *  - Otherwise, this handler should map a private writable copy of
  *    the faulting page at the same address.
  */
-static void __attribute__((noreturn)) cow_entry(struct Trapframe *tf) {
+static void __attribute__((noreturn)) cow_entry(struct Trapframe* tf)
+{
 	u_int va = tf->cp0_badvaddr;
 	u_int perm;
 
 	/* Step 1: Find the 'perm' in which the faulting address 'va' is mapped. */
 	/* Hint: Use 'vpt' and 'VPN' to find the page table entry. If the 'perm'
 	 * doesn't have 'PTE_COW', launch a 'user_panic'. */
-	/* Exercise 4.13: Your code here. (1/6) */
+	 /* Exercise 4.13: Your code here. (1/6) */
 	perm = PTE_PERM(vpt[VPN(va)]);
 	panic_on(!(perm & PTE_COW));
 
@@ -76,8 +77,8 @@ static void __attribute__((noreturn)) cow_entry(struct Trapframe *tf) {
  *   - You should use 'syscall_mem_map', the user space wrapper around 'msyscall'
  *     to invoke 'sys_mem_map' in kernel.
  */
-static void duppage(u_int envid, u_int vpn) {
-	int r;
+static void duppage(u_int envid, u_int vpn)
+{
 	u_int addr;
 	u_int perm;
 
@@ -95,12 +96,12 @@ static void duppage(u_int envid, u_int vpn) {
 	/* Step 2: If the page is writable, and not shared with children, and not
 	 * marked as COW yet, then map it as copy-on-write, both in the parent (0)
 	 * and the child (envid). */
-	/* Hint: The page should be first mapped to the child before remapped in the
-	 * parent. (Why?)
-	 * Because if we map to parent first, the page will not be writable anymore,
-	 * which will cause it not mappable to child and invoke TLB Mod exception.
-	 */
-	/* Exercise 4.10: Your code here. (2/2) */
+	 /* Hint: The page should be first mapped to the child before remapped in the
+	  * parent. (Why?)
+	  * Because if we map to parent first, the page will not be writable anymore,
+	  * which will cause it not mappable to child and invoke TLB Mod exception.
+	  */
+	  /* Exercise 4.10: Your code here. (2/2) */
 	int remap = 0;
 	if ((perm & PTE_D) && !(perm & PTE_LIBRARY))
 	{
@@ -124,22 +125,27 @@ static void duppage(u_int envid, u_int vpn) {
  *
  * Hint:
  *   Use global symbols 'env', 'vpt' and 'vpd'.
- *   Use 'syscall_set_tlb_mod_entry', 'syscall_getenvid', 'syscall_exofork',  and 'duppage'.
+ *   Use 'syscall_set_tlb_mod_entry', 'syscall_getenvid', 'syscall_exofork',
+ * and 'duppage'.
  */
-int fork(void) {
+int fork(void)
+{
+	extern volatile struct Env* env;
+	
 	u_int child;
-	extern volatile struct Env *env;
 
 	/* Step 1: Set our TLB Mod user exception entry to 'cow_entry' if not done yet. */
-	if (env->env_user_tlb_mod_entry != (u_int)cow_entry) {
+	if (env->env_user_tlb_mod_entry != (u_int)cow_entry)
+	{
 		try(syscall_set_tlb_mod_entry(0, cow_entry));
 	}
-
+	
 	/* Step 2: Create a child env that's not ready to be scheduled. */
-	// Hint: 'env' should always point to the current env itself, so we should fix it to the
-	// correct value.
+	// Hint: 'env' should always point to the current env itself, so we should fix
+	// it to the correct value.
 	child = syscall_exofork();
-	if (child == 0) {
+	if (child == 0)
+	{
 		env = envs + ENVX(syscall_getenvid());
 		return 0;
 	}
