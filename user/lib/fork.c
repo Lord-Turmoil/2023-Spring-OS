@@ -100,6 +100,7 @@ static void duppage(u_int envid, u_int vpn)
 	  * parent. (Why?)
 	  * Because if we map to parent first, the page will not be writable anymore,
 	  * which will cause it not mappable to child and invoke TLB Mod exception.
+	  * But is there a write operation? YES, write on function calling stack!!!
 	  */
 	  /* Exercise 4.10: Your code here. (2/2) */
 	int remap = 0;
@@ -146,6 +147,10 @@ int fork(void)
 	child = syscall_exofork();
 	if (child == 0)
 	{
+		/*
+		 * env is set on process start up, but child process doesn't have a
+		 * regular start up, so we have to set it manually here.
+		 */
 		env = envs + ENVX(syscall_getenvid());
 		return 0;
 	}

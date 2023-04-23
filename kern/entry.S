@@ -7,7 +7,7 @@ tlb_miss_entry:
 
 .section .text.exc_gen_entry
 exc_gen_entry:
-	SAVE_ALL
+	SAVE_ALL	/* $sp is set to KSTACKTOP - TF_SIZE */
 /* Exercise 3.9: Your code here. */
 	mfc0 t0, CP0_CAUSE
 	andi t0, 0x7c

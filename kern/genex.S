@@ -2,12 +2,18 @@
 #include <drivers/dev_rtc.h>
 #include <stackframe.h>
 
+/*
+ * See include/asm.h for its definition.
+ * NESTED(symbol, framesize, rpc)
+ */
+
 .macro BUILD_HANDLER exception handler
 NESTED(handle_\exception, TF_SIZE + 8, zero)
+	/* See entry.S, $sp is (KSTACKTOP - TF_SIZE), which is our Trapframe. */
 	move    a0, sp
-	addiu   sp, sp, -8
+	addiu   sp, sp, -8	/* 8 bytes aligned */
 	jal     \handler
-	addiu   sp, sp, 8
+	addiu   sp, sp, 8  /* Here, sp is restored to (KSTACKTOP - TF_SIZE) */
 	j       ret_from_exception
 END(handle_\exception)
 .endm
@@ -15,7 +21,7 @@ END(handle_\exception)
 .text
 
 FEXPORT(ret_from_exception)
-	RESTORE_SOME
+	RESTORE_SOME  /* sp remains unchanged as (KSTACKTOP - TF_SIZE) */
 	lw      k0, TF_EPC(sp)
 	lw      sp, TF_REG29(sp) /* Deallocate stack */
 .set noreorder

@@ -102,7 +102,7 @@ static void map_segment(Pde* pgdir, u_int asid, u_long pa, u_long va, u_int size
 u_int mkenvid(struct Env* e)
 {
 	/*
-	 * Why left shift 11 bits?
+	 * Why left shift 11 bits? This is trival.
 	 */
 	static u_int i = 0;
 
@@ -154,8 +154,7 @@ int envid2env(u_int envid, struct Env** penv, int checkperm)
 		static u_int i = 0;
 		return ((++i) << (1 + LOG2NENV)) | (e - envs);
 	}
-	
-	 * ?? Why mkenvid make (++i) left shift 11 bits?
+
 	 * 
 	 * We have 1024 Envs, and the low 10 bits are to present the physical offset
 	 * of a env to the base address envs. If we have more than 1024 Envs, the high

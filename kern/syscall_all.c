@@ -270,8 +270,14 @@ int sys_exofork(void)
 	/* Step 2: Copy the current Trapframe below 'KSTACKTOP' to the new env's
 	   'env_tf'. */
 	/* Exercise 4.9: Your code here. (2/4) */
+	/*
+	 * Since env_tf is only save for next run in env_run. Here, the value of
+	 * curenv->tf is the break point of the current run start of the current
+	 * process's, which is not up to date. So we should use directly the
+	 * memory area to get child process's trapframe.
+	 */
 	e->env_tf = *((struct Trapframe*)KSTACKTOP - 1);
-
+	
 	/* Step 3: Set the new env's 'env_tf.regs[2]' to 0 to indicate the return
 	   value in child. */
 	/* Exercise 4.9: Your code here. (3/4) */
@@ -346,8 +352,8 @@ int sys_set_trapframe(u_int envid, struct Trapframe* tf)
 	if (env == curenv)
 	{
 		*((struct Trapframe*)KSTACKTOP - 1) = *tf;
-		// return `tf->regs[2]` instead of 0, because return value overrides regs[2] on
-		// current trapframe.
+		// return `tf->regs[2]` instead of 0, because return value overrides
+		// regs[2] on current trapframe.
 		return tf->regs[2];
 	}
 	else
