@@ -310,7 +310,7 @@ int sys_set_env_status(u_int envid, u_int status)
 
 	/* Step 1: Check if 'status' is valid. */
 	/* Exercise 4.14: Your code here. (1/3) */
-	if (!((env->env_status == ENV_RUNNABLE) || (env->env_status == ENV_NOT_RUNNABLE)))
+	if (!((status == ENV_RUNNABLE) || (status == ENV_NOT_RUNNABLE)))
 		return -E_INVAL;
 
 
