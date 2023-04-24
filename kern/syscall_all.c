@@ -536,11 +536,7 @@ int sys_read_dev(u_int va, u_int pa, u_int len)
 
 void sys_set_gid(u_int gid)
 {
-	struct Env* env;
-
-	panic_on(envid2env(0, &env, 1));
-
-	env->env_gid = gid;
+	curenv->env_gid = gid;
 }
 
 int sys_ipc_try_group_send(u_int whom, u_int val, const void *srcva, u_int perm)
@@ -551,7 +547,7 @@ int sys_ipc_try_group_send(u_int whom, u_int val, const void *srcva, u_int perm)
 	if ((srcva != NULL) && is_illegal_va((u_int)srcva))
 		return -E_INVAL;
 
-	try(envid2env(whom, &e, 1));
+	try(envid2env(whom, &e, 0));
 
 	if (!e->env_ipc_recving)
 		return -E_IPC_NOT_RECV;
