@@ -310,7 +310,7 @@ int sys_set_env_status(u_int envid, u_int status)
 
 	/* Step 1: Check if 'status' is valid. */
 	/* Exercise 4.14: Your code here. (1/3) */
-	if (!((env->env_status == ENV_RUNNABLE) || (env->env_status == ENV_NOT_RUNNABLE)))
+	if (!((status == ENV_RUNNABLE) || (status == ENV_NOT_RUNNABLE)))
 		return -E_INVAL;
 
 
@@ -534,6 +534,49 @@ int sys_read_dev(u_int va, u_int pa, u_int len)
 	return 0;
 }
 
+void sys_set_gid(u_int gid)
+{
+	struct Env* env;
+
+	panic_on(envid2env(0, &env, 1));
+
+	env->env_gid = gid;
+}
+
+int sys_ipc_try_group_send(u_int whom, u_int val, const void *srcva, u_int perm)
+{
+	struct Env* e;
+	struct Page* p;
+
+	if ((srcva != NULL) && is_illegal_va((u_int)srcva))
+		return -E_INVAL;
+
+	try(envid2env(whom, &e, 1));
+
+	if (!e->env_ipc_recving)
+		return -E_IPC_NOT_RECV;
+	if (e->env_gid != curenv->env_gid)
+		return -E_IPC_NOT_GROUP;
+
+	e->env_ipc_value = val;
+	e->env_ipc_from = curenv->env_id;
+	e->env_ipc_perm = PTE_V | perm;
+	e->env_ipc_recving = 0;
+
+	e->env_status = ENV_RUNNABLE;
+	TAILQ_INSERT_TAIL(&env_sched_list, e, env_sched_link);
+
+	if (srcva != 0)
+	{
+		p = page_lookup(curenv->env_pgdir, srcva, NULL);
+		if (!p)
+			return -E_INVAL;
+		try(page_insert(e->env_pgdir, e->env_asid, p, e->env_ipc_dstva, perm));
+	}
+
+	return 0;
+}
+
 void* syscall_table[MAX_SYSNO] = {
 	[SYS_putchar] = sys_putchar,
 	[SYS_print_cons] = sys_print_cons,
@@ -553,6 +596,8 @@ void* syscall_table[MAX_SYSNO] = {
 	[SYS_cgetc] = sys_cgetc,
 	[SYS_write_dev] = sys_write_dev,
 	[SYS_read_dev] = sys_read_dev,
+	[SYS_set_gid] = sys_set_gid,
+	[SYS_ipc_try_group_send] = sys_ipc_try_group_send,
 };
 
 /* Overview:
