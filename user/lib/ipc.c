@@ -37,3 +37,32 @@ u_int ipc_recv(u_int *whom, void *dstva, u_int *perm) {
 
 	return env->env_ipc_value;
 }
+
+static int is_parent(u_int parent_id, u_int e_id)
+{
+	struct Env* e = &envs[ENVX(e_id)];
+
+	if (e->env_status == ENV_FREE)
+		return 0;
+	if (e->env_id != e_id)
+		return 0;
+	if (e->env_id == parent_id)
+		return 0;
+
+	if (e->env_parent_id == parent_id)
+		return 1;
+
+	return is_parent(parent_id, e->env_parent_id);
+}
+
+void ipc_broadcast(u_int val, void * srcva, u_int perm)
+{
+	for (int i = 0; i < NENV; i++)
+	{
+		if (envs[i].env_status == ENV_FREE)
+			continue;
+		if (is_parent(env->env_id, envs[i].env_id))
+			ipc_send(envs[i].env_id, val, (const void*)srcva, perm);
+	}
+}
+
