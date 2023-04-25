@@ -565,6 +565,11 @@ void* syscall_table[MAX_SYSNO] = {
  * [$sp + 20 bytes] in order.
  *   Number of arguments cannot exceed 5.
  */
+
+/*
+ * Here, tf points at (KSTACKTOP - TF_SIZE), so it actually deals with
+ * that memory directly.
+ */
 void do_syscall(struct Trapframe* tf)
 {
 	int (*func)(u_int, u_int, u_int, u_int, u_int);

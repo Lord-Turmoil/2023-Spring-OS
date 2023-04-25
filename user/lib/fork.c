@@ -135,6 +135,8 @@ int fork(void)
 	
 	u_int child;
 
+	// panic_on(env->env_user_tlb_mod_entry == NULL);
+
 	/* Step 1: Set our TLB Mod user exception entry to 'cow_entry' if not done yet. */
 	if (env->env_user_tlb_mod_entry != (u_int)cow_entry)
 	{

@@ -145,7 +145,7 @@ int envid2env(u_int envid, struct Env** penv, int checkperm)
 	}
 	else
 		e = &envs[ENVX(envid)];
-
+	
 	/*
 	 * We get envid from env.c:mkenvid(struct Env* e)
 	
