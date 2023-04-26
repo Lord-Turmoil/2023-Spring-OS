@@ -72,18 +72,18 @@ void enable_irq(void);
 void env_check(void);
 void envid2env_check(void);
 
-#define ENV_CREATE_PRIORITY(x, y)                                                                  \
-	({                                                                                         \
-		extern u_char binary_##x##_start[];                                                \
-		extern u_int binary_##x##_size;                                                    \
-		env_create(binary_##x##_start, (u_int)binary_##x##_size, y);                       \
+#define ENV_CREATE_PRIORITY(x, y)                                    \
+	({                                                               \
+		extern u_char binary_##x##_start[];                          \
+		extern u_int binary_##x##_size;                              \
+		env_create(binary_##x##_start, (u_int)binary_##x##_size, y); \
 	})
 
-#define ENV_CREATE(x)                                                                              \
-	({                                                                                         \
-		extern u_char binary_##x##_start[];                                                \
-		extern u_int binary_##x##_size;                                                    \
-		env_create(binary_##x##_start, (u_int)binary_##x##_size, 1);                       \
+#define ENV_CREATE(x)                                                \
+	({                                                               \
+		extern u_char binary_##x##_start[];                          \
+		extern u_int binary_##x##_size;                              \
+		env_create(binary_##x##_start, (u_int)binary_##x##_size, 1); \
 	})
 
 #endif // !_ENV_H_
