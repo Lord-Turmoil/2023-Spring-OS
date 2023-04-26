@@ -83,7 +83,7 @@ int sys_env_destroy(u_int envid)
 {
 	struct Env* e;
 	try(envid2env(envid, &e, 1));
-
+	
 	printk("[%08x] destroying %08x\n", curenv->env_id, e->env_id);
 	env_destroy(e);
 	return 0;
@@ -100,12 +100,12 @@ int sys_env_destroy(u_int envid)
 int sys_set_tlb_mod_entry(u_int envid, u_int func)
 {
 	struct Env* env;
-
+	
 	/* Step 1: Convert the envid to its corresponding 'struct Env *' using
 	   'envid2env'. */
 	/* Exercise 4.12: Your code here. (1/2) */
 	try(envid2env(envid, &env, 1));
-
+	
 	/* Step 2: Set its 'env_user_tlb_mod_entry' to 'func'. */
 	/* Exercise 4.12: Your code here. (2/2) */
 	env->env_user_tlb_mod_entry = func;
@@ -162,7 +162,7 @@ int sys_mem_alloc(u_int envid, u_int va, u_int perm)
 	/* Hint: **Always** validate the permission in syscalls! */
 	/* Exercise 4.4: Your code here. (2/3) */
 	try(envid2env(envid, &env, 1));
-
+	
 	/* Step 3: Allocate a physical page using 'page_alloc'. */
 	/* Exercise 4.4: Your code here. (3/3) */
 	try(page_alloc(&pp));
@@ -434,7 +434,7 @@ int sys_ipc_try_send(u_int envid, u_int value, u_int srcva, u_int perm)
 	/* Exercise 4.8: Your code here. (4/8) */
 	if ((srcva != 0) && is_illegal_va(srcva))
 		return -E_INVAL;
-	
+		
 	/* Step 2: Convert 'envid' to 'struct Env *e'. */
 	/* This is the only syscall where the 'envid2env' should be used with 'checkperm' UNSET,
 	 * because the target env is not restricted to 'curenv''s children. */
@@ -530,7 +530,7 @@ int sys_write_dev(u_int va, u_int pa, u_int len)
 int sys_read_dev(u_int va, u_int pa, u_int len)
 {
 	/* Exercise 5.1: Your code here. (2/2) */
-
+	
 	return 0;
 }
 
@@ -579,7 +579,7 @@ void do_syscall(struct Trapframe* tf)
 		tf->regs[2] = -E_NO_SYS;
 		return;
 	}
-
+	
 	/* Step 1: Add the EPC in 'tf' by a word (size of an instruction). */
 	/* Exercise 4.2: Your code here. (1/4) */
 	tf->cp0_epc += 4;
