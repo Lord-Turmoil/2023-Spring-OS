@@ -21,7 +21,7 @@
 #ifndef _ELF_H
 #define _ELF_H
 
-/* ELF defination file from GNU C Library. We simplefied this
+/* ELF definition file from GNU C Library. We simplified this
  * file for our lab, removing definations about ELF64, structs and
  * enums which we don't care.
  */
