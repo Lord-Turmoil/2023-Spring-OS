@@ -122,21 +122,40 @@ void init_disk()
 	disk[0].type = BLOCK_BOOT;
 
 	// Step 2: Initialize boundary.
+	/*
+	 * We actually need (NBLOCK / BIT2BLK) blocks as bit block. However, if so,
+	 * because the integral division, 'nbitblock' will end up to be zero. So
+	 * here we add BIT2BLK to make it at least one. However, if NBLOCK == BIT2BLK,
+	 * we'll get a extra block... Thus is why '-1' is needed.
+	 */
 	nbitblock = (NBLOCK + BIT2BLK - 1) / BIT2BLK;
+	
+	/*
+	 * This is the next block no. 2 is boot sector (block 0) and super block
+	 * (block 1), with 'nbitblock' added, actual available blocks for free
+	 * allocatable blocks start with 'nbitblock'.
+	 */
 	nextbno = 2 + nbitblock;
 
 	// Step 2: Initialize bitmap blocks.
+	/*
+	 * This will set all bitmap blocks' bits to 1, which marks it available
+	 * for allocation.
+	 */
 	for (i = 0; i < nbitblock; ++i)
 	{
 		disk[2 + i].type = BLOCK_BMAP;
-	}
-	for (i = 0; i < nbitblock; ++i)
-	{
 		memset(disk[2 + i].data, 0xff, BY2BLK);
 	}
+
+	/*
+	 * If bitmap block maps more memory than disk actually has, we should
+	 * mark those exceeded bits to 0, indicating invalid.
+	 */
 	if (NBLOCK != nbitblock * BIT2BLK)
 	{
-		diff = NBLOCK % BIT2BLK / 8;
+		// NBLOCK % BIT2BLK is the last part of disk in the last bitmap block
+		diff = (NBLOCK % BIT2BLK) / 8;
 		memset(disk[2 + (nbitblock - 1)].data + diff, 0x00, BY2BLK - diff);
 	}
 
@@ -189,7 +208,19 @@ void finish_fs(char* name)
 	close(fd);
 }
 
-// Save block link.
+
+/*
+ * Save block link. This is only used for directory.
+ * 
+ * nblk -- the number of blocks current directory File has
+ * bno  -- the block number to be linked to this File
+ * 
+ * Hint:
+ *   For directory, one File::f_direct corresponds to one block of File(s), and
+ * one File::f_indirect corresponds to a block, which contains a block of
+ * direct(s) (equivalent to File::direct), that again, each corresponds to one
+ * block of File(s).
+ */
 void save_block_link(struct File* f, int nblk, int bno)
 {
 	assert(nblk < NINDIRECT); // if not, file is too large !
@@ -205,6 +236,10 @@ void save_block_link(struct File* f, int nblk, int bno)
 			// create new indirect block.
 			f->f_indirect = next_block(BLOCK_INDEX);
 		}
+		/*
+		 * Here, nblk starts from NDIRECT, which is why the first NDIRECT
+		 * pointers are not used in MOS.
+		 */
 		((uint32_t*)(disk[f->f_indirect].data))[nblk] = bno;
 	}
 }
@@ -221,7 +256,7 @@ int make_link_block(struct File* dirf, int nblk)
 // Overview:
 //  Allocate an unused 'struct File' under the specified directory.
 //
-//  Note that when we delete a file, we do not re-arrenge all
+//  Note that when we delete a file, we do not re-arrange all
 //  other 'File's, so we should reuse existing unused 'File's here.
 //
 // Post-Condition:
@@ -229,8 +264,8 @@ int make_link_block(struct File* dirf, int nblk)
 //  We assume that this function will never fail.
 //
 // Hint:
-//  Use 'make_link_block' to allocate a new block for the directory if there are no existing unused
-//  'File's.
+//  Use 'make_link_block' to allocate a new block for the directory if there are
+//  no existing unused 'File's.
 struct File* create_file(struct File* dirf)
 {
 	int nblk = dirf->f_size / BY2BLK;
@@ -239,55 +274,70 @@ struct File* create_file(struct File* dirf)
 	for (int i = 0; i < nblk; ++i)
 	{
 		int bno; // the block number
-		// If the block number is in the range of direct pointers (NDIRECT), get the 'bno'
-		// directly from 'f_direct'. Otherwise, access the indirect block on 'disk' and get
-		// the 'bno' at the index.
+		
+		// If the block number is in the range of direct pointers (NDIRECT),
+		// get the 'bno' directly from 'f_direct'. Otherwise, access the
+		// indirect block on 'disk' and get the 'bno' at the index.
 		/* Exercise 5.5: Your code here. (1/3) */
-
+		if (i < NDIRECT)
+			bno = dirf->f_direct[i];
+		else
+		{
+			/*
+			 * For directory, the block its indirect id refers to is used as
+			 * an array, which stores its children's (struct File). One block
+			 * may stores multiple blocks.
+			 */
+			bno = ((uint32_t*)disk[dirf->f_indirect].data)[nblk];
+		}
+		
 		// Get the directory block using the block number.
-		struct File* blk = (struct File*)(disk[bno].data);
+		// One disk block contains many blocks.
+		struct File* blks = (struct File*)(disk[bno].data);
 
 		// Iterate through all 'File's in the directory block.
-		for (struct File* f = blk; f < blk + FILE2BLK; ++f)
+		for (struct File* f = blks; f < blks + FILE2BLK; ++f)
 		{
 			// If the first byte of the file name is null, the 'File' is unused.
 			// Return a pointer to the unused 'File'.
 			/* Exercise 5.5: Your code here. (2/3) */
-
+			if (!f->f_name[0])
+				return f;
 		}
 	}
 
-	// Step 2: If no unused file is found, allocate a new block using 'make_link_block' function
-	// and return a pointer to the new block on 'disk'.
+	// Step 2: If no unused file is found, allocate a new block using
+	// 'make_link_block' function and return a pointer to the new block on 'disk'.
 	/* Exercise 5.5: Your code here. (3/3) */
-
-	return NULL;
+	/*
+	 * 'make_link_block' is used to make a block that stores File, an inside
+	 * of it, it calls 'save_block_link', which links this new block to 'dirf',
+	 * which decides whether link this block to f_direct[] or f_indirect. Of course
+	 * during 'save_block_link', another block may be allocated for f_indirect.
+	 */
+	return (struct File*)disk[make_link_block(dirf, nblk)].data;
 }
 
 // Write file to disk under specified dir.
 void write_file(struct File* dirf, const char* path)
 {
-	int iblk = 0, r = 0, n = sizeof(disk[0].data);
+	int iblk = 0;
+	int r = 0;
+	int n = sizeof(disk[0].data);
 	struct File* target = create_file(dirf);
 
-	/* in case `create_file` is't filled */
+	/* in case `create_file` isn't filled */
 	if (target == NULL)
-	{
 		return;
-	}
 
 	int fd = open(path, O_RDONLY);
 
 	// Get file name with no path prefix.
 	const char* fname = strrchr(path, '/');
 	if (fname)
-	{
 		fname++;
-	}
 	else
-	{
 		fname = path;
-	}
 	strcpy(target->f_name, fname);
 
 	target->f_size = lseek(fd, 0, SEEK_END);
@@ -296,9 +346,7 @@ void write_file(struct File* dirf, const char* path)
 	// Start reading file.
 	lseek(fd, 0, SEEK_SET);
 	while ((r = read(fd, disk[nextbno].data, n)) > 0)
-	{
 		save_block_link(target, iblk++, next_block(BLOCK_DATA));
-	}
 	close(fd); // Close file descriptor.
 }
 
@@ -319,6 +367,8 @@ void write_directory(struct File* dirf, char* path)
 	}
 	struct File* pdir = create_file(dirf);
 	strncpy(pdir->f_name, basename(path), MAXNAMELEN - 1);
+	// Perhaps should be this?
+	// strncpy(pdir->f_name, basename(path), MAXNAMELEN);
 	if (pdir->f_name[MAXNAMELEN - 1] != 0)
 	{
 		fprintf(stderr, "file name is too long: %s\n", path);
@@ -333,13 +383,9 @@ void write_directory(struct File* dirf, char* path)
 			char* buf = malloc(strlen(path) + strlen(e->d_name) + 2);
 			sprintf(buf, "%s/%s", path, e->d_name);
 			if (e->d_type == DT_DIR)
-			{
 				write_directory(pdir, buf);
-			}
 			else
-			{
 				write_file(pdir, buf);
-			}
 			free(buf);
 		}
 	}

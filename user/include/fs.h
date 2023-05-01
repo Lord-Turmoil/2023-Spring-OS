@@ -34,7 +34,7 @@ struct File {
 	char f_pad[BY2FILE - MAXNAMELEN - (3 + NDIRECT) * 4 - sizeof(void *)];
 } __attribute__((aligned(4), packed));
 
-#define FILE2BLK (BY2BLK / sizeof(struct File))
+#define FILE2BLK (BY2BLK / sizeof(struct File))  // 16
 
 // File types
 #define FTYPE_REG 0 // Regular file
