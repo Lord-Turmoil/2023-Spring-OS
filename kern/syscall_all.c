@@ -483,8 +483,9 @@ int sys_cgetc(void)
 }
 
 /* Overview:
- *  This function is used to write data at 'va' with length 'len' to a device physical address
- *  'pa'. Remember to check the validity of 'va' and 'pa' (see Hint below);
+ *  This function is used to write data at 'va' with length 'len' to a device
+ *  physical address 'pa'. Remember to check the validity of 'va' and 'pa'
+ *  (see Hint below);
  *
  *  'va' is the starting address of source data, 'len' is the
  *  length of data (in bytes), 'pa' is the physical address of
@@ -495,7 +496,8 @@ int sys_cgetc(void)
  *  Return 0 on success.
  *  Return -E_INVAL on bad address.
  *
- * Hint: Use the unmapped and uncached segment in kernel address space (KSEG1) to perform MMIO.
+ * Hint: Use the unmapped and uncached segment in kernel address space (KSEG1)
+ *       to perform MMIO.
  * Hint: You can use 'is_illegal_va_range' to validate 'va'.
  * Hint: You MUST use 'memcpy' to copy data after checking the validity.
  *
@@ -508,9 +510,35 @@ int sys_cgetc(void)
  *	|    rtc     | 0x15000000 | 0x200  | (dev_rtc.h)
  *	* ---------------------------------*
  */
+static inline int in_range(u_long base, u_int range, u_long begin, u_int len)
+{
+	return (base <= begin) && (begin + len <= base + range);
+}
+
+static inline int is_illegal_dev_pa_range(u_long pa, u_int len)
+{
+	if (len == 0)
+		return 0;
+	if (pa + len < pa)
+		return 1;
+	if (!in_range(0x10000000, 0x20, pa, len))
+		return 1;
+	if (!in_range(0x13000000, 0x4200, pa, len))
+		return 1;
+	if (!in_range(0x15000000, 0x200, pa, len))
+		return 1;
+	return 0;
+}
+
 int sys_write_dev(u_int va, u_int pa, u_int len)
 {
 	/* Exercise 5.1: Your code here. (1/2) */
+	if (is_illegal_va_range(va, len))
+		return -E_INVAL;
+	if (is_illegal_dev_pa_range(pa, len))
+		return -E_INVAL;
+
+	memcpy((void*)KSEG1ADDR(pa), (const void*)va, len);
 
 	return 0;
 }
@@ -529,6 +557,12 @@ int sys_write_dev(u_int va, u_int pa, u_int len)
 int sys_read_dev(u_int va, u_int pa, u_int len)
 {
 	/* Exercise 5.1: Your code here. (2/2) */
+	if (is_illegal_va_range(va, len))
+		return -E_INVAL;
+	if (is_illegal_dev_pa_range(va, len))
+		return -E_INVAL;
+
+	memcpy((void*)va, (const void*)KSEG1ADDR(pa), len);
 
 	return 0;
 }
