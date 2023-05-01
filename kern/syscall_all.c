@@ -597,6 +597,10 @@ void* syscall_table[MAX_SYSNO] = {
  *   The possible arguments are stored at $a1, $a2, $a3, [$sp + 16 bytes],
  * [$sp + 20 bytes] in order.
  *   Number of arguments cannot exceed 5.
+ * 
+ * Notice:
+ *   Here, see genex.S, tf points to (KSTACKTOP - TF_SIZE), which makes it equal
+ * to modify tf or (KSTACKTOP - TF_SIZE).
  */
 void do_syscall(struct Trapframe* tf)
 {
