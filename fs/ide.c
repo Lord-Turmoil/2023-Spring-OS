@@ -25,14 +25,45 @@
 // Hint: Use the physical address and offsets defined in 'include/drivers/dev_disk.h':
 //  'DEV_DISK_ADDRESS', 'DEV_DISK_ID', 'DEV_DISK_OFFSET', 'DEV_DISK_OPERATION_READ',
 //  'DEV_DISK_START_OPERATION', 'DEV_DISK_STATUS', 'DEV_DISK_BUFFER'
-void ide_read(u_int diskno, u_int secno, void *dst, u_int nsecs) {
+void ide_read(u_int diskno, u_int secno, void* dst, u_int nsecs)
+{
 	u_int begin = secno * BY2SECT;
 	u_int end = begin + nsecs * BY2SECT;
 
-	for (u_int off = 0; begin + off < end; off += BY2SECT) {
-		uint32_t temp = diskno;
-		/* Exercise 5.3: Your code here. (1/2) */
+	u_int read_flag = 0;
+	u_int ret;
 
+	for (u_int offset = 0; begin + offset < end; offset += BY2SECT)
+	{
+		/* Exercise 5.3: Your code here. (1/2) */
+		u_int dev_offset = begin + offset;
+		
+		// Set IDE disk ID.
+		panic_on(syscall_write_dev(&diskno,
+								  DEV_DISK_ADDRESS + DEV_DISK_ID,
+								  sizeof(diskno)));
+		// Set offset from begin.
+		panic_on(syscall_write_dev(&dev_offset,
+								   DEV_DISK_ADDRESS + DEV_DISK_OFFSET,
+								   sizeof(dev_offset)));
+		
+		// Set disk to read.
+		panic_on(syscall_write_dev(&read_flag,
+								   DEV_DISK_ADDRESS + DEV_DISK_START_OPERATION,
+								   sizeof(read_flag)));
+
+		// Read data to device buffer.
+		panic_on(syscall_read_dev(dst + offset,
+								   DEV_DISK_ADDRESS + DEV_DISK_BUFFER,
+								   BY2SECT));
+
+		// Get disk return value (status).
+		panic_on(syscall_read_dev(&ret,
+								  DEV_DISK_ADDRESS + DEV_DISK_STATUS,
+								  sizeof(ret)));
+
+		if (ret == 0)	// failed
+			panic("ide_read failed");
 	}
 }
 
@@ -52,13 +83,43 @@ void ide_read(u_int diskno, u_int secno, void *dst, u_int nsecs) {
 // Hint: Use the physical address and offsets defined in 'include/drivers/dev_disk.h':
 //  'DEV_DISK_ADDRESS', 'DEV_DISK_ID', 'DEV_DISK_OFFSET', 'DEV_DISK_BUFFER',
 //  'DEV_DISK_OPERATION_WRITE', 'DEV_DISK_START_OPERATION', 'DEV_DISK_STATUS'
-void ide_write(u_int diskno, u_int secno, void *src, u_int nsecs) {
+void ide_write(u_int diskno, u_int secno, void* src, u_int nsecs)
+{
 	u_int begin = secno * BY2SECT;
 	u_int end = begin + nsecs * BY2SECT;
 
-	for (u_int off = 0; begin + off < end; off += BY2SECT) {
-		uint32_t temp = diskno;
-		/* Exercise 5.3: Your code here. (2/2) */
+	u_int write_flag = 1;
+	u_int ret;
 
+	for (u_int offset = 0; begin + offset < end; offset += BY2SECT)
+	{
+		/* Exercise 5.3: Your code here. (2/2) */
+		u_int dev_offset = begin + offset;
+
+		// Set IDE disk ID.
+		panic_on(syscall_write_dev(&diskno,
+								   DEV_DISK_ADDRESS + DEV_DISK_ID,
+								   sizeof(diskno)));
+		// Set offset from begin.
+		panic_on(syscall_write_dev(&dev_offset,
+								   DEV_DISK_ADDRESS + DEV_DISK_OFFSET,
+								   sizeof(dev_offset)));
+
+		// Load data to device buffer.
+		panic_on(syscall_write_dev(src + offset,
+								   DEV_DISK_ADDRESS + DEV_DISK_BUFFER,
+								   BY2SECT));
+		// Set disk to read.
+		panic_on(syscall_write_dev(&write_flag,
+								   DEV_DISK_ADDRESS + DEV_DISK_START_OPERATION,
+								   sizeof(write_flag)));
+
+		// Get disk return value (status).
+		panic_on(syscall_read_dev(&ret,
+								  DEV_DISK_ADDRESS + DEV_DISK_STATUS,
+								  sizeof(ret)));
+
+		if (ret == 0)	// failed
+			panic("ide_write failed");
 	}
 }
