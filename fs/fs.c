@@ -17,7 +17,7 @@ void* diskaddr(u_int blockno)
 	u_long va = (DISKMAP + blockno * BY2BLK);
 	
 	panic_on(va < DISKMAP);
-	panic_on(va >= DISKMAX);
+	panic_on(va >= DISKMAP + DISKMAX);
 
 	return (void*)va;
 }
