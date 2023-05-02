@@ -553,8 +553,6 @@ int file_dirty(struct File* f, u_int offset)
 //  Return the underlying error if an error occurs.
 int dir_lookup(struct File* dir, char* name, struct File** file)
 {
-	int r;
-
 	// Step 1: Calculate the number of blocks in 'dir' via its size.
 	/* Exercise 5.8: Your code here. (1/3) */
 	u_int nblk = dir->f_size / BY2BLK;

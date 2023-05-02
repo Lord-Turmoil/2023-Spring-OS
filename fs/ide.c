@@ -63,7 +63,7 @@ void ide_read(u_int diskno, u_int secno, void* dst, u_int nsecs)
 								  sizeof(ret)));
 
 		if (ret == 0)	// failed
-			panic("ide_read failed");
+			user_panic("ide_read failed");	// not kernal 'panic'
 	}
 }
 
@@ -120,6 +120,6 @@ void ide_write(u_int diskno, u_int secno, void* src, u_int nsecs)
 								  sizeof(ret)));
 
 		if (ret == 0)	// failed
-			panic("ide_write failed");
+			user_panic("ide_write failed");
 	}
 }

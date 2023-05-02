@@ -193,7 +193,7 @@ void serve_remove(u_int envid, struct Fsreq_remove* rq)
 {
 	// Step 1: Remove the file specified in 'rq' using 'file_remove' and store its return value.
 	/* Exercise 5.11: Your code here. (1/2) */
-	try(file_remove(rq->req_path));
+	file_remove(rq->req_path);
 
 	// Step 2: Respond the return value to the requester 'envid' using 'ipc_send'.
 	/* Exercise 5.11: Your code here. (2/2) */

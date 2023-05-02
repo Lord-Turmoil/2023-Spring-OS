@@ -111,10 +111,10 @@ static void duppage(u_int envid, u_int vpn)
 		remap = 1;
 	}
 
-	syscall_mem_map(0, addr, envid, addr, perm);
+	syscall_mem_map(0, (void*)addr, envid, (void*)addr, perm);
 
 	if (remap)
-		syscall_mem_map(0, addr, 0, addr, perm);
+		syscall_mem_map(0, (void*)addr, 0, (void*)addr, perm);
 }
 
 /* Overview:
