@@ -14,7 +14,12 @@ int block_is_free(u_int);
 void* diskaddr(u_int blockno)
 {
 	/* Exercise 5.6: Your code here. */
+	u_long va = (DISKMAP + blockno * BY2BLK);
+	
+	panic_on(va < DISKMAP);
+	panic_on(va >= DISKMAX);
 
+	return (void*)va;
 }
 
 // Overview:
@@ -31,9 +36,8 @@ void* block_is_mapped(u_int blockno)
 {
 	void* va = diskaddr(blockno);
 	if (va_is_mapped(va))
-	{
 		return va;
-	}
+
 	return NULL;
 }
 
@@ -59,14 +63,10 @@ int dirty_block(u_int blockno)
 	void* va = diskaddr(blockno);
 
 	if (!va_is_mapped(va))
-	{
 		return -E_NOT_FOUND;
-	}
 
 	if (va_is_dirty(va))
-	{
 		return 0;
-	}
 
 	return syscall_mem_map(0, va, 0, va, PTE_D | PTE_DIRTY);
 }
@@ -77,9 +77,7 @@ void write_block(u_int blockno)
 {
 	// Step 1: detect is this block is mapped, if not, can't write it's data to disk.
 	if (!block_is_mapped(blockno))
-	{
 		user_panic("write unmapped block %08x", blockno);
-	}
 
 	// Step2: write data to IDE disk. (using ide_write, and the diskno is 0)
 	void* va = diskaddr(blockno);
@@ -95,7 +93,7 @@ void write_block(u_int blockno)
 //  If blk!=0, set *blk to the address of the block in memory.
 //
 //  If isnew!=0, set *isnew to 0 if the block was already in memory, or
-//  to 1 if the block was loaded off disk to satisfy this request. (Isnew
+//  to 1 if the block was loaded off disk to satisfy this request. (isnew
 //  lets callers like file_get_block clear any memory-only fields
 //  from the disk blocks when they come in off disk.)
 //
@@ -105,9 +103,7 @@ int read_block(u_int blockno, void** blk, u_int* isnew)
 {
 	// Step 1: validate blockno. Make file the block to read is within the disk.
 	if (super && blockno >= super->s_nblocks)
-	{
 		user_panic("reading non-existent block %08x\n", blockno);
-	}
 
 	// Step 2: validate this block is used, not free.
 	// Hint:
@@ -115,9 +111,7 @@ int read_block(u_int blockno, void** blk, u_int* isnew)
 	//  until now. So, before we check if a block is free using `block_is_free`, we must
 	//  ensure that the bitmap blocks are already read from the disk to memory.
 	if (bitmap && block_is_free(blockno))
-	{
 		user_panic("reading free block %08x\n", blockno);
-	}
 
 	// Step 3: transform block number to corresponding virtual address.
 	void* va = diskaddr(blockno);
@@ -128,27 +122,24 @@ int read_block(u_int blockno, void** blk, u_int* isnew)
 	//  read data from IDE disk (use `syscall_mem_alloc` and `ide_read`).
 	//  We have only one IDE disk, so the diskno of ide_read should be 0.
 	if (block_is_mapped(blockno))
-	{ // the block is in memory
+	{
+		// the block is in memory
 		if (isnew)
-		{
 			*isnew = 0;
-		}
 	}
 	else
-	{ // the block is not in memory
+	{
+		// the block is not in memory
 		if (isnew)
-		{
 			*isnew = 1;
-		}
 		syscall_mem_alloc(0, va, PTE_D);
 		ide_read(0, blockno * SECT2BLK, va, SECT2BLK);
 	}
 
 	// Step 5: if blk != NULL, assign 'va' to '*blk'.
 	if (blk)
-	{
 		*blk = va;
-	}
+
 	return 0;
 }
 
@@ -156,31 +147,50 @@ int read_block(u_int blockno, void** blk, u_int* isnew)
 //  Allocate a page to cache the disk block.
 int map_block(u_int blockno)
 {
+	/*
+	 * I think this function is equivalent to this regenerated function.
+	 * read_block(blockno, NULL, NULL);
+	 */
+
 	// Step 1: If the block is already mapped in cache, return 0.
 	// Hint: Use 'block_is_mapped'.
 	/* Exercise 5.7: Your code here. (1/5) */
+	if (block_is_mapped(blockno))
+		return 0;
 
 	// Step 2: Alloc a page in permission 'PTE_D' via syscall.
 	// Hint: Use 'diskaddr' for the virtual address.
 	/* Exercise 5.7: Your code here. (2/5) */
+	void* va = diskaddr(blockno);
 
+	// syscall_mem_alloc will link va to the new page automatically.
+	try(syscall_mem_alloc(0, va, PTE_D));
+	ide_read(0, blockno * SECT2BLK, va, SECT2BLK);
+
+	return 0;
 }
 
 // Overview:
 //  Unmap a disk block in cache.
 void unmap_block(u_int blockno)
 {
-	// Step 1: Get the mapped address of the cache page of this block using 'block_is_mapped'.
-	void* va;
+	// Step 1: Get the mapped address of the cache page of this block using
+	// 'block_is_mapped'.
 	/* Exercise 5.7: Your code here. (3/5) */
+	void* va = block_is_mapped(blockno);
+	if (!va)
+		return;
 
-	// Step 2: If this block is used (not free) and dirty in cache, write it back to the disk
-	// first.
+	// Step 2: If this block is used (not free) and dirty in cache, write it back
+	// to the disk first.
 	// Hint: Use 'block_is_free', 'block_is_dirty' to check, and 'write_block' to sync.
 	/* Exercise 5.7: Your code here. (4/5) */
+	if (!block_is_free(blockno) && block_is_dirty(blockno))
+		write_block(blockno);
 
 	// Step 3: Unmap the virtual address via syscall.
 	/* Exercise 5.7: Your code here. (5/5) */
+	syscall_mem_unmap(0, va);
 
 	user_assert(!block_is_mapped(blockno));
 }
@@ -193,14 +203,10 @@ void unmap_block(u_int blockno)
 int block_is_free(u_int blockno)
 {
 	if (super == 0 || blockno >= super->s_nblocks)
-	{
 		return 0;
-	}
 
 	if (bitmap[blockno / 32] & (1 << (blockno % 32)))
-	{
 		return 1;
-	}
 
 	return 0;
 }
@@ -254,7 +260,8 @@ int alloc_block(void)
 	int r, bno;
 	// Step 1: find a free block.
 	if ((r = alloc_block_num()) < 0)
-	{ // failed.
+	{
+		// failed.
 		return r;
 	}
 	bno = r;
@@ -318,9 +325,7 @@ void read_bitmap(void)
 	// Step 1: Calculate the number of the bitmap blocks, and read them into memory.
 	u_int nbitmap = super->s_nblocks / BIT2BLK + 1;
 	for (i = 0; i < nbitmap; i++)
-	{
 		read_block(i + 2, blk, 0);
-	}
 
 	bitmap = diskaddr(2);
 
@@ -397,7 +402,7 @@ void fs_init(void)
 int file_block_walk(struct File* f, u_int filebno, uint32_t** ppdiskbno, u_int alloc)
 {
 	int r;
-	uint32_t* ptr;
+	uint32_t* ptr; // ptr is the address of diskbno, so *ptr is diskbno
 	uint32_t* blk;
 
 	if (filebno < NDIRECT)
@@ -413,22 +418,18 @@ int file_block_walk(struct File* f, u_int filebno, uint32_t** ppdiskbno, u_int a
 		if (f->f_indirect == 0)
 		{
 			if (alloc == 0)
-			{
 				return -E_NOT_FOUND;
-			}
 
 			if ((r = alloc_block()) < 0)
-			{
 				return r;
-			}
+
 			f->f_indirect = r;
 		}
 
 		// Step 3: read the new indirect block to memory.
 		if ((r = read_block(f->f_indirect, (void**)&blk, 0)) < 0)
-		{
 			return r;
-		}
+
 		ptr = blk + filebno;
 	}
 	else
@@ -438,48 +439,53 @@ int file_block_walk(struct File* f, u_int filebno, uint32_t** ppdiskbno, u_int a
 
 	// Step 4: store the result into *ppdiskbno, and return 0.
 	*ppdiskbno = ptr;
+
 	return 0;
 }
 
-// OVerview:
-//  Set *diskbno to the disk block number for the filebno'th block in file f.
-//  If alloc is set and the block does not exist, allocate it.
-//
-// Post-Condition:
-//  Returns 0: success, < 0 on error.
-//  Errors are:
-//   -E_NOT_FOUND: alloc was 0 but the block did not exist.
-//   -E_NO_DISK: if a block needed to be allocated but the disk is full.
-//   -E_NO_MEM: if we're out of memory.
-//   -E_INVAL: if filebno is out of range.
+/*
+ * Overview:
+ *   Set *diskbno to the disk block number for the filebno'th block in file f.
+ *   If alloc is set and the block does not exist, allocate it.
+ *
+ * Post-Condition:
+ *   Returns 0: success, < 0 on error.
+ *   Errors are:
+ *     -E_NOT_FOUND: alloc was 0 but the block did not exist.
+ *     -E_NO_DISK: if a block needed to be allocated but the disk is full.
+ *     -E_NO_MEM: if we're out of memory.
+ *     -E_INVAL: if filebno is out of range.
+ *
+ * Hint:
+ *   This function will get (or with create) the diskbno of a directory from
+ * its filebno.
+ */
 int file_map_block(struct File* f, u_int filebno, u_int* diskbno, u_int alloc)
 {
 	int r;
+	// I think this pointer is redundant. We can simply use
+	// uint32_t bno instead.
 	uint32_t* ptr;
 
 	// Step 1: find the pointer for the target block.
 	if ((r = file_block_walk(f, filebno, &ptr, alloc)) < 0)
-	{
 		return r;
-	}
 
 	// Step 2: if the block not exists, and create is set, alloc one.
 	if (*ptr == 0)
 	{
 		if (alloc == 0)
-		{
 			return -E_NOT_FOUND;
-		}
 
 		if ((r = alloc_block()) < 0)
-		{
 			return r;
-		}
+
 		*ptr = r;
 	}
 
 	// Step 3: set the pointer to the block in *diskbno and return 0.
 	*diskbno = *ptr;
+
 	return 0;
 }
 
@@ -491,9 +497,7 @@ int file_clear_block(struct File* f, u_int filebno)
 	uint32_t* ptr;
 
 	if ((r = file_block_walk(f, filebno, &ptr, 0)) < 0)
-	{
 		return r;
-	}
 
 	if (*ptr)
 	{
@@ -519,15 +523,12 @@ int file_get_block(struct File* f, u_int filebno, void** blk)
 
 	// Step 1: find the disk block number is `f` using `file_map_block`.
 	if ((r = file_map_block(f, filebno, &diskbno, 1)) < 0)
-	{
 		return r;
-	}
 
 	// Step 2: read the data in this disk to blk.
 	if ((r = read_block(diskbno, blk, &isnew)) < 0)
-	{
 		return r;
-	}
+
 	return 0;
 }
 
@@ -539,9 +540,7 @@ int file_dirty(struct File* f, u_int offset)
 	u_int diskbno;
 
 	if ((r = file_map_block(f, offset / BY2BLK, &diskbno, 0)) < 0)
-	{
 		return r;
-	}
 
 	return dirty_block(diskbno);
 }
@@ -555,27 +554,36 @@ int file_dirty(struct File* f, u_int offset)
 int dir_lookup(struct File* dir, char* name, struct File** file)
 {
 	int r;
+
 	// Step 1: Calculate the number of blocks in 'dir' via its size.
-	u_int nblock;
 	/* Exercise 5.8: Your code here. (1/3) */
+	u_int nblk = dir->f_size / BY2BLK;
 
 	// Step 2: Iterate through all blocks in the directory.
-	for (int i = 0; i < nblock; i++)
+	for (int i = 0; i < nblk; i++)
 	{
-		// Read the i'th block of 'dir' and get its address in 'blk' using 'file_get_block'.
+		// Read the i'th block of 'dir' and get its address in 'blk' using
+		// 'file_get_block'.
 		void* blk;
-		/* Exercise 5.8: Your code here. (2/3) */
+		file_get_block(dir, i, &blk);
 
 		struct File* files = (struct File*)blk;
 
 		// Find the target among all 'File's in this block.
 		for (struct File* f = files; f < files + FILE2BLK; ++f)
 		{
-			// Compare the file name against 'name' using 'strcmp'.
-			// If we find the target file, set '*file' to it and set up its 'f_dir'
-			// field.
+			/*
+			 * Compare the file name against 'name' using 'strcmp'.
+			 * If we find the target file, set '*file' to it and set up its
+			 * 'f_dir' field.
+			 */
 			/* Exercise 5.8: Your code here. (3/3) */
-
+			if (strcmp(f->f_name, name))
+			{
+				f->f_dir = dir;	// set this every time it is accessed?
+				*file = f;
+				return 0;
+			}
 		}
 	}
 
