@@ -288,7 +288,7 @@ struct File* create_file(struct File* dirf)
 			 * an array, which stores its children's (struct File). One block
 			 * may stores multiple blocks.
 			 */
-			bno = ((uint32_t*)disk[dirf->f_indirect].data)[nblk];
+			bno = ((uint32_t*)disk[dirf->f_indirect].data)[i];
 		}
 		
 		// Get the directory block using the block number.
