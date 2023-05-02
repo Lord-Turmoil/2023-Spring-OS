@@ -131,6 +131,7 @@ static int file_read(struct Fd* fd, void* buf, u_int n, u_int offset)
 	}
 
 	memcpy(buf, (char*)fd2data(fd) + offset, n);
+
 	return n;
 }
 
@@ -183,9 +184,7 @@ static int file_write(struct Fd* fd, const void* buf, u_int n, u_int offset)
 	tot = offset + n;
 
 	if (tot > MAXFILESIZE)
-	{
 		return -E_NO_DISK;
-	}
 
 	// Increase the file's size if necessary
 	if (tot > f->f_file.f_size)
@@ -223,19 +222,13 @@ int ftruncate(int fdnum, u_int size)
 	u_int oldsize, fileid;
 
 	if (size > MAXFILESIZE)
-	{
 		return -E_NO_DISK;
-	}
 
 	if ((r = fd_lookup(fdnum, &fd)) < 0)
-	{
 		return r;
-	}
 
 	if (fd->fd_dev_id != devfile.dev_id)
-	{
 		return -E_INVAL;
-	}
 
 	f = (struct Filefd*)fd;
 	fileid = f->f_fileid;

@@ -78,14 +78,13 @@ int fd_lookup(int fdnum, struct Fd** fd)
 	u_int va;
 
 	if (fdnum >= MAXFD)
-	{
 		return -E_INVAL;
-	}
 
 	va = INDEX2FD(fdnum);
 
 	if ((vpt[va / BY2PG] & PTE_V) != 0)
-	{ // the fd is used
+	{
+		// the fd is used
 		*fd = (struct Fd*)va;
 		return 0;
 	}
@@ -196,30 +195,37 @@ err:
 //  Return < 0 on error.
 int read(int fdnum, void* buf, u_int n)
 {
-	int r;
-
 	// Similar to the 'write' function below.
 	// Step 1: Get 'fd' and 'dev' using 'fd_lookup' and 'dev_lookup'.
 	struct Dev* dev;
 	struct Fd* fd;
 	/* Exercise 5.10: Your code here. (1/4) */
+	fd_lookup(fdnum, &fd);
+	dev = fd->fd_dev_id;
 
 	// Step 2: Check the open mode in 'fd'.
 	// Return -E_INVAL if the file is opened for writing only (O_WRONLY).
 	/* Exercise 5.10: Your code here. (2/4) */
+	if (fd->fd_omode == O_WRONLY)
+		return -E_INVAL;
 
 	// Step 3: Read from 'dev' into 'buf' at the seek position (offset in 'fd').
 	/* Exercise 5.10: Your code here. (3/4) */
+	// int r = dev->dev_write(fd, buf, n, fd->fd_offset);
+	int r = dev->dev_read(fd, buf, n, fd->fd_offset);
 
 	// Step 4: Update the offset in 'fd' if the read is successful.
 	/* Hint: DO NOT add a null terminator to the end of the buffer!
-	 *  A character buffer is not a C string. Only the memory within [buf, buf+n) is safe to
-	 *  use. */
+	 *  A character buffer is not a C string. Only the memory within [buf, buf+n)
+	 * is safe to use. */
 	 /* Exercise 5.10: Your code here. (4/4) */
+	if (r > 0)
+		fd->fd_offset += r;
 
 	return r;
 }
 
+// read n bytes not at once
 int readn(int fdnum, void* buf, u_int n)
 {
 	int m, tot;
@@ -229,14 +235,10 @@ int readn(int fdnum, void* buf, u_int n)
 		m = read(fdnum, (char*)buf + tot, n - tot);
 
 		if (m < 0)
-		{
 			return m;
-		}
 
 		if (m == 0)
-		{
 			break;
-		}
 	}
 
 	return tot;
@@ -260,9 +262,7 @@ int write(int fdnum, const void* buf, u_int n)
 
 	r = dev->dev_write(fd, buf, n, fd->fd_offset);
 	if (r > 0)
-	{
 		fd->fd_offset += r;
-	}
 
 	return r;
 }
