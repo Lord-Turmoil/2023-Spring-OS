@@ -155,23 +155,17 @@ typedef u_long Pte;
 		(pa) + ULIM;                                                 \
 	})
 
-#define PSEG1ADDR(kva)                                           \
+
+#define PSEG1ADDR(va)                                            \
 	({                                                           \
-		u_long a = (u_long)(kva);                                \
+		u_long a = (u_long)(va);                                 \
 		if (a < KSEG1)                                           \
-			panic("PSEG1ADDR called with invalid kva %08lx", a); \
+			panic("PSEG1ADDR called with invalid va %08lx", a);  \
 		a - KSEG1;                                               \
 	})
 
 // translates from physical address to kseg1 virtual address
-#define KSEG1ADDR(pa)                                                    \
-	({                                                                   \
-		u_long ppn = PPN(pa);                                            \
-		if (ppn >= npage) {                                              \
-			panic("KSEG1ADDR called with invalid pa %08lx", (u_long)pa); \
-		}                                                                \
-		(pa) + KSEG1;                                                    \
-	})
+#define KSEG1ADDR(pa) ((pa) + KSEG1)
 
 
 #define assert(x)                              \

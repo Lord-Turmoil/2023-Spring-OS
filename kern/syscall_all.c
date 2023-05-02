@@ -521,12 +521,13 @@ static inline int is_illegal_dev_pa_range(u_long pa, u_int len)
 		return 0;
 	if (pa + len < pa)
 		return 1;
-	if (!in_range(0x10000000, 0x20, pa, len))
+	if (!(in_range(0x10000000, 0x20, pa, len) ||
+		  in_range(0x13000000, 0x4200, pa, len) ||
+		  in_range(0x15000000, 0x200, pa, len)))
+	{
 		return 1;
-	if (!in_range(0x13000000, 0x4200, pa, len))
-		return 1;
-	if (!in_range(0x15000000, 0x200, pa, len))
-		return 1;
+	}
+
 	return 0;
 }
 
@@ -559,7 +560,7 @@ int sys_read_dev(u_int va, u_int pa, u_int len)
 	/* Exercise 5.1: Your code here. (2/2) */
 	if (is_illegal_va_range(va, len))
 		return -E_INVAL;
-	if (is_illegal_dev_pa_range(va, len))
+	if (is_illegal_dev_pa_range(pa, len))
 		return -E_INVAL;
 
 	memcpy((void*)va, (const void*)KSEG1ADDR(pa), len);
