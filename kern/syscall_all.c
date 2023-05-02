@@ -103,7 +103,7 @@ int sys_set_tlb_mod_entry(u_int envid, u_int func)
 
 	/* Step 1: Convert the envid to its corresponding 'struct Env *' using
 	   'envid2env'. */
-	/* Exercise 4.12: Your code here. (1/2) */
+	   /* Exercise 4.12: Your code here. (1/2) */
 	try(envid2env(envid, &env, 1));
 
 	/* Step 2: Set its 'env_user_tlb_mod_entry' to 'func'. */
@@ -159,8 +159,8 @@ int sys_mem_alloc(u_int envid, u_int va, u_int perm)
 
 	/* Step 2: Convert the envid to its corresponding 'struct Env *'
 	   using 'envid2env'. */
-	/* Hint: **Always** validate the permission in syscalls! */
-	/* Exercise 4.4: Your code here. (2/3) */
+	   /* Hint: **Always** validate the permission in syscalls! */
+	   /* Exercise 4.4: Your code here. (2/3) */
 	try(envid2env(envid, &env, 1));
 
 	/* Step 3: Allocate a physical page using 'page_alloc'. */
@@ -210,8 +210,8 @@ int sys_mem_map(u_int srcid, u_int srcva, u_int dstid, u_int dstva, u_int perm)
 	pp = page_lookup(srcenv->env_pgdir, srcva, NULL);
 	if (!pp)
 		return -E_INVAL;
-	
-	 /* Step 5: Map the physical page at 'dstva' in the address space of 'dstid'. */
+
+	/* Step 5: Map the physical page at 'dstva' in the address space of 'dstid'. */
 	return page_insert(dstenv->env_pgdir, dstenv->env_asid, pp, dstva, perm);
 }
 
@@ -262,26 +262,26 @@ int sys_mem_unmap(u_int envid, u_int va)
 int sys_exofork(void)
 {
 	struct Env* e;
-	
+
 	/* Step 1: Allocate a new env using 'env_alloc'. */
 	/* Exercise 4.9: Your code here. (1/4) */
 	try(env_alloc(&e, curenv->env_id));
 
 	/* Step 2: Copy the current Trapframe below 'KSTACKTOP' to the new env's
 	   'env_tf'. */
-	/* Exercise 4.9: Your code here. (2/4) */
-	/*
-	 * Since env_tf is only save for next run in env_run. Here, the value of
-	 * curenv->tf is the break point of the current run start of the current
-	 * process's, which is not up to date. So we should use directly the
-	 * memory area to get child process's trapframe.
-	 */
+	   /* Exercise 4.9: Your code here. (2/4) */
+	   /*
+		* Since env_tf is only save for next run in env_run. Here, the value of
+		* curenv->tf is the break point of the current run start of the current
+		* process's, which is not up to date. So we should use directly the
+		* memory area to get child process's trapframe.
+		*/
 	e->env_tf = *((struct Trapframe*)KSTACKTOP - 1);
-	
+
 	/* Step 3: Set the new env's 'env_tf.regs[2]' to 0 to indicate the return
 	   value in child. */
-	/* Exercise 4.9: Your code here. (3/4) */
-	// $v0 = $2
+	   /* Exercise 4.9: Your code here. (3/4) */
+	   // $v0 = $2
 	e->env_tf.regs[2] = 0;
 
 	/* Step 4: Set up the new env's 'env_status' and 'env_pri'.  */
@@ -402,7 +402,7 @@ int sys_ipc_recv(u_int dstva)
 	curenv->env_status = ENV_NOT_RUNNABLE;
 	TAILQ_REMOVE(&env_sched_list, curenv, env_sched_link);
 
-	 /* Step 5: Give up the CPU and block until a message is received. */
+	/* Step 5: Give up the CPU and block until a message is received. */
 	((struct Trapframe*)KSTACKTOP - 1)->regs[2] = 0;
 	schedule(1);	// with yeild set
 }
@@ -428,16 +428,16 @@ int sys_ipc_try_send(u_int envid, u_int value, u_int srcva, u_int perm)
 {
 	struct Env* e;
 	struct Page* p;
- 
+
 	/* Step 1: Check if 'srcva' is either zero or a legal address. */
 	/* Exercise 4.8: Your code here. (4/8) */
 	if ((srcva != 0) && is_illegal_va(srcva))
 		return -E_INVAL;
-	
+
 	/* Step 2: Convert 'envid' to 'struct Env *e'. */
 	/* This is the only syscall where the 'envid2env' should be used with 'checkperm' UNSET,
 	 * because the target env is not restricted to 'curenv''s children. */
-	/* Exercise 4.8: Your code here. (5/8) */
+	 /* Exercise 4.8: Your code here. (5/8) */
 	try(envid2env(envid, &e, 0));
 
 	/* Step 3: Check if the target is waiting for a message. */
@@ -453,13 +453,13 @@ int sys_ipc_try_send(u_int envid, u_int value, u_int srcva, u_int perm)
 
 	/* Step 5: Set the target's status to 'ENV_RUNNABLE' again and insert it to
 	 * the tail of 'env_sched_list'. */
-	/* Exercise 4.8: Your code here. (7/8) */
+	 /* Exercise 4.8: Your code here. (7/8) */
 	e->env_status = ENV_RUNNABLE;
 	TAILQ_INSERT_TAIL(&env_sched_list, e, env_sched_link);
 
 	/* Step 6: If 'srcva' is not zero, map the page at 'srcva' in 'curenv' to
 	 * 'e->env_ipc_dstva' in 'e'. */
-	/* Return -E_INVAL if 'srcva' is not zero and not mapped in 'curenv'. */
+	 /* Return -E_INVAL if 'srcva' is not zero and not mapped in 'curenv'. */
 	if (srcva != 0)
 	{
 		/* Exercise 4.8: Your code here. (8/8) */
@@ -598,7 +598,7 @@ void* syscall_table[MAX_SYSNO] = {
  *   The possible arguments are stored at $a1, $a2, $a3, [$sp + 16 bytes],
  * [$sp + 20 bytes] in order.
  *   Number of arguments cannot exceed 5.
- * 
+ *
  * Notice:
  *   Here, see genex.S, tf points to (KSTACKTOP - TF_SIZE), which makes it equal
  * to modify tf or (KSTACKTOP - TF_SIZE).
@@ -634,7 +634,7 @@ void do_syscall(struct Trapframe* tf)
 
 	/* Step 5: Invoke 'func' with retrieved arguments and store its return value
 	   to $v0 in 'tf'. */
-	 /* Exercise 4.2: Your code here. (4/4) */
-	// $v0 is $2
+	   /* Exercise 4.2: Your code here. (4/4) */
+	  // $v0 is $2
 	tf->regs[2] = func(arg1, arg2, arg3, arg4, arg5);
 }

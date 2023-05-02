@@ -54,7 +54,6 @@ void fs_check() {
 	if ((r = file_get_block(f, 0, &blk)) < 0) {
 		user_panic("file_get_block: %e", r);
 	}
-
 	if (strecmp(blk, msg) != 0) {
 		user_panic("file_get_block returned wrong data");
 	}

@@ -164,10 +164,7 @@ int map_block(u_int blockno)
 	void* va = diskaddr(blockno);
 
 	// syscall_mem_alloc will link va to the new page automatically.
-	try(syscall_mem_alloc(0, va, PTE_D));
-	ide_read(0, blockno * SECT2BLK, va, SECT2BLK);
-
-	return 0;
+	return syscall_mem_alloc(0, va, PTE_D);
 }
 
 // Overview:
@@ -553,17 +550,18 @@ int file_dirty(struct File* f, u_int offset)
 //  Return the underlying error if an error occurs.
 int dir_lookup(struct File* dir, char* name, struct File** file)
 {
+	int r;
 	// Step 1: Calculate the number of blocks in 'dir' via its size.
 	/* Exercise 5.8: Your code here. (1/3) */
 	u_int nblk = dir->f_size / BY2BLK;
-
 	// Step 2: Iterate through all blocks in the directory.
 	for (int i = 0; i < nblk; i++)
 	{
 		// Read the i'th block of 'dir' and get its address in 'blk' using
 		// 'file_get_block'.
 		void* blk;
-		file_get_block(dir, i, &blk);
+		if ((r = file_get_block(dir, i, &blk)) < 0)
+			return r;
 
 		struct File* files = (struct File*)blk;
 
@@ -576,7 +574,7 @@ int dir_lookup(struct File* dir, char* name, struct File** file)
 			 * 'f_dir' field.
 			 */
 			/* Exercise 5.8: Your code here. (3/3) */
-			if (strcmp(f->f_name, name))
+			if (strcmp(f->f_name, name) == 0)	// Damn it! ' == 0'!
 			{
 				f->f_dir = dir;	// set this every time it is accessed?
 				*file = f;
@@ -679,14 +677,10 @@ int walk_path(char* path, struct File** pdir, struct File** pfile, char* lastele
 		p = path;
 
 		while (*path != '/' && *path != '\0')
-		{
 			path++;
-		}
 
 		if (path - p >= MAXNAMELEN)
-		{
 			return -E_BAD_PATH;
-		}
 
 		memcpy(name, p, path - p);
 		name[path - p] = '\0';
@@ -701,14 +695,10 @@ int walk_path(char* path, struct File** pdir, struct File** pfile, char* lastele
 			if (r == -E_NOT_FOUND && *path == '\0')
 			{
 				if (pdir)
-				{
 					*pdir = dir;
-				}
 
 				if (lastelem)
-				{
 					strcpy(lastelem, name);
-				}
 
 				*pfile = 0;
 			}
@@ -718,11 +708,10 @@ int walk_path(char* path, struct File** pdir, struct File** pfile, char* lastele
 	}
 
 	if (pdir)
-	{
 		*pdir = dir;
-	}
 
 	*pfile = file;
+
 	return 0;
 }
 

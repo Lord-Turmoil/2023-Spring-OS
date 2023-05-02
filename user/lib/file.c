@@ -27,11 +27,14 @@ struct Dev devfile = {
 //  the underlying error on failure.
 int open(const char* path, int mode)
 {
+	int r;
+
 	// Step 1: Alloc a new 'Fd' using 'fd_alloc' in fd.c.
 	// Hint: return the error code if failed.
 	/* Exercise 5.9: Your code here. (1/5) */
 	struct Fd* fd;
-	try(fd_alloc(&fd));
+	if ((r = fd_alloc(&fd)) < 0)
+		return r;
 
 	// Step 2: Prepare the 'fd' using 'fsipc_open' in fsipc.c.
 	/* Exercise 5.9: Your code here. (2/5) */
@@ -40,7 +43,8 @@ int open(const char* path, int mode)
 	 * our file system process, and file system will create such fd for us
 	 * and send a page of fd to this fd.
 	 */
-	try(fsipc_open(path, mode, fd));
+	if ((r = fsipc_open(path, mode, fd)) < 0)
+		return r;
 
 	// Step 3: Set 'va' to the address of the page where the 'fd''s data is cached,
 	// using 'fd2data'.
@@ -55,7 +59,8 @@ int open(const char* path, int mode)
 	for (int i = 0; i < size; i += BY2PG)
 	{
 		/* Exercise 5.9: Your code here. (4/5) */
-		try(fsipc_map(fileid, i, va + i));
+		if ((r = fsipc_map(fileid, i, va + i)) < 0)
+			return r;
 	}
 
 	// Step 5: Return the number of file descriptor using 'fd2num'.
