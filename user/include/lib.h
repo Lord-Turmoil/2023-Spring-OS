@@ -32,7 +32,7 @@ void _user_halt(const char *, int, const char *, ...) __attribute__((noreturn));
 #undef panic_on
 #define panic_on(expr)                                \
 	do {                                              \
-		int r = (!!(expr));                           \
+		int r = (expr);                               \
 		if (r != 0) {                                 \
 			user_panic("'" #expr "' returned %d", r); \
 		}                                             \

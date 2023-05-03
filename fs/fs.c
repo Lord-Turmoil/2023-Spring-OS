@@ -75,7 +75,7 @@ int dirty_block(u_int blockno)
 //  Write the current contents of the block out to disk.
 void write_block(u_int blockno)
 {
-	// Step 1: detect is this block is mapped, if not, can't write it's data to disk.
+	// Step 1: detect if this block is mapped, if not, can't write it's data to disk.
 	if (!block_is_mapped(blockno))
 		user_panic("write unmapped block %08x", blockno);
 
@@ -147,11 +147,6 @@ int read_block(u_int blockno, void** blk, u_int* isnew)
 //  Allocate a page to cache the disk block.
 int map_block(u_int blockno)
 {
-	/*
-	 * I think this function is equivalent to this regenerated function.
-	 * read_block(blockno, NULL, NULL);
-	 */
-
 	// Step 1: If the block is already mapped in cache, return 0.
 	// Hint: Use 'block_is_mapped'.
 	/* Exercise 5.7: Your code here. (1/5) */
@@ -161,10 +156,8 @@ int map_block(u_int blockno)
 	// Step 2: Alloc a page in permission 'PTE_D' via syscall.
 	// Hint: Use 'diskaddr' for the virtual address.
 	/* Exercise 5.7: Your code here. (2/5) */
-	void* va = diskaddr(blockno);
-
 	// syscall_mem_alloc will link va to the new page automatically.
-	return syscall_mem_alloc(0, va, PTE_D);
+	return syscall_mem_alloc(0, diskaddr(blockno), PTE_D);
 }
 
 // Overview:
@@ -242,7 +235,10 @@ int alloc_block_num(void)
 		{
 			// the block is free
 			bitmap[blockno / 32] &= ~(1 << (blockno % 32));
-			write_block(blockno / BIT2BLK + 2); // write to disk.
+			/*
+			 * Write the affected bitmap block to disk
+			 */
+			write_block(blockno / BIT2BLK + 2);
 			return blockno;
 		}
 	}
@@ -316,12 +312,13 @@ void read_super(void)
 //  For each block i, user_assert(!block_is_free(i))) to check that they're all marked as in use.
 void read_bitmap(void)
 {
-	u_int i;
 	void* blk = NULL;
 
 	// Step 1: Calculate the number of the bitmap blocks, and read them into memory.
+	// error if super->s_nblocks == BIT2BLK
 	u_int nbitmap = super->s_nblocks / BIT2BLK + 1;
-	for (i = 0; i < nbitmap; i++)
+	// u_int nbitmap = super->s_nblocks / BIT2BLK + !!(super->s_nblocks % BIT2BLK);
+	for (u_int i = 0; i < nbitmap; i++)
 		read_block(i + 2, blk, 0);
 
 	bitmap = diskaddr(2);
@@ -332,7 +329,7 @@ void read_bitmap(void)
 	user_assert(!block_is_free(1));
 
 	// Step 3: Make sure all bitmap blocks are marked in-use.
-	for (i = 0; i < nbitmap; i++)
+	for (u_int i = 0; i < nbitmap; i++)
 	{
 		user_assert(!block_is_free(i + 2));
 	}

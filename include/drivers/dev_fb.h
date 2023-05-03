@@ -12,7 +12,7 @@
 
 /*  Physical base address for the framebuffer controller:  */
 #define DEV_FBCTRL_ADDRESS 0x12f00000
-#define DEV_FBCTRL_LENGTH 0x20
+#define DEV_FBCTRL_LENGTH  0x20
 
 /*
  *  First choose the port by writing the port index to DEV_FBCTRL_PORT,

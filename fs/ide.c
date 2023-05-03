@@ -30,7 +30,7 @@ void ide_read(u_int diskno, u_int secno, void* dst, u_int nsecs)
 	u_int begin = secno * BY2SECT;
 	u_int end = begin + nsecs * BY2SECT;
 
-	u_int read_flag = 0;
+	u_int read_flag = DEV_DISK_OPERATION_READ;
 	u_int ret;
 
 	for (u_int offset = 0; begin + offset < end; offset += BY2SECT)
@@ -88,7 +88,7 @@ void ide_write(u_int diskno, u_int secno, void* src, u_int nsecs)
 	u_int begin = secno * BY2SECT;
 	u_int end = begin + nsecs * BY2SECT;
 
-	u_int write_flag = 1;
+	u_int write_flag = DEV_DISK_OPERATION_WRITE;
 	u_int ret;
 
 	for (u_int offset = 0; begin + offset < end; offset += BY2SECT)
@@ -109,7 +109,7 @@ void ide_write(u_int diskno, u_int secno, void* src, u_int nsecs)
 		panic_on(syscall_write_dev(src + offset,
 								   DEV_DISK_ADDRESS + DEV_DISK_BUFFER,
 								   BY2SECT));
-		// Set disk to read.
+		// Set disk to write.
 		panic_on(syscall_write_dev(&write_flag,
 								   DEV_DISK_ADDRESS + DEV_DISK_START_OPERATION,
 								   sizeof(write_flag)));

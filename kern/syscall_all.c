@@ -124,9 +124,8 @@ static inline int is_illegal_va(u_long va)
 static inline int is_illegal_va_range(u_long va, u_int len)
 {
 	if (len == 0)
-	{
 		return 0;
-	}
+
 	return va + len < va || va < UTEMP || va + len > UTOP;
 }
 
@@ -521,9 +520,9 @@ static inline int is_illegal_dev_pa_range(u_long pa, u_int len)
 		return 0;
 	if (pa + len < pa)
 		return 1;
-	if (!(in_range(0x10000000, 0x20, pa, len) ||
+	if (!(in_range(0x10000000, 0x20,   pa, len) ||
 		  in_range(0x13000000, 0x4200, pa, len) ||
-		  in_range(0x15000000, 0x200, pa, len)))
+		  in_range(0x15000000, 0x200,  pa, len)))
 	{
 		return 1;
 	}
@@ -534,9 +533,7 @@ static inline int is_illegal_dev_pa_range(u_long pa, u_int len)
 int sys_write_dev(u_int va, u_int pa, u_int len)
 {
 	/* Exercise 5.1: Your code here. (1/2) */
-	if (is_illegal_va_range(va, len))
-		return -E_INVAL;
-	if (is_illegal_dev_pa_range(pa, len))
+	if (is_illegal_va_range(va, len) || is_illegal_dev_pa_range(pa, len))
 		return -E_INVAL;
 
 	memcpy((void*)KSEG1ADDR(pa), (const void*)va, len);
@@ -558,9 +555,7 @@ int sys_write_dev(u_int va, u_int pa, u_int len)
 int sys_read_dev(u_int va, u_int pa, u_int len)
 {
 	/* Exercise 5.1: Your code here. (2/2) */
-	if (is_illegal_va_range(va, len))
-		return -E_INVAL;
-	if (is_illegal_dev_pa_range(pa, len))
+	if (is_illegal_va_range(va, len) || is_illegal_dev_pa_range(pa, len))
 		return -E_INVAL;
 
 	memcpy((void*)va, (const void*)KSEG1ADDR(pa), len);
@@ -569,24 +564,24 @@ int sys_read_dev(u_int va, u_int pa, u_int len)
 }
 
 void* syscall_table[MAX_SYSNO] = {
-	[SYS_putchar] = sys_putchar,
-	[SYS_print_cons] = sys_print_cons,
-	[SYS_getenvid] = sys_getenvid,
-	[SYS_yield] = sys_yield,
-	[SYS_env_destroy] = sys_env_destroy,
+	[SYS_putchar]           = sys_putchar,
+	[SYS_print_cons]        = sys_print_cons,
+	[SYS_getenvid]          = sys_getenvid,
+	[SYS_yield]             = sys_yield,
+	[SYS_env_destroy]       = sys_env_destroy,
 	[SYS_set_tlb_mod_entry] = sys_set_tlb_mod_entry,
-	[SYS_mem_alloc] = sys_mem_alloc,
-	[SYS_mem_map] = sys_mem_map,
-	[SYS_mem_unmap] = sys_mem_unmap,
-	[SYS_exofork] = sys_exofork,
-	[SYS_set_env_status] = sys_set_env_status,
-	[SYS_set_trapframe] = sys_set_trapframe,
-	[SYS_panic] = sys_panic,
-	[SYS_ipc_try_send] = sys_ipc_try_send,
-	[SYS_ipc_recv] = sys_ipc_recv,
-	[SYS_cgetc] = sys_cgetc,
-	[SYS_write_dev] = sys_write_dev,
-	[SYS_read_dev] = sys_read_dev,
+	[SYS_mem_alloc]         = sys_mem_alloc,
+	[SYS_mem_map]           = sys_mem_map,
+	[SYS_mem_unmap]         = sys_mem_unmap,
+	[SYS_exofork]           = sys_exofork,
+	[SYS_set_env_status]    = sys_set_env_status,
+	[SYS_set_trapframe]     = sys_set_trapframe,
+	[SYS_panic]             = sys_panic,
+	[SYS_ipc_try_send]      = sys_ipc_try_send,
+	[SYS_ipc_recv]          = sys_ipc_recv,
+	[SYS_cgetc]             = sys_cgetc,
+	[SYS_write_dev]         = sys_write_dev,
+	[SYS_read_dev]          = sys_read_dev,
 };
 
 /* Overview:
