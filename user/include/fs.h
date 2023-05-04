@@ -23,15 +23,16 @@
 
 #define BY2FILE 256
 
-struct File {
+struct File
+{
 	char f_name[MAXNAMELEN]; // filename
-	uint32_t f_size;	 // file size in bytes
-	uint32_t f_type;	 // file type
+	uint32_t f_size;         // file size in bytes
+	uint32_t f_type;         // file type
 	uint32_t f_direct[NDIRECT];
 	uint32_t f_indirect;
 
-	struct File *f_dir; // the pointer to the dir where this file is in, valid only in memory.
-	char f_pad[BY2FILE - MAXNAMELEN - (3 + NDIRECT) * 4 - sizeof(void *)];
+	struct File* f_dir; // the pointer to the dir where this file is in, valid only in memory.
+	char f_pad[BY2FILE - MAXNAMELEN - (3 + NDIRECT) * 4 - sizeof(void*)];
 } __attribute__((aligned(4), packed));
 
 #define FILE2BLK (BY2BLK / sizeof(struct File))  // 16
@@ -44,7 +45,8 @@ struct File {
 
 #define FS_MAGIC 0x68286097 // Everyone's favorite OS class
 
-struct Super {
+struct Super
+{
 	uint32_t s_magic;   // Magic number: FS_MAGIC
 	uint32_t s_nblocks; // Total number of blocks on disk
 	struct File s_root; // Root directory node

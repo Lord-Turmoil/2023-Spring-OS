@@ -78,8 +78,7 @@ void write_block(u_int blockno)
 		user_panic("write unmapped block %08x", blockno);
 
 	// Step2: write data to IDE disk. (using ide_write, and the diskno is 0)
-	void* va = diskaddr(blockno);
-	ide_write(0, blockno * SECT2BLK, va, SECT2BLK);
+	ide_write(0, blockno * SECT2BLK, diskaddr(blockno), SECT2BLK);
 }
 
 // Overview:
@@ -130,7 +129,10 @@ int read_block(u_int blockno, void** blk, u_int* isnew)
 		// the block is not in memory
 		if (isnew)
 			*isnew = 1;
-		syscall_mem_alloc(0, va, PTE_D);
+
+		// syscall_mem_alloc(0, va, PTE_D);
+		map_block(blockno);
+
 		ide_read(0, blockno * SECT2BLK, va, SECT2BLK);
 	}
 
