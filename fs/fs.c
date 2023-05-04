@@ -14,12 +14,10 @@ int block_is_free(u_int);
 void* diskaddr(u_int blockno)
 {
 	/* Exercise 5.6: Your code here. */
-	u_long va = (DISKMAP + blockno * BY2BLK);
-	
-	panic_on(va < DISKMAP);
-	panic_on(va >= DISKMAP + DISKMAX);
+	// Might be called before super block is initialized!
+	user_assert(!super || (blockno < super->s_nblocks));
 
-	return (void*)va;
+	return (void*)(DISKMAP + blockno * BY2BLK);
 }
 
 // Overview:
