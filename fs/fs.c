@@ -341,7 +341,7 @@ void read_bitmap(void)
 //  Test that write_block works, by smashing the superblock and reading it back.
 void check_write_block(void)
 {
-	super = 0;
+	super = NULL;
 
 	// backup the super block.
 	// copy the data in super block to the first block on the disk.
@@ -466,6 +466,10 @@ int file_map_block(struct File* f, u_int filebno, u_int* diskbno, u_int alloc)
 		return r;
 
 	// Step 2: if the block not exists, and create is set, alloc one.
+	/*
+	 * Since file_block_walk already used alloc, this part seems to be
+	 * redundant?
+	 */
 	if (*ptr == 0)
 	{
 		if (alloc == 0)
@@ -482,6 +486,7 @@ int file_map_block(struct File* f, u_int filebno, u_int* diskbno, u_int alloc)
 
 	return 0;
 }
+
 
 // Overview:
 //  Remove a block from file f. If it's not there, just silently succeed.
@@ -571,7 +576,7 @@ int dir_lookup(struct File* dir, char* name, struct File** file)
 			 * 'f_dir' field.
 			 */
 			/* Exercise 5.8: Your code here. (3/3) */
-			if (strcmp(f->f_name, name) == 0)	// Damn it! ' == 0'!
+			if (strcmp(f->f_name, name) == 0)	// Karabast! ' == 0'!
 			{
 				f->f_dir = dir;	// set this every time it is accessed?
 				*file = f;

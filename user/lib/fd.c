@@ -75,14 +75,11 @@ void fd_close(struct Fd* fd)
 //  Return -E_INVAL if 'fdnum' is invalid or unmapped.
 int fd_lookup(int fdnum, struct Fd** fd)
 {
-	u_int va;
-
 	if (fdnum >= MAXFD)
 		return -E_INVAL;
 
-	va = INDEX2FD(fdnum);
-
-	if ((vpt[va / BY2PG] & PTE_V) != 0)
+	u_int va = INDEX2FD(fdnum);
+	if ((vpt[VPN(va)] & PTE_V) != 0)
 	{
 		// the fd is used
 		*fd = (struct Fd*)va;
@@ -120,6 +117,7 @@ int close(int fdnum)
 
 	r = (*dev->dev_close)(fd);
 	fd_close(fd);
+	
 	return r;
 }
 
@@ -149,11 +147,9 @@ int dup(int oldfdnum, int newfdnum)
 	newfd = (struct Fd*)INDEX2FD(newfdnum);
 	ova = fd2data(oldfd);
 	nva = fd2data(newfd);
-	if ((r = syscall_mem_map(0, oldfd, 0, newfd, vpt[VPN(oldfd)] & (PTE_D | PTE_LIBRARY))) <
-		0)
-	{
+	r = syscall_mem_map(0, oldfd, 0, newfd, vpt[VPN(oldfd)] & (PTE_D | PTE_LIBRARY));
+	if (r < 0)
 		goto err;
-	}
 
 	if (vpd[PDX(ova)])
 	{
@@ -251,18 +247,16 @@ int readn(int fdnum, void* buf, u_int n)
 int write(int fdnum, const void* buf, u_int n)
 {
 	int r;
-	struct Dev* dev;
+	
 	struct Fd* fd;
-
-	if ((r = fd_lookup(fdnum, &fd)) < 0 || (r = dev_lookup(fd->fd_dev_id, &dev)) < 0)
-	{
+	if ((r = fd_lookup(fdnum, &fd)) < 0)
 		return r;
-	}
+	struct Dev* dev;
+	if ((r = dev_lookup(fd->fd_dev_id, &dev)) < 0)
+		return r;
 
 	if ((fd->fd_omode & O_ACCMODE) == O_RDONLY)
-	{
 		return -E_INVAL;
-	}
 
 	r = dev->dev_write(fd, buf, n, fd->fd_offset);
 	if (r > 0)

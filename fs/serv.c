@@ -30,15 +30,12 @@ struct Open opentab[MAXOPEN] = { {0, 0, 1} };
 // Overview:
 //  Initialize file system server process.
 void serve_init(void)
-{
-	int i;
-	u_int va;
-
+{	
 	// Set virtual address to map.
-	va = FILEVA;
+	u_int va = FILEVA;
 
 	// Initial array opentab.
-	for (i = 0; i < MAXOPEN; i++)
+	for (int i = 0; i < MAXOPEN; i++)
 	{
 		opentab[i].o_fileid = i;
 		opentab[i].o_ff = (struct Filefd*)va;
@@ -93,12 +90,11 @@ int open_lookup(u_int envid, u_int fileid, struct Open** po)
 // Serve requests, sending responses back to envid.
 // To send a result back, ipc_send(envid, r, 0, 0).
 // To include a page, ipc_send(envid, r, srcva, perm).
-
 void serve_open(u_int envid, struct Fsreq_open* rq)
 {
+	int r;
 	struct File* f;
 	struct Filefd* ff;
-	int r;
 	struct Open* o;
 
 	// Find a file id.
@@ -279,7 +275,7 @@ void serve(void)
 		}
 
 		/*
-		 * IPC receiver does not map page to va by itself, this map is doen
+		 * IPC receiver does not map page to va by itself, this map is done
 		 * by sender at the end of transaction. So... to save memory? Receiver
 		 * here has to unmap this page by itself.
 		 */

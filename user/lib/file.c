@@ -11,12 +11,12 @@ static int file_stat(struct Fd* fd, struct Stat* stat);
 // Dot represents choosing the member within the struct declaration
 // to initialize, with no need to consider the order of members.
 struct Dev devfile = {
-	.dev_id = 'f',
-	.dev_name = "file",
-	.dev_read = file_read,
+	.dev_id    = 'f',
+	.dev_name  = "file",
+	.dev_read  = file_read,
 	.dev_write = file_write,
 	.dev_close = file_close,
-	.dev_stat = file_stat,
+	.dev_stat  = file_stat,
 };
 
 // Overview:
@@ -73,20 +73,16 @@ int open(const char* path, int mode)
 int file_close(struct Fd* fd)
 {
 	int r;
-	struct Filefd* ffd;
-	void* va;
-	u_int size, fileid;
-	u_int i;
 
-	ffd = (struct Filefd*)fd;
-	fileid = ffd->f_fileid;
-	size = ffd->f_file.f_size;
+	struct Filefd* ffd = (struct Filefd*)fd;
+	u_int fileid = ffd->f_fileid;
+	u_int size = ffd->f_file.f_size;
 
 	// Set the start address storing the file's content.
-	va = fd2data(fd);
+	void* va = fd2data(fd);
 
 	// Tell the file server the dirty page.
-	for (i = 0; i < size; i += BY2PG)
+	for (u_int i = 0; i < size; i += BY2PG)
 		fsipc_dirty(fileid, i);
 
 	// Request the file server to close the file with fsipc.
@@ -100,7 +96,7 @@ int file_close(struct Fd* fd)
 	if (size == 0)
 		return 0;
 
-	for (i = 0; i < size; i += BY2PG)
+	for (u_int i = 0; i < size; i += BY2PG)
 	{
 		if ((r = syscall_mem_unmap(0, (void*)(va + i))) < 0)
 		{
@@ -118,22 +114,14 @@ int file_close(struct Fd* fd)
 //  tape to handle the file size and seek pointer.
 static int file_read(struct Fd* fd, void* buf, u_int n, u_int offset)
 {
-	u_int size;
-	struct Filefd* f;
-	f = (struct Filefd*)fd;
+	struct Filefd* f = (struct Filefd*)fd;
+	u_int size = f->f_file.f_size;
 
 	// Avoid reading past the end of file.
-	size = f->f_file.f_size;
-
 	if (offset > size)
-	{
 		return 0;
-	}
-
 	if (offset + n > size)
-	{
 		n = size - offset;
-	}
 
 	memcpy(buf, (char*)fd2data(fd) + offset, n);
 
@@ -150,15 +138,11 @@ int read_map(int fdnum, u_int offset, void** blk)
 	struct Fd* fd;
 
 	if ((r = fd_lookup(fdnum, &fd)) < 0)
-	{
 		return r;
-	}
 
 	if (fd->fd_dev_id != devfile.dev_id)
-	{
 		return -E_INVAL;
-	}
-
+	
 	va = fd2data(fd) + offset;
 
 	if (offset >= MAXFILESIZE)
@@ -180,14 +164,11 @@ int read_map(int fdnum, u_int offset, void** blk)
 static int file_write(struct Fd* fd, const void* buf, u_int n, u_int offset)
 {
 	int r;
-	u_int tot;
-	struct Filefd* f;
 
-	f = (struct Filefd*)fd;
+	struct Filefd* f = (struct Filefd*)fd;
+	u_int tot = offset + n;
 
 	// Don't write more than the maximum file size.
-	tot = offset + n;
-
 	if (tot > MAXFILESIZE)
 		return -E_NO_DISK;
 
@@ -195,9 +176,7 @@ static int file_write(struct Fd* fd, const void* buf, u_int n, u_int offset)
 	if (tot > f->f_file.f_size)
 	{
 		if ((r = ftruncate(fd2num(fd), tot)) < 0)
-		{
 			return r;
-		}
 	}
 
 	// Write the data
@@ -207,13 +186,12 @@ static int file_write(struct Fd* fd, const void* buf, u_int n, u_int offset)
 
 static int file_stat(struct Fd* fd, struct Stat* st)
 {
-	struct Filefd* f;
-
-	f = (struct Filefd*)fd;
+	struct Filefd* f = (struct Filefd*)fd;
 
 	strcpy(st->st_name, f->f_file.f_name);
 	st->st_size = f->f_file.f_size;
 	st->st_isdir = f->f_file.f_type == FTYPE_DIR;
+	
 	return 0;
 }
 
@@ -221,34 +199,29 @@ static int file_stat(struct Fd* fd, struct Stat* st)
 //  Truncate or extend an open file to 'size' bytes
 int ftruncate(int fdnum, u_int size)
 {
-	int i, r;
-	struct Fd* fd;
-	struct Filefd* f;
-	u_int oldsize, fileid;
-
 	if (size > MAXFILESIZE)
 		return -E_NO_DISK;
 
+	int r;
+	struct Fd* fd;
 	if ((r = fd_lookup(fdnum, &fd)) < 0)
 		return r;
 
 	if (fd->fd_dev_id != devfile.dev_id)
 		return -E_INVAL;
 
-	f = (struct Filefd*)fd;
-	fileid = f->f_fileid;
-	oldsize = f->f_file.f_size;
+	struct Filefd* f = (struct Filefd*)fd;
+	u_int fileid = f->f_fileid;
+	u_int oldsize = f->f_file.f_size;
 	f->f_file.f_size = size;
 
 	if ((r = fsipc_set_size(fileid, size)) < 0)
-	{
 		return r;
-	}
 
 	void* va = fd2data(fd);
 
 	// Map any new pages needed if extending the file
-	for (i = ROUND(oldsize, BY2PG); i < ROUND(size, BY2PG); i += BY2PG)
+	for (u_int i = ROUND(oldsize, BY2PG); i < ROUND(size, BY2PG); i += BY2PG)
 	{
 		if ((r = fsipc_map(fileid, i, va + i)) < 0)
 		{
@@ -258,12 +231,10 @@ int ftruncate(int fdnum, u_int size)
 	}
 
 	// Unmap pages if truncating the file
-	for (i = ROUND(size, BY2PG); i < ROUND(oldsize, BY2PG); i += BY2PG)
+	for (u_int i = ROUND(size, BY2PG); i < ROUND(oldsize, BY2PG); i += BY2PG)
 	{
 		if ((r = syscall_mem_unmap(0, (void*)(va + i))) < 0)
-		{
 			user_panic("ftruncate: syscall_mem_unmap %08x: %e", va + i, r);
-		}
 	}
 
 	return 0;
