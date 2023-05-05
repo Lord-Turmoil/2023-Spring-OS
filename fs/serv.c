@@ -74,19 +74,16 @@ int open_alloc(struct Open** o)
 //  Look up an open file for envid.
 int open_lookup(u_int envid, u_int fileid, struct Open** po)
 {
-	struct Open* o;
-
-	o = &opentab[fileid % MAXOPEN];
+	struct Open* o = &opentab[fileid % MAXOPEN];
 	
 	// debugf("pageref(o->o_ff) = %d\n", pageref(o->o_ff));
 	// = 2
 
 	if (pageref(o->o_ff) == 1 || o->o_fileid != fileid)
-	{
 		return -E_INVAL;
-	}
 
 	*po = o;
+
 	return 0;
 }
 
