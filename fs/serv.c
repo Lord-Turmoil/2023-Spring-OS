@@ -77,6 +77,9 @@ int open_lookup(u_int envid, u_int fileid, struct Open** po)
 	struct Open* o;
 
 	o = &opentab[fileid % MAXOPEN];
+	
+	// debugf("pageref(o->o_ff) = %d\n", pageref(o->o_ff));
+	// = 2
 
 	if (pageref(o->o_ff) == 1 || o->o_fileid != fileid)
 	{
@@ -103,6 +106,9 @@ void serve_open(u_int envid, struct Fsreq_open* rq)
 		ipc_send(envid, r, 0, 0);
 	}
 
+	// debugf("pageref(o->o_ff) = %d\n", pageref(o->o_ff));
+	// = 1
+
 	// Open the file.
 	if ((r = file_open(rq->req_path, &f)) < 0)
 	{
@@ -121,6 +127,11 @@ void serve_open(u_int envid, struct Fsreq_open* rq)
 	ff->f_fd.fd_omode = o->o_mode;
 	ff->f_fd.fd_dev_id = devfile.dev_id;
 
+	/*
+	 * With this ipc_send, another `page_insert` is called, which will make
+	 * pageref(o->off) = 2. And this is way later in `open_lookup`, this value
+	 * can't be 1, which indicates that this request is not complete or successful.
+	 */
 	ipc_send(envid, 0, o->o_ff, PTE_D | PTE_LIBRARY);
 }
 

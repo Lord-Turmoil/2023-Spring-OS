@@ -393,6 +393,10 @@ void fs_init(void)
 //  Return -E_NO_DISK if there's no space on the disk for an indirect block.
 //  Return -E_NO_MEM if there's not enough memory for an indirect block.
 //  Return -E_INVAL if filebno is out of range (>= NINDIRECT).
+//
+// Warning:
+//   Here, alloc only deals with the case that f_indirect is needed to be created,
+// not the final block!
 int file_block_walk(struct File* f, u_int filebno, uint32_t** ppdiskbno, u_int alloc)
 {
 	int r;
@@ -467,8 +471,9 @@ int file_map_block(struct File* f, u_int filebno, u_int* diskbno, u_int alloc)
 
 	// Step 2: if the block not exists, and create is set, alloc one.
 	/*
-	 * Since file_block_walk already used alloc, this part seems to be
-	 * redundant?
+	 * If block does not exists, file_block_walk will only create the f_indirect,
+	 * not the block! So the *ptr can be 0, indicating block not existent. Thus,
+	 * we have to allocate new a block here.
 	 */
 	if (*ptr == 0)
 	{
@@ -553,9 +558,11 @@ int file_dirty(struct File* f, u_int offset)
 int dir_lookup(struct File* dir, char* name, struct File** file)
 {
 	int r;
+
 	// Step 1: Calculate the number of blocks in 'dir' via its size.
 	/* Exercise 5.8: Your code here. (1/3) */
 	u_int nblk = dir->f_size / BY2BLK;
+
 	// Step 2: Iterate through all blocks in the directory.
 	for (int i = 0; i < nblk; i++)
 	{
