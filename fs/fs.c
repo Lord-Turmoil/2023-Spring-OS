@@ -652,25 +652,25 @@ char* skip_slash(char* p)
 //  the file is in.
 //  If we cannot find the file but find the directory it should be in, set
 //  *pdir and copy the final path element into lastelem.
+// 
+// 2023/05/05 TS: Make pfile nullable.
 int walk_path(char* path, struct File** pdir, struct File** pfile, char* lastelem)
 {
-	char* p;
 	char name[MAXNAMELEN];
-	struct File* dir, * file;
 	int r;
 
 	// start at the root.
 	path = skip_slash(path);
-	file = &super->s_root;
-	dir = 0;
-	name[0] = 0;
+	struct File* file = &super->s_root;
+	struct File* dir = NULL;
+	char* p;
+
+	name[0] = '\0';
 
 	if (pdir)
-	{
-		*pdir = 0;
-	}
-
-	*pfile = 0;
+		*pdir = NULL;
+	if (pfile)
+		*pfile = NULL;
 
 	// find the target file by name recursively.
 	while (*path != '\0')
@@ -680,7 +680,6 @@ int walk_path(char* path, struct File** pdir, struct File** pfile, char* lastele
 
 		while (*path != '/' && *path != '\0')
 			path++;
-
 		if (path - p >= MAXNAMELEN)
 			return -E_BAD_PATH;
 
@@ -688,9 +687,7 @@ int walk_path(char* path, struct File** pdir, struct File** pfile, char* lastele
 		name[path - p] = '\0';
 		path = skip_slash(path);
 		if (dir->f_type != FTYPE_DIR)
-		{
 			return -E_NOT_FOUND;
-		}
 
 		if ((r = dir_lookup(dir, name, &file)) < 0)
 		{
@@ -698,21 +695,18 @@ int walk_path(char* path, struct File** pdir, struct File** pfile, char* lastele
 			{
 				if (pdir)
 					*pdir = dir;
-
 				if (lastelem)
 					strcpy(lastelem, name);
-
-				*pfile = 0;
+				*pfile = NULL;
 			}
-
 			return r;
 		}
 	}
 
 	if (pdir)
 		*pdir = dir;
-
-	*pfile = file;
+	if (pfile)
+		*pfile = file;
 
 	return 0;
 }
