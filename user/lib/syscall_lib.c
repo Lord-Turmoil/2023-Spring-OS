@@ -61,6 +61,16 @@ int syscall_ipc_recv(void *dstva) {
 	return msyscall(SYS_ipc_recv, dstva);
 }
 
+void syscall_barrier_alloc(int n)
+{
+	msyscall(SYS_barrier_alloc, n);
+}
+
+void syscall_barrier_wait(void)
+{
+	msyscall(SYS_barrier_wait);
+}
+
 int syscall_cgetc() {
 	return msyscall(SYS_cgetc);
 }

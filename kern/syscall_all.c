@@ -472,6 +472,90 @@ int sys_ipc_try_send(u_int envid, u_int value, u_int srcva, u_int perm)
 	return 0;
 }
 
+//////////////////////////// Barrier
+#define MAX_BARRIER_CAPACITY 128
+
+struct Barrier
+{
+	u_int owner;
+	int capacity;
+	int size;
+	int valid;
+	u_int pid[MAX_BARRIER_CAPACITY];
+};
+
+void _print_barrier(struct Barrier* b)
+{
+	printk("\tO: %u\n\tC: %d\n\tS: %d\n\tV: %d\n",
+			b->owner,
+			b->capacity,
+			b->size,
+			b->valid);
+}
+
+struct Barrier barrier;
+void sys_barrier_alloc(int n)
+{
+	memset(&barrier, 0, sizeof(struct Barrier));
+
+	barrier.owner = curenv->env_id;
+	barrier.capacity = n;
+	barrier.size = 0;
+	barrier.valid = 1;
+
+	if (barrier.size >= barrier.capacity)
+		barrier.valid = 0;
+	// _print_barrier(&barrier);
+}
+
+static int is_parent(u_int parent_id, u_int e_id)
+{
+	struct Env* e;
+	if (envid2env(e_id, &e, 0) != 0)
+		return 0;
+
+	if (e->env_status == ENV_FREE)
+		return 0;
+	if (e->env_id != e_id)
+		return 0;
+	if (e->env_id == parent_id)
+		return 0;
+	if (e->env_parent_id == parent_id)
+		return 1;
+	return is_parent(parent_id, e->env_parent_id);
+}
+
+void sys_barrier_wait(void)
+{
+	if (!barrier.valid)	// no longer valid
+		return;
+	if (!is_parent(barrier.owner, curenv->env_id))	// no blood
+		return;
+
+	barrier.pid[barrier.size++] = curenv->env_id;
+	// _print_barrier(&barrier);
+	if (barrier.size >= barrier.capacity)	// reach max
+	{
+		struct Env* e;
+		// current process not wait yet
+		for (int i = 0; i < barrier.size - 1; i++)
+		{
+			// wake all up
+			panic_on(envid2env(barrier.pid[i], &e, 0));
+			e->env_status = ENV_RUNNABLE;
+			TAILQ_INSERT_TAIL(&env_sched_list, e, env_sched_link);
+		}
+		memset(&barrier, 0, sizeof(struct Barrier));
+		return;
+	}
+
+	// block current process
+	curenv->env_status = ENV_NOT_RUNNABLE;
+	TAILQ_REMOVE(&env_sched_list, curenv, env_sched_link);
+
+	sys_yield();
+}
+
 // XXX: kernel does busy waiting here, blocking all envs
 int sys_cgetc(void)
 {
@@ -549,6 +633,8 @@ void* syscall_table[MAX_SYSNO] = {
 	[SYS_panic] = sys_panic,
 	[SYS_ipc_try_send] = sys_ipc_try_send,
 	[SYS_ipc_recv] = sys_ipc_recv,
+	[SYS_barrier_alloc] = sys_barrier_alloc,
+	[SYS_barrier_wait] = sys_barrier_wait,
 	[SYS_cgetc] = sys_cgetc,
 	[SYS_write_dev] = sys_write_dev,
 	[SYS_read_dev] = sys_read_dev,
