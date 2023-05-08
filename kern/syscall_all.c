@@ -529,8 +529,8 @@ void sys_barrier_wait(void)
 {
 	if (!barrier.valid)	// no longer valid
 		return;
-	if (!is_parent(barrier.owner, curenv->env_id))	// no blood
-		return;
+	// if (!is_parent(barrier.owner, curenv->env_id))	// no blood
+	//	return;
 
 	barrier.pid[barrier.size++] = curenv->env_id;
 	// _print_barrier(&barrier);
