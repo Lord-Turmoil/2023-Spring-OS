@@ -472,6 +472,167 @@ int sys_ipc_try_send(u_int envid, u_int value, u_int srcva, u_int perm)
 	return 0;
 }
 
+///////////////////////////// Semaphore
+
+static int is_parent(u_int parent_id, u_int e_id)
+{
+	struct Env* e;
+	if (envid2env(e_id, &e, 0) != 0)
+		return 0;
+	if (e->env_status == ENV_FREE)
+		return 0;
+	if (e->env_id != e_id)
+		return 0;
+	if (e->env_id == parent_id)
+		return 0;
+	if (e->env_parent_id == parent_id)
+		return 1;
+	return is_parent(parent_id, e->env_parent_id);
+}
+
+#define SEM_MAX_NAME_LEN 36
+#define SEM_MAX_NUM 12
+#define MAX_PROC_NUM 64
+
+struct Semaphore
+{
+	char name[SEM_MAX_NAME_LEN];
+	u_int owner;
+	int id;
+	int value;
+	int valid;
+	int checkperm;
+	u_int pid[MAX_PROC_NUM];
+};
+
+struct Semaphore sems[SEM_MAX_NUM];
+
+static struct Semaphore* get_sem(int id, int envid)
+{
+	if (id < 0 || id > SEM_MAX_NUM)
+		return NULL;
+	struct Semaphore* s = &sems[id];
+	if (!s->valid)
+		return NULL;
+	if (s->checkperm && envid != 0)
+	{
+		if (!is_parent(s->owner, envid))
+			return NULL;
+	}
+
+	return s;
+}
+
+int sys_sem_init(const char *name, int init_value, int checkperm)
+{
+	struct Semaphore* s = NULL;
+	for (int i = 0; i < SEM_MAX_NUM; i++)
+	{
+		if (!sems[i].valid)
+		{
+			sems[i].id = i;
+			s = &sems[i];
+			break;
+		}
+	}
+	if (!s)
+		return -E_NO_SEM;
+	strcpy(s->name, name);
+	s->owner = curenv->env_id;
+	s->value = init_value;
+	s->valid = 1;
+	s->checkperm = checkperm;
+	for (int i = 0; i < MAX_PROC_NUM; i++)
+		s->pid[i] = 0;
+	return s->id;
+}
+
+int sys_sem_wait(int sem_id)
+{
+	struct Semaphore* s = get_sem(sem_id, curenv->env_id);
+	if (!s)
+		return -E_NO_SEM;
+
+	if (s->value > 0)
+	{
+		s->value--;
+		return 0;
+	}
+	
+	// block current process
+	while (s->value <= 0)
+	{
+		for (int i = 0; i < MAX_PROC_NUM; i++)
+		{
+			if (s->pid[i] == 0)
+			{
+				s->pid[i] = curenv->env_id;
+				break;
+			}
+		}
+		curenv->env_status = ENV_NOT_RUNNABLE;
+		TAILQ_REMOVE(&env_sched_list, curenv, env_sched_link);
+		sys_yield();
+	}
+
+	s->value--;
+
+	return 0;
+}
+	
+int sys_sem_post(int sem_id)
+{
+	struct Semaphore* s = get_sem(sem_id, curenv->env_id);
+	if (!s)
+		return -E_NO_SEM;
+
+	s->value++;
+	if (s->value > 0)	// should awake process
+	{
+		struct Env* e;
+		for (int i = 0; i < MAX_PROC_NUM; i++)
+		{
+			if (s->pid[i] == 0) // no record
+				continue;
+			panic_on(envid2env(s->pid[i], &e, 0));
+			e->env_status = ENV_RUNNABLE;
+			TAILQ_INSERT_TAIL(&env_sched_list, e, env_sched_link);
+			s->pid[i] = 0; // remove from wait list
+			break; // awake only one
+		}
+	}
+
+	return 0;
+}
+
+int sys_sem_getvalue(int sem_id)
+{
+	struct Semaphore* s = get_sem(sem_id, curenv->env_id);
+	if (!s)
+		return -E_NO_SEM;
+	
+	return s->value;
+}
+
+int sys_sem_getid(const char *name)
+{
+	int id = -1;
+	for (int i = 0; i < SEM_MAX_NUM; i++)
+	{
+		if (!sems[i].valid)
+			continue;
+		if (strcmp(sems[i].name, name) == 0)
+		{
+			id = i;
+			break;
+		}
+	}
+	if (!get_sem(id, curenv->env_id))
+		return -E_NO_SEM;
+
+	return id;
+}
+
 // XXX: kernel does busy waiting here, blocking all envs
 int sys_cgetc(void)
 {
@@ -550,6 +711,11 @@ void* syscall_table[MAX_SYSNO] = {
 	[SYS_ipc_try_send] = sys_ipc_try_send,
 	[SYS_ipc_recv] = sys_ipc_recv,
 	[SYS_cgetc] = sys_cgetc,
+	[SYS_sem_init] = sys_sem_init,
+	[SYS_sem_wait] = sys_sem_wait,
+	[SYS_sem_post] = sys_sem_post,
+	[SYS_sem_getvalue] = sys_sem_getvalue,
+	[SYS_sem_getid] = sys_sem_getid,
 	[SYS_write_dev] = sys_write_dev,
 	[SYS_read_dev] = sys_read_dev,
 };

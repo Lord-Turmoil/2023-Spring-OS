@@ -81,6 +81,12 @@ int syscall_read_dev(void *, u_int, u_int);
 void ipc_send(u_int whom, u_int val, const void *srcva, u_int perm);
 u_int ipc_recv(u_int *whom, void *dstva, u_int *perm);
 
+int sem_init(const char *name, int init_value, int checkperm);
+int sem_wait(int sem_id);
+int sem_post(int sem_id);
+int sem_getvalue(int sem_id);
+int sem_getid(const char *name);
+
 // wait.c
 void wait(u_int envid);
 
