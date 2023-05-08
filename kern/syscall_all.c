@@ -491,7 +491,7 @@ static int is_parent(u_int parent_id, u_int e_id)
 }
 
 #define SEM_MAX_NAME_LEN 36
-#define SEM_MAX_NUM 12
+#define SEM_MAX_NUM 10
 #define MAX_PROC_NUM 64
 
 struct Semaphore
@@ -572,7 +572,7 @@ int sys_sem_wait(int sem_id)
 		}
 		curenv->env_status = ENV_NOT_RUNNABLE;
 		TAILQ_REMOVE(&env_sched_list, curenv, env_sched_link);
-		((struct Trapframe*)KSTACKTOP - 1)->regs[2] = 1;
+		((struct Trapframe*)KSTACKTOP - 1)->regs[2] = 0;
 		sys_yield();
 	}
 
