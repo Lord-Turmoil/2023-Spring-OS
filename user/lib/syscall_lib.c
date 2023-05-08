@@ -68,7 +68,15 @@ int syscall_sem_init(const char *name, int init_value, int checkperm)
 
 int syscall_sem_wait(int sem_id)
 {
-	return msyscall(SYS_sem_wait, sem_id);
+	int r;
+	if ((r = msyscall(SYS_sem_wait, sem_id)) != 0)
+		return r;
+	return msyscall(SYS_sem_v, sem_id);
+}
+
+int syscall_sem_v(int sem_id)
+{
+	return msyscall(SYS_sem_v, sem_id);
 }
 
 int syscall_sem_post(int sem_id)

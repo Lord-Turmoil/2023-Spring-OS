@@ -572,10 +572,22 @@ int sys_sem_wait(int sem_id)
 		}
 		curenv->env_status = ENV_NOT_RUNNABLE;
 		TAILQ_REMOVE(&env_sched_list, curenv, env_sched_link);
+		((struct Trapframe*)KSTACKTOP - 1)->regs[2] = 0;
 		sys_yield();
 	}
 
-	s->value--;
+	// will never reach here.
+	return 0;
+}
+
+int sys_sem_v(int sem_id)
+{
+	struct Semaphore* s = get_sem(sem_id, curenv->env_id);
+	if (!s)
+		return -E_NO_SEM;
+
+	if (s->value > 0)
+		s->value--;
 
 	return 0;
 }
@@ -713,6 +725,7 @@ void* syscall_table[MAX_SYSNO] = {
 	[SYS_cgetc] = sys_cgetc,
 	[SYS_sem_init] = sys_sem_init,
 	[SYS_sem_wait] = sys_sem_wait,
+	[SYS_sem_v] = sys_sem_v,
 	[SYS_sem_post] = sys_sem_post,
 	[SYS_sem_getvalue] = sys_sem_getvalue,
 	[SYS_sem_getid] = sys_sem_getid,
