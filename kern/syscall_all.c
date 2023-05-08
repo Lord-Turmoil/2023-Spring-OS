@@ -572,7 +572,7 @@ int sys_sem_wait(int sem_id)
 		}
 		curenv->env_status = ENV_NOT_RUNNABLE;
 		TAILQ_REMOVE(&env_sched_list, curenv, env_sched_link);
-		((struct Trapframe*)KSTACKTOP - 1)->regs[2] = 0;
+		((struct Trapframe*)KSTACKTOP - 1)->regs[2] = 1;
 		sys_yield();
 	}
 

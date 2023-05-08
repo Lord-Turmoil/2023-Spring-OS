@@ -69,9 +69,14 @@ int syscall_sem_init(const char *name, int init_value, int checkperm)
 int syscall_sem_wait(int sem_id)
 {
 	int r;
-	if ((r = msyscall(SYS_sem_wait, sem_id)) != 0)
-		return r;
-	return msyscall(SYS_sem_v, sem_id);
+	while ((r = msyscall(SYS_sem_wait, sem_id)) != 0)
+	{
+		if (r == -E_NO_SEM)
+			return r;
+		continue;
+	}
+
+	return 0;
 }
 
 int syscall_sem_v(int sem_id)
