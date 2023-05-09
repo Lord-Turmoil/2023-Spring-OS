@@ -71,11 +71,6 @@ int syscall_sem_wait(int sem_id)
 	return msyscall(SYS_sem_wait, sem_id);
 }
 
-int syscall_sem_v(int sem_id)
-{
-	return msyscall(SYS_sem_v, sem_id);
-}
-
 int syscall_sem_post(int sem_id)
 {
 	return msyscall(SYS_sem_post, sem_id);

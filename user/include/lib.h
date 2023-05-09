@@ -73,9 +73,17 @@ int syscall_set_trapframe(u_int envid, struct Trapframe *tf);
 void syscall_panic(const char *msg) __attribute__((noreturn));
 int syscall_ipc_try_send(u_int envid, u_int value, const void *srcva, u_int perm);
 int syscall_ipc_recv(void *dstva);
+
+int syscall_sem_init(const char* name, int init_value, int checkperm);
+int syscall_sem_wait(int sem_id);
+int syscall_sem_post(int sem_id);
+int syscall_sem_getvalue(int sem_id);
+int syscall_sem_getid(const char* name);
+
 int syscall_cgetc();
 int syscall_write_dev(void *, u_int, u_int);
 int syscall_read_dev(void *, u_int, u_int);
+
 
 // ipc.c
 void ipc_send(u_int whom, u_int val, const void *srcva, u_int perm);
@@ -83,7 +91,6 @@ u_int ipc_recv(u_int *whom, void *dstva, u_int *perm);
 
 int sem_init(const char *name, int init_value, int checkperm);
 int sem_wait(int sem_id);
-int sem_v(int sem_id);
 int sem_post(int sem_id);
 int sem_getvalue(int sem_id);
 int sem_getid(const char *name);

@@ -21,7 +21,6 @@ enum {
 	SYS_ipc_recv,
 	SYS_sem_init,
 	SYS_sem_wait,
-	SYS_sem_v,
 	SYS_sem_post,
 	SYS_sem_getvalue,
 	SYS_sem_getid,

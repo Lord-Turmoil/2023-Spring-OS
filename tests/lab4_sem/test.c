@@ -15,18 +15,18 @@ int main() {
 	}
 	if (r == 0) {
 		sem_wait(lock_id);
-		os_assert(sem_getvalue(items_id) == 4, "WRONG_RETURN_VALUE_WAIT");
-		os_assert(sem_getvalue(lock_id) == 0, "WRONG_RETURN_VALUE_WAIT");
+		os_assert(sem_getvalue(items_id) == 4, "WRONG_RETURN_VALUE_WAIT 1");
+		os_assert(sem_getvalue(lock_id) == 0, "WRONG_RETURN_VALUE_WAIT 2");
 		debugf("OSTEST_OK\n");
 		return 0;
 	} else {
-		os_assert(sem_getvalue(items_id) == 5, "WRONG_RETURN_VALUE");
-		os_assert(sem_getvalue(lock_id) == 0, "WRONG_RETURN_VALUE");
+		os_assert(sem_getvalue(items_id) == 5, "WRONG_RETURN_VALUE 3");
+		os_assert(sem_getvalue(lock_id) == 0, "WRONG_RETURN_VALUE 4");
 
 		sem_wait(items_id);
 
-		os_assert(sem_getvalue(items_id) == 4, "WRONG_RETURN_VALUE_WAIT");
-		os_assert(sem_getvalue(lock_id) == 0, "WRONG_RETURN_VALUE_WAIT");
+		os_assert(sem_getvalue(items_id) == 4, "WRONG_RETURN_VALUE_WAIT 5");
+		os_assert(sem_getvalue(lock_id) == 0, "WRONG_RETURN_VALUE_WAIT 6");
 
 		sem_post(lock_id);
 		debugf("OSTEST_OK\n");
