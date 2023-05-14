@@ -311,7 +311,7 @@ struct File* create_file(struct File* dirf)
 	// 'make_link_block' function and return a pointer to the new block on 'disk'.
 	/* Exercise 5.5: Your code here. (3/3) */
 	/*
-	 * 'make_link_block' is used to make a block that stores File, an inside
+	 * 'make_link_block' is used to make a block that stores File, and inside
 	 * of it, it calls 'save_block_link', which links this new block to 'dirf',
 	 * which decides whether link this block to f_direct[] or f_indirect. Of course
 	 * during 'save_block_link', another block may be allocated for f_indirect.
