@@ -337,8 +337,13 @@ void read_bitmap(void)
 	debugf("read_bitmap is good\n");
 }
 
-// Overview:
-//  Test that write_block works, by smashing the superblock and reading it back.
+/*
+** Overview:
+**  Test that write_block works, by smashing the superblock and reading it back.
+** Notice that, here, we actually didn't affect the 0-th block, because there's
+** no write operation of block 0. So we just use the virtual address of block 0
+** as a temporary segment.
+*/
 void check_write_block(void)
 {
 	super = NULL;

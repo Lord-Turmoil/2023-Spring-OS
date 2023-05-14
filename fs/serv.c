@@ -21,9 +21,12 @@ struct Open
 #define MAXOPEN 1024
 #define FILEVA 0x60000000
 
-// initialize to force into data section
-// struct Open opentab[MAXOPEN] = { {0, 0, 1} };
-struct Open opentab[MAXOPEN];
+/*
+** initialize to force into data section
+** 2023/05/14: It seems, it won't affect the result... IDK...
+*/
+struct Open opentab[MAXOPEN] = { { 0, 0, 1 } };
+// struct Open opentab[MAXOPEN];
 
 // Virtual address at which to receive page mappings containing client requests.
 #define REQVA 0x0ffff000
