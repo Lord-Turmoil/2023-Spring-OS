@@ -316,8 +316,8 @@ void read_bitmap(void)
 
 	// Step 1: Calculate the number of the bitmap blocks, and read them into memory.
 	// error if super->s_nblocks == BIT2BLK
-	u_int nbitmap = super->s_nblocks / BIT2BLK + 1;
-	// u_int nbitmap = super->s_nblocks / BIT2BLK + !!(super->s_nblocks % BIT2BLK);
+	// u_int nbitmap = super->s_nblocks / BIT2BLK + 1;
+	u_int nbitmap = super->s_nblocks / BIT2BLK + !!(super->s_nblocks % BIT2BLK);
 	for (u_int i = 0; i < nbitmap; i++)
 		read_block(i + 2, blk, 0);
 

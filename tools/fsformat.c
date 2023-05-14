@@ -126,9 +126,10 @@ void init_disk()
 	 * We actually need (NBLOCK / BIT2BLK) blocks as bit block. However, if so,
 	 * because the integral division, 'nbitblock' will end up to be zero. So
 	 * here we add BIT2BLK to make it at least one. However, if NBLOCK == BIT2BLK,
-	 * we'll get a extra block... Thus is why '-1' is needed.
+	 * we'll get a extra block... This is why '-1' is needed.
 	 */
 	nbitblock = (NBLOCK + BIT2BLK - 1) / BIT2BLK;
+	// nbitblock = NBLOCK / BIT2BLK + !!(NBLOCK % BIT2BLK);
 	
 	/*
 	 * This is the next block no. 2 is boot sector (block 0) and super block
