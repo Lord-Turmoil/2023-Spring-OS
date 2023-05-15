@@ -167,15 +167,16 @@ void ssd_write(u_int logic_no, void *src)
 		return;
 	if (min_erase < SSD_THRESHOLD)
 	{
+		ide_write(0, pno, src, 1);
 		ssdmap[logic_no].pno = pno;
 		ssdmap[logic_no].valid = 1;
-		ide_write(0, pno, src, 1);
 		ssdblocks[pno].writable = 0;
 		return;
 	}
 	
 	// Here, pno -> A, rpno -> B
 	u_int rpno = -1;	// replacement pno
+	min_erase = 2147483647;
 	for (int i = 0; i < SSD_BLOCK_NUM; i++)
 	{
 		if (ssdblocks[i].writable)
@@ -217,9 +218,12 @@ void ssd_erase(u_int logic_no)
 {
 	if (!ssdmap[logic_no].valid)
 		return;
+	ssdmap[logic_no].valid = 0;
+
 	u_int pno = ssdmap[logic_no].pno;
 	memset(&dumb, 0, BY2SECT);
 	ide_write(0, pno, &dumb, 1);
+
 	ssdblocks[pno].erase++;
 	ssdblocks[pno].writable = 1;
 }
