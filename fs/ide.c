@@ -201,12 +201,13 @@ void ssd_write(u_int logic_no, void *src)
 		if (ssdmap[i].pno == rpno)
 		{
 			ssdmap[i].pno = pno;
+			ssd_erase(i);
 			break;
 		}
 	}
 	
 	// clear B
-	ssd_erase(rpno);
+	// ssd_erase(rpno); // Barnacles!!!
 	ide_write(0, rpno, src, 1);
 	ssdmap[logic_no].pno = rpno;
 	ssdmap[logic_no].valid = 1;
