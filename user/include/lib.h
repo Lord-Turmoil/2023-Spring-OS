@@ -30,12 +30,12 @@ void _user_halt(const char*, int, const char*, ...) __attribute__((noreturn));
 #define user_halt(...) _user_halt(__FILE__, __LINE__, __VA_ARGS__)
 
 #undef panic_on
-#define panic_on(expr)                                \
-	do {                                              \
-		int r = (expr);                               \
-		if (r != 0) {                                 \
-			user_panic("'" #expr "' returned %d", r); \
-		}                                             \
+#define panic_on(expr)                                  \
+	do {                                                \
+		int __r = (expr);                               \
+		if (__r != 0) {                                 \
+			user_panic("'" #expr "' returned %d", __r); \
+		}                                               \
 	} while (0)
 
 /// fork, spawn
