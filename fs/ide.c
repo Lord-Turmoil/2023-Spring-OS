@@ -193,14 +193,15 @@ void ssd_write(u_int logic_no, void *src)
 			rpno = i;
 		}
 	}
-	if (rpno == -1)
+	if (rpno == INVALID_PNO)
 		return;
 	// write block B to block A
-	if (pno != old_pno)	// not cleared at the beginning
+	if (!ssdblocks[pno].writable)	// not cleared
 	{
 		memset(dumb, 0, BY2SECT);	// clear A first
 		ide_write(0, pno, &dumb, 1);
 		ssdblocks[pno].erase++;
+		ssdblocks[pno].writable = 1;
 	}
 	ide_read(0, rpno, &dumb, 1);	// write B to A
 	ide_write(0, pno, &dumb, 1);
