@@ -65,6 +65,7 @@ void usleep(u_int us)
 {
 	u_int old_sec, old_usec;
 	u_int new_sec, new_usec;
+	u_int elapsed;
 
 	old_sec = get_time(&old_usec);
 	for (; ; )
