@@ -151,7 +151,11 @@ void ssd_write(u_int logic_no, void *src)
 {
 	u_int old_pno = INVALID_PNO;
 	if (ssdmap[logic_no].valid)
+	{
+		old_pno = ssdmap[logic_no].pno;
 		ssd_erase(logic_no);
+	}
+
 	// allocate
 	int min_erase = 2147483647;
 	u_int pno = INVALID_PNO;
