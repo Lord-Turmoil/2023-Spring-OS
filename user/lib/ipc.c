@@ -59,11 +59,12 @@ u_int get_time(u_int *us)
 	return sec;
 }
 
+#define US2S 1000000u
+
 void usleep(u_int us)
 {
 	u_int old_sec, old_usec;
 	u_int new_sec, new_usec;
-	u_int elapsed;
 
 	old_sec = get_time(&old_usec);
 	for (; ; )
@@ -71,10 +72,10 @@ void usleep(u_int us)
 		new_sec = get_time(&new_usec);
 		if (new_usec < old_usec)
 		{
-			new_usec += 1000;
+			new_usec += US2S;
 			new_sec--;
 		}
-		elapsed = (new_sec - old_sec) * 1000u + (new_usec - old_usec);
+		elapsed = (new_sec - old_sec) * US2S + (new_usec - old_usec);
 		if (elapsed < us)
 			syscall_yield();
 		else
