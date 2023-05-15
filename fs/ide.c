@@ -7,24 +7,24 @@
 #include <lib.h>
 #include <mmu.h>
 
-// Overview:
-//  read data from IDE disk. First issue a read request through
-//  disk register and then copy data from disk buffer
-//  (512 bytes, a sector) to destination array.
-//
-// Parameters:
-//  diskno: disk number.
-//  secno: start sector number.
-//  dst: destination for data read from IDE disk.
-//  nsecs: the number of sectors to read.
-//
-// Post-Condition:
-//  Panic if any error occurs. (you may want to use 'panic_on')
-//
-// Hint: Use syscalls to access device registers and buffers.
-// Hint: Use the physical address and offsets defined in 'include/drivers/dev_disk.h':
-//  'DEV_DISK_ADDRESS', 'DEV_DISK_ID', 'DEV_DISK_OFFSET', 'DEV_DISK_OPERATION_READ',
-//  'DEV_DISK_START_OPERATION', 'DEV_DISK_STATUS', 'DEV_DISK_BUFFER'
+ // Overview:
+ //  read data from IDE disk. First issue a read request through
+ //  disk register and then copy data from disk buffer
+ //  (512 bytes, a sector) to destination array.
+ //
+ // Parameters:
+ //  diskno: disk number.
+ //  secno: start sector number.
+ //  dst: destination for data read from IDE disk.
+ //  nsecs: the number of sectors to read.
+ //
+ // Post-Condition:
+ //  Panic if any error occurs. (you may want to use 'panic_on')
+ //
+ // Hint: Use syscalls to access device registers and buffers.
+ // Hint: Use the physical address and offsets defined in 'include/drivers/dev_disk.h':
+ //  'DEV_DISK_ADDRESS', 'DEV_DISK_ID', 'DEV_DISK_OFFSET', 'DEV_DISK_OPERATION_READ',
+ //  'DEV_DISK_START_OPERATION', 'DEV_DISK_STATUS', 'DEV_DISK_BUFFER'
 void ide_read(u_int diskno, u_int secno, void* dst, u_int nsecs)
 {
 	u_int begin = secno * BY2SECT;
@@ -37,16 +37,16 @@ void ide_read(u_int diskno, u_int secno, void* dst, u_int nsecs)
 	{
 		/* Exercise 5.3: Your code here. (1/2) */
 		u_int dev_offset = begin + offset;
-		
+
 		// Set IDE disk ID.
 		panic_on(syscall_write_dev(&diskno,
-								  DEV_DISK_ADDRESS + DEV_DISK_ID,
-								  sizeof(diskno)));
+								   DEV_DISK_ADDRESS + DEV_DISK_ID,
+								   sizeof(diskno)));
 		// Set offset from begin.
 		panic_on(syscall_write_dev(&dev_offset,
 								   DEV_DISK_ADDRESS + DEV_DISK_OFFSET,
 								   sizeof(dev_offset)));
-		
+
 		// Set disk to read.
 		panic_on(syscall_write_dev(&read_flag,
 								   DEV_DISK_ADDRESS + DEV_DISK_START_OPERATION,
@@ -61,8 +61,8 @@ void ide_read(u_int diskno, u_int secno, void* dst, u_int nsecs)
 
 		// Read data to device buffer.
 		panic_on(syscall_read_dev(dst + offset,
-								   DEV_DISK_ADDRESS + DEV_DISK_BUFFER,
-								   BY2SECT));
+								  DEV_DISK_ADDRESS + DEV_DISK_BUFFER,
+								  BY2SECT));
 	}
 }
 
@@ -124,13 +124,16 @@ void ide_write(u_int diskno, u_int secno, void* src, u_int nsecs)
 }
 
 //////////////////////////////////////////////////////////////
-struct SSDMap ssdmap[SSD_BLOCK_NUM];
-struct SSDBlock ssdblocks[SSD_BLOCK_NUM];
-u_char dumb[BY2SECT];
+static u_int ssdmap[SSD_BLOCK_NUM];
+static struct SSDBlock ssdblocks[SSD_BLOCK_NUM];
+static const u_char DUMB_BLOCK[BY2SECT];
+static u_char temp_block[BY2SECT];
+
+static u_int INVALID_PNO = 0xFFFFFFFF;
 
 void ssd_init()
 {
-	memset(ssdmap, 0, sizeof(ssdmap));
+	memset(ssdmap, 0xFF, sizeof(ssdmap));
 	for (int i = 0; i < SSD_BLOCK_NUM; i++)
 	{
 		ssdblocks[i].erase = 0;
@@ -138,24 +141,19 @@ void ssd_init()
 	}
 }
 
-int ssd_read(u_int logic_no, void *dst)
+int ssd_read(u_int logic_no, void* dst)
 {
-	if (!ssdmap[logic_no].valid)
+	if (ssdmap[logic_no] == INVALID_PNO)
 		return -1;
-	ide_read(0, ssdmap[logic_no].pno, dst, 1);
+	ide_read(0, ssdmap[logic_no], dst, 1);
 	return 0;
 }
 
-static const u_int INVALID_PNO = 0xFFFFFFFF;
-void ssd_write(u_int logic_no, void *src)
+static u_int _get_writable_block()
 {
-	if (ssdmap[logic_no].valid)
-		ssd_erase(logic_no);
-
-	// allocate
 	int min_erase = 2147483647;
 	u_int pno = INVALID_PNO;
-	for (int i = 0; i < SSD_BLOCK_NUM; i++)
+	for (u_int i = 0; i < SSD_BLOCK_NUM; i++)
 	{
 		if (!ssdblocks[i].writable)
 			continue;
@@ -165,65 +163,71 @@ void ssd_write(u_int logic_no, void *src)
 			pno = i;
 		}
 	}
-	if (pno == INVALID_PNO)
-		return;
-	if (min_erase < SSD_THRESHOLD)
-	{
-		ide_write(0, pno, src, 1);
-		ssdmap[logic_no].pno = pno;
-		ssdmap[logic_no].valid = 1;
-		ssdblocks[pno].writable = 0;
-		return;
-	}
-	
-	// Here, pno -> A, rpno -> B
-	u_int rpno = INVALID_PNO;	// replacement pno
-	min_erase = 2147483647;
-	for (int i = 0; i < SSD_BLOCK_NUM; i++)
+
+	return pno;
+}
+
+static u_int _get_non_writable_block()
+{
+	int min_erase = 2147483647;
+	u_int pno = INVALID_PNO;
+	for (u_int i = 0; i < SSD_BLOCK_NUM; i++)
 	{
 		if (ssdblocks[i].writable)
 			continue;
 		if (ssdblocks[i].erase < min_erase)
 		{
 			min_erase = ssdblocks[i].erase;
-			rpno = i;
+			pno = i;
 		}
 	}
-	if (rpno == INVALID_PNO)
+
+	return pno;
+}
+
+void ssd_write(u_int logic_no, void* src)
+{
+	if (ssdmap[logic_no] != INVALID_PNO)
+		ssd_erase(logic_no);
+
+	u_int pno = _get_writable_block();
+	if (pno == INVALID_PNO)
 		return;
-	// write block B to block A
-	ide_read(0, rpno, &dumb, 1);	// write B to A
-	ide_write(0, pno, &dumb, 1);
-	ssdblocks[pno].writable = 0;
-	// update map
-	for (int i = 0; i < SSD_BLOCK_NUM; i++)
+	if (ssdblocks[pno].erase >= SSD_THRESHOLD)
 	{
-		if (ssdmap[i].pno == rpno)
+		u_int rpno = _get_non_writable_block();
+		if (rpno == INVALID_PNO)
+			return;
+		ide_read(0, rpno, (void*)&temp_block, 1);
+		ide_write(0, pno, (void*)&temp_block, 1);
+		ssdblocks[pno].writable = 0;
+		for (u_int i = 0; i < SSD_BLOCK_NUM; i++)
 		{
-			ssdmap[i].pno = pno;
-			break;
+			if (ssdmap[i] == rpno)
+			{
+				ssd_erase(i);
+				ssdmap[i] = pno;
+				break;
+			}
 		}
+		pno = rpno;
 	}
-	
-	// clear B
-	ssd_erase(rpno);
-	ide_write(0, rpno, src, 1);
-	ssdmap[logic_no].pno = rpno;
-	ssdmap[logic_no].valid = 1;
-	ssdblocks[rpno].writable = 0;
+
+	ide_write(0, pno, src, 1);
+	ssdmap[logic_no] = pno;
+	ssdblocks[pno].writable = 0;
 }
 
 void ssd_erase(u_int logic_no)
 {
-	if (!ssdmap[logic_no].valid)
+	if (ssdmap[logic_no] == INVALID_PNO)
 		return;
-	ssdmap[logic_no].valid = 0;
 
-	u_int pno = ssdmap[logic_no].pno;
-	memset(&dumb, 0, BY2SECT);
-	ide_write(0, pno, &dumb, 1);
+	u_int pno = ssdmap[logic_no];
+	ide_write(0, pno, (void*)&DUMB_BLOCK, 1);
 
 	ssdblocks[pno].erase++;
 	ssdblocks[pno].writable = 1;
-}
 
+	ssdmap[logic_no] = INVALID_PNO;
+}

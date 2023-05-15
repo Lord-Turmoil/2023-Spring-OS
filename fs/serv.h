@@ -40,12 +40,6 @@ int alloc_block(void);
 #define SSD_BLOCK_NUM 32
 #define SSD_THRESHOLD 5
 
-struct SSDMap
-{
-	u_int pno;
-	int valid;
-};
-
 struct SSDBlock
 {
 	int erase;	// erase time count
