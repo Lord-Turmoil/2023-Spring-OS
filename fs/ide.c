@@ -122,3 +122,105 @@ void ide_write(u_int diskno, u_int secno, void* src, u_int nsecs)
 			user_panic("ide_write failed");
 	}
 }
+
+//////////////////////////////////////////////////////////////
+struct SSDMap ssdmap[SSD_BLOCK_NUM];
+struct SSDBlock ssdblocks[SSD_BLOCK_NUM];
+u_char dumb[BY2SECT];
+
+void ssd_init()
+{
+	memset(ssdmap, 0, sizeof(ssdmap));
+	for (int i = 0; i < SSD_BLOCK_NUM; i++)
+	{
+		ssdblocks[i].erase = 0;
+		ssdblocks[i].writable = 1;
+	}
+}
+
+int ssd_read(u_int logic_no, void *dst)
+{
+	if (!ssdmap[logic_no].valid)
+		return -1;
+	ide_read(0, ssdmap[logic_no].pno, dst, 1);
+	return 0;
+}
+
+void ssd_write(u_int logic_no, void *src)
+{
+	if (ssdmap[logic_no].valid)
+		ssd_erase(logic_no);
+	// allocate
+	int min_erase = 2147483647;
+	int pno = -1;
+	for (int i = 0; i < SSD_BLOCK_NUM; i++)
+	{
+		if (!ssdblocks[i].writable)
+			continue;
+		if (ssdblocks[i].erase < min_erase)
+		{
+			min_erase = ssdblocks[i].erase;
+			pno = i;
+		}
+	}
+	if (pno == -1)
+		return;
+	if (min_erase < SSD_THRESHOLD)
+	{
+		ssdmap[logic_no].pno = pno;
+		ssdmap[logic_no].valid = 1;
+		ide_write(0, pno, src, 1);
+		ssdblocks[pno].writable = 0;
+		return;
+	}
+	
+	// Here, pno -> A, rpno -> B
+	u_int rpno = -1;	// replacement pno
+	for (int i = 0; i < SSD_BLOCK_NUM; i++)
+	{
+		if (ssdblocks[i].writable)
+			continue;
+		if (ssdblocks[i].erase < min_erase)
+		{
+			min_erase = ssdblocks[i].erase;
+			rpno = i;
+		}
+	}
+	if (rpno == -1)
+		return;
+	// write block B to block A
+	ide_read(0, rpno, &dumb, 1);
+	ide_write(0, pno, &dumb, 1);
+	// ssdblocks[pno].erase++;
+	ssdblocks[pno].writable = 0;
+	// update map
+	for (int i = 0; i < SSD_BLOCK_NUM; i++)
+	{
+		if (!ssdmap[i].valid)
+			continue;
+		if (ssdmap[i].pno == rpno)
+		{
+			ssdmap[i].pno = pno;
+			break;
+		}
+	}
+	
+	// clear B
+	ssd_erase(rpno);
+	ide_write(0, rpno, src, 1);
+	ssdmap[logic_no].pno = rpno;
+	ssdmap[logic_no].valid = 1;
+	ssdblocks[rpno].writable = 0;
+}
+
+void ssd_erase(u_int logic_no)
+{
+	if (!ssdmap[logic_no].valid)
+		return;
+	u_int pno = ssdmap[logic_no].pno;
+	memset(&dumb, 0, BY2SECT);
+	ide_write(0, pno, &dumb, 1);
+	ssdblocks[pno].erase++;
+	ssdblocks[pno].writable = 1;
+}
+
