@@ -110,6 +110,9 @@ int fsipc_remove(const char*);
 int fsipc_sync(void);
 int fsipc_incref(u_int);
 
+u_int get_time(u_int *us);
+void usleep(u_int us);
+
 // fd.c
 int close(int fd);
 int read(int fd, void* buf, u_int nbytes);
