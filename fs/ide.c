@@ -31,7 +31,7 @@ void ide_read(u_int diskno, u_int secno, void* dst, u_int nsecs)
 	u_int end = begin + nsecs * BY2SECT;
 
 	u_int read_flag = DEV_DISK_OPERATION_READ;
-	u_int r;
+	u_int r;	// r is dangerous
 
 	for (u_int offset = 0; begin + offset < end; offset += BY2SECT)
 	{
@@ -53,10 +53,15 @@ void ide_read(u_int diskno, u_int secno, void* dst, u_int nsecs)
 								   sizeof(read_flag)));
 
 		// Get disk return value (status).
-		panic_on(syscall_read_dev(&r,
-								  DEV_DISK_ADDRESS + DEV_DISK_STATUS,
-								  sizeof(r)));
-		// debugf("0x%x\n", &r);
+		// Macro replacement will case name conflict.
+		do
+		{
+			int r = (syscall_read_dev(&r, 0x13000000 + 0x0030, sizeof(r))); if (r != 0)
+			{
+				_user_panic("E:\\Program\\BUAA\\Operating System\\OS\\21371300\\fs\\ide.c", 58, "'" "syscall_read_dev(&r, DEV_DISK_ADDRESS + DEV_DISK_STATUS, sizeof(r))" "' returned %d", r);
+			}
+		} while (0);
+
 		if (r == 0)	// failed	
 			user_panic("ide_read failed");	// not kernel 'panic'
 
