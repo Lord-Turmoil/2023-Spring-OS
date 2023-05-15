@@ -149,12 +149,8 @@ int ssd_read(u_int logic_no, void *dst)
 static const u_int INVALID_PNO = 0xFFFFFFFF;
 void ssd_write(u_int logic_no, void *src)
 {
-	u_int old_pno = INVALID_PNO;
 	if (ssdmap[logic_no].valid)
-	{
-		old_pno = ssdmap[logic_no].pno;
 		ssd_erase(logic_no);
-	}
 
 	// allocate
 	int min_erase = 2147483647;
@@ -196,21 +192,12 @@ void ssd_write(u_int logic_no, void *src)
 	if (rpno == INVALID_PNO)
 		return;
 	// write block B to block A
-	if (!ssdblocks[pno].writable)	// not cleared
-	{
-		memset(dumb, 0, BY2SECT);	// clear A first
-		ide_write(0, pno, &dumb, 1);
-		ssdblocks[pno].erase++;
-		ssdblocks[pno].writable = 1;
-	}
 	ide_read(0, rpno, &dumb, 1);	// write B to A
 	ide_write(0, pno, &dumb, 1);
 	ssdblocks[pno].writable = 0;
 	// update map
 	for (int i = 0; i < SSD_BLOCK_NUM; i++)
 	{
-		if (!ssdmap[i].valid)
-			continue;
 		if (ssdmap[i].pno == rpno)
 		{
 			ssdmap[i].pno = pno;
