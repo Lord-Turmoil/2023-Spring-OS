@@ -52,18 +52,17 @@ void ide_read(u_int diskno, u_int secno, void* dst, u_int nsecs)
 								   DEV_DISK_ADDRESS + DEV_DISK_START_OPERATION,
 								   sizeof(read_flag)));
 
-		// Read data to device buffer.
-		panic_on(syscall_read_dev(dst + offset,
-								   DEV_DISK_ADDRESS + DEV_DISK_BUFFER,
-								   BY2SECT));
-
 		// Get disk return value (status).
 		panic_on(syscall_read_dev(&ret,
 								  DEV_DISK_ADDRESS + DEV_DISK_STATUS,
 								  sizeof(ret)));
-
 		if (ret == 0)	// failed
-			user_panic("ide_read failed");	// not kernal 'panic'
+			user_panic("ide_read failed");	// not kernel 'panic'
+
+		// Read data to device buffer.
+		panic_on(syscall_read_dev(dst + offset,
+								   DEV_DISK_ADDRESS + DEV_DISK_BUFFER,
+								   BY2SECT));
 	}
 }
 
