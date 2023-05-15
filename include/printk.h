@@ -16,7 +16,7 @@ void _panic(const char*, int, const char*, const char*, ...)
 
 #define panic_on(expr)                           \
 	do {                                         \
-		int r = (!!(expr));                      \
+		int r = (expr);                          \
 		if (r != 0) {                            \
 			panic("'" #expr "' returned %d", r); \
 		}                                        \

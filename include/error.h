@@ -50,7 +50,7 @@
  */
 #define try(expr)           \
 	do {                    \
-		int r = (!!(expr)); \
+		int r = (expr);     \
 		if (r != 0)         \
 			return r;       \
 	} while (0)
