@@ -190,9 +190,11 @@ void ssd_write(u_int logic_no, void *src)
 	if (rpno == -1)
 		return;
 	// write block B to block A
-	ide_read(0, rpno, &dumb, 1);
+	memset(dumb, 0, BY2SECT);	// clear A first
 	ide_write(0, pno, &dumb, 1);
-	// ssdblocks[pno].erase++;
+	ssdblocks[pno].erase++;
+	ide_read(0, rpno, &dumb, 1);	// write B to A
+	ide_write(0, pno, &dumb, 1);
 	ssdblocks[pno].writable = 0;
 	// update map
 	for (int i = 0; i < SSD_BLOCK_NUM; i++)
