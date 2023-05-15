@@ -4,6 +4,8 @@
 #include <lib.h>
 #include <mmu.h>
 
+#include <drivers/dev_rtc.h>
+
 // Send val to whom.  This function keeps trying until
 // it succeeds.  It should panic() on any error other than
 // -E_IPC_NOT_RECV.
@@ -42,7 +44,7 @@ u_int get_time(u_int *us)
 {
 	u_int write = 1;
 	panic_on(syscall_write_dev(&write,
-				DEV_RTC_ADDRESS + DEV_RTC_TRIGGER_READ 
+				DEV_RTC_ADDRESS + DEV_RTC_TRIGGER_READ, 
 				sizeof(u_int)));
 	u_int sec;
 	u_int usec;
