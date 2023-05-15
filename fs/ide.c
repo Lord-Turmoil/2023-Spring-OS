@@ -146,13 +146,15 @@ int ssd_read(u_int logic_no, void *dst)
 	return 0;
 }
 
+static const u_int INVALID_PNO = 0xFFFFFFFF;
 void ssd_write(u_int logic_no, void *src)
 {
+	u_int old_pno = INVALID_PNO;
 	if (ssdmap[logic_no].valid)
 		ssd_erase(logic_no);
 	// allocate
 	int min_erase = 2147483647;
-	int pno = -1;
+	u_int pno = INVALID_PNO;
 	for (int i = 0; i < SSD_BLOCK_NUM; i++)
 	{
 		if (!ssdblocks[i].writable)
@@ -163,7 +165,7 @@ void ssd_write(u_int logic_no, void *src)
 			pno = i;
 		}
 	}
-	if (pno == -1)
+	if (pno == INVALID_PNO)
 		return;
 	if (min_erase < SSD_THRESHOLD)
 	{
@@ -175,7 +177,7 @@ void ssd_write(u_int logic_no, void *src)
 	}
 	
 	// Here, pno -> A, rpno -> B
-	u_int rpno = -1;	// replacement pno
+	u_int rpno = INVALID_PNO;	// replacement pno
 	min_erase = 2147483647;
 	for (int i = 0; i < SSD_BLOCK_NUM; i++)
 	{
@@ -190,9 +192,12 @@ void ssd_write(u_int logic_no, void *src)
 	if (rpno == -1)
 		return;
 	// write block B to block A
-	memset(dumb, 0, BY2SECT);	// clear A first
-	ide_write(0, pno, &dumb, 1);
-	ssdblocks[pno].erase++;
+	if (pno != old_pno)	// not cleared at the beginning
+	{
+		memset(dumb, 0, BY2SECT);	// clear A first
+		ide_write(0, pno, &dumb, 1);
+		ssdblocks[pno].erase++;
+	}
 	ide_read(0, rpno, &dumb, 1);	// write B to A
 	ide_write(0, pno, &dumb, 1);
 	ssdblocks[pno].writable = 0;
