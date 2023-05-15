@@ -31,7 +31,7 @@ void ide_read(u_int diskno, u_int secno, void* dst, u_int nsecs)
 	u_int end = begin + nsecs * BY2SECT;
 
 	u_int read_flag = DEV_DISK_OPERATION_READ;
-	u_int ret;
+	u_int r;
 
 	for (u_int offset = 0; begin + offset < end; offset += BY2SECT)
 	{
@@ -53,10 +53,11 @@ void ide_read(u_int diskno, u_int secno, void* dst, u_int nsecs)
 								   sizeof(read_flag)));
 
 		// Get disk return value (status).
-		panic_on(syscall_read_dev(&ret,
+		panic_on(syscall_read_dev(&r,
 								  DEV_DISK_ADDRESS + DEV_DISK_STATUS,
-								  sizeof(ret)));
-		if (ret == 0)	// failed
+								  sizeof(r)));
+		// debugf("0x%x\n", &r);
+		if (r == 0)	// failed	
 			user_panic("ide_read failed");	// not kernel 'panic'
 
 		// Read data to device buffer.
