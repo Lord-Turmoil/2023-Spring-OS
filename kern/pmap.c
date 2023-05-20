@@ -150,7 +150,7 @@ int page_alloc(struct Page** pp)
 	/* Exercise 2.4: Your code here. (1/2) */
 	if (LIST_EMPTY(&page_free_list))
 		return -E_NO_MEM;
-	newPage = page_free_list.lh_first;
+	newPage = LIST_FIRST(&page_free_list);
 
 	LIST_REMOVE(newPage, pp_link);
 

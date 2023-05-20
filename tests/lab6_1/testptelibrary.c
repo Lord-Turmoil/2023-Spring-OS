@@ -33,6 +33,7 @@ int main(int argc, char **argv) {
 	if ((r = spawnl("testptelibrary.b", "testptelibrary", "arg", 0)) < 0) {
 		user_panic("spawn wrong: %d", r);
 	}
+	debugf("\tBefore wait...\n");
 	wait(r);
 	debugf("\tAfter wait...\n");
 	if (strcmp(TMPVA, msg2) == 0) {

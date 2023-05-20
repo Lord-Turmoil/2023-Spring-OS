@@ -137,8 +137,6 @@ int spawn(char* prog, char** argv)
 		goto err;
 	}
 
-	debugf("\tELF header loaded!\n");
-
 	const Elf32_Ehdr* ehdr = elf_from(elfbuf, sizeof(Elf32_Ehdr));
 	if (!ehdr)
 	{
@@ -187,7 +185,7 @@ int spawn(char* prog, char** argv)
 			// Read and map the ELF data in the file at 'ph->p_offset' into our
 			// memory using 'read_map()'. 'goto err1' if that fails.
 			/* Exercise 6.4: Your code here. (5/6) */
-			if ((r = read_map(fd, ph_off, &bin)) != 0)
+			if ((r = read_map(fd, ph->p_offset, &bin)) != 0)
 				goto err1;
 
 			// Load the segment 'ph' into the child's memory using 'elf_load_seg()'.
