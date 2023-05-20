@@ -19,21 +19,26 @@
  *   The buffer is modified to turn the spaces after words into zero bytes ('\0'), so that the
  *   returned token is a null-terminated string.
  */
-int _gettoken(char *s, char **p1, char **p2) {
+int _gettoken(char* s, char** p1, char** p2)
+{
 	*p1 = 0;
 	*p2 = 0;
-	if (s == 0) {
+	if (s == 0)
+	{
 		return 0;
 	}
 
-	while (strchr(WHITESPACE, *s)) {
+	while (strchr(WHITESPACE, *s))
+	{
 		*s++ = 0;
 	}
-	if (*s == 0) {
+	if (*s == 0)
+	{
 		return 0;
 	}
 
-	if (strchr(SYMBOLS, *s)) {
+	if (strchr(SYMBOLS, *s))
+	{
 		int t = *s;
 		*p1 = s;
 		*s++ = 0;
@@ -42,18 +47,21 @@ int _gettoken(char *s, char **p1, char **p2) {
 	}
 
 	*p1 = s;
-	while (*s && !strchr(WHITESPACE SYMBOLS, *s)) {
+	while (*s && !strchr(WHITESPACE SYMBOLS, *s))
+	{
 		s++;
 	}
 	*p2 = s;
 	return 'w';
 }
 
-int gettoken(char *s, char **p1) {
+int gettoken(char* s, char** p1)
+{
 	static int c, nc;
-	static char *np1, *np2;
+	static char* np1, * np2;
 
-	if (s) {
+	if (s)
+	{
 		nc = _gettoken(s, &np1, &np2);
 		return 0;
 	}
@@ -65,43 +73,61 @@ int gettoken(char *s, char **p1) {
 
 #define MAXARGS 128
 
-int parsecmd(char **argv, int *rightpipe) {
+int parsecmd(char** argv, int* rightpipe)
+{
 	int argc = 0;
-	while (1) {
-		char *t;
+	while (1)
+	{
+		char* t;
 		int fd, r;
 		int c = gettoken(0, &t);
-		switch (c) {
+		switch (c)
+		{
 		case 0:
 			return argc;
 		case 'w':
-			if (argc >= MAXARGS) {
+			if (argc >= MAXARGS)
+			{
 				debugf("too many arguments\n");
 				exit();
 			}
 			argv[argc++] = t;
 			break;
 		case '<':
-			if (gettoken(0, &t) != 'w') {
+			if (gettoken(0, &t) != 'w')
+			{
 				debugf("syntax error: < not followed by word\n");
 				exit();
 			}
 			// Open 't' for reading, dup it onto fd 0, and then close the original fd.
 			/* Exercise 6.5: Your code here. (1/3) */
-
-			user_panic("< redirection not implemented");
-
+			fd = open(t, O_RDONLY);
+			if (fd < 0)
+			{
+				debugf("can't open '%s' for reading\n", t);
+				exit();
+			}
+			dup(fd, 0);
+			close(fd);
+			// user_panic("< redirection not implemented");
 			break;
 		case '>':
-			if (gettoken(0, &t) != 'w') {
+			if (gettoken(0, &t) != 'w')
+			{
 				debugf("syntax error: > not followed by word\n");
 				exit();
 			}
 			// Open 't' for writing, dup it onto fd 1, and then close the original fd.
 			/* Exercise 6.5: Your code here. (2/3) */
-
-			user_panic("> redirection not implemented");
-
+			fd = open(t, O_WRONLY);
+			if (fd < 0)
+			{
+				debugf("can't open '%s' for writing\n", t);
+				exit();
+			}
+			dup(fd, 1);
+			close(fd);
+			// user_panic("> redirection not implemented");
 			break;
 		case '|':;
 			/*
@@ -121,8 +147,30 @@ int parsecmd(char **argv, int *rightpipe) {
 			 */
 			int p[2];
 			/* Exercise 6.5: Your code here. (3/3) */
+			pipe(&p);
+			r = fork();
+			if (r < 0)
+			{
+				debugf("failed to fork\n");
+				exit();
+			}
+			*rightpipe = r;
+			if (r == 0)
+			{
+				dup(p[0], 0);
+				close(p[0]);
+				close(p[1]);
+				return parsecmd(argv, rightpipe);
+			}
+			else
+			{
+				dup(p[1], 1);
+				close(p[0]);
+				close(p[1]);
+				return argc;
+			}
 
-			user_panic("| not implemented");
+			// user_panic("| not implemented");
 
 			break;
 		}
@@ -131,56 +179,73 @@ int parsecmd(char **argv, int *rightpipe) {
 	return argc;
 }
 
-void runcmd(char *s) {
+void runcmd(char* s)
+{
 	gettoken(s, 0);
 
-	char *argv[MAXARGS];
+	char* argv[MAXARGS];
 	int rightpipe = 0;
 	int argc = parsecmd(argv, &rightpipe);
-	if (argc == 0) {
+	if (argc == 0)
+	{
 		return;
 	}
 	argv[argc] = 0;
 
 	int child = spawn(argv[0], argv);
 	close_all();
-	if (child >= 0) {
+	if (child >= 0)
+	{
 		wait(child);
-	} else {
+	}
+	else
+	{
 		debugf("spawn %s: %d\n", argv[0], child);
 	}
-	if (rightpipe) {
+	if (rightpipe)
+	{
 		wait(rightpipe);
 	}
 	exit();
 }
 
-void readline(char *buf, u_int n) {
+void readline(char* buf, u_int n)
+{
 	int r;
-	for (int i = 0; i < n; i++) {
-		if ((r = read(0, buf + i, 1)) != 1) {
-			if (r < 0) {
+	for (int i = 0; i < n; i++)
+	{
+		if ((r = read(0, buf + i, 1)) != 1)
+		{
+			if (r < 0)
+			{
 				debugf("read error: %d\n", r);
 			}
 			exit();
 		}
-		if (buf[i] == '\b' || buf[i] == 0x7f) {
-			if (i > 0) {
+		if (buf[i] == '\b' || buf[i] == 0x7f)
+		{
+			if (i > 0)
+			{
 				i -= 2;
-			} else {
+			}
+			else
+			{
 				i = -1;
 			}
-			if (buf[i] != '\b') {
+			if (buf[i] != '\b')
+			{
 				printf("\b");
 			}
 		}
-		if (buf[i] == '\r' || buf[i] == '\n') {
+		if (buf[i] == '\r' || buf[i] == '\n')
+		{
 			buf[i] = 0;
 			return;
 		}
 	}
 	debugf("line too long\n");
-	while ((r = read(0, buf, 1)) == 1 && buf[0] != '\r' && buf[0] != '\n') {
+	while ((r = read(0, buf, 1)) == 1 && buf[0] != '\r' && buf[0] != '\n')
+	{
 		;
 	}
 	buf[0] = 0;
@@ -188,12 +253,14 @@ void readline(char *buf, u_int n) {
 
 char buf[1024];
 
-void usage(void) {
+void usage(void)
+{
 	debugf("usage: sh [-dix] [command-file]\n");
 	exit();
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
 	int r;
 	int interactive = iscons(0);
 	int echocmds = 0;
@@ -202,7 +269,7 @@ int main(int argc, char **argv) {
 	debugf("::                     MOS Shell 2023                      ::\n");
 	debugf("::                                                         ::\n");
 	debugf(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n");
-	ARGBEGIN {
+	ARGBEGIN{
 	case 'i':
 		interactive = 1;
 		break;
@@ -212,39 +279,42 @@ int main(int argc, char **argv) {
 	default:
 		usage();
 	}
-	ARGEND
+		ARGEND
 
-	if (argc > 1) {
-		usage();
-	}
-	if (argc == 1) {
+		if (argc > 1)
+		{
+			usage();
+		}
+	if (argc == 1)
+	{
 		close(0);
-		if ((r = open(argv[1], O_RDONLY)) < 0) {
+		if ((r = open(argv[1], O_RDONLY)) < 0)
+		{
 			user_panic("open %s: %d", argv[1], r);
 		}
 		user_assert(r == 0);
 	}
-	for (;;) {
-		if (interactive) {
+	for (;;)
+	{
+		if (interactive)
 			printf("\n$ ");
-		}
 		readline(buf, sizeof buf);
 
-		if (buf[0] == '#') {
+		if (buf[0] == '#')
 			continue;
-		}
-		if (echocmds) {
+		if (echocmds)
 			printf("# %s\n", buf);
-		}
-		if ((r = fork()) < 0) {
+
+		if ((r = fork()) < 0)
 			user_panic("fork: %d", r);
-		}
-		if (r == 0) {
+		if (r == 0)
+		{
 			runcmd(buf);
 			exit();
-		} else {
-			wait(r);
 		}
+		else
+			wait(r);
 	}
+
 	return 0;
 }

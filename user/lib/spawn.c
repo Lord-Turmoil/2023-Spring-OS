@@ -122,8 +122,6 @@ int spawn(char* prog, char** argv)
 		return fd;
 	}
 
-	debugf("\tfd openend!\n");
-
 	// Step 2: Read the ELF header (of type 'Elf32_Ehdr') from the file into
 	// 'elfbuf' using 'readn()'.
 	// If that fails (where 'readn' returns a different size than expected),
@@ -198,8 +196,6 @@ int spawn(char* prog, char** argv)
 	}
 	close(fd);
 
-	debugf("\tfd closed\n");
-
 	struct Trapframe tf = envs[ENVX(child)].env_tf;
 	tf.cp0_epc = entrypoint;
 	tf.regs[29] = sp;
@@ -232,8 +228,6 @@ int spawn(char* prog, char** argv)
 		}
 	}
 
-	debugf("\tLibrary set!\n");
-
 	if ((r = syscall_set_env_status(child, ENV_RUNNABLE)) < 0)
 	{
 		debugf("spawn: syscall_set_env_status %x: %d\n", child, r);
@@ -255,6 +249,5 @@ int spawnl(char* prog, char* args, ...)
 {
 	// Thanks to MIPS calling convention, the layout of arguments on the stack
 	// are straightforward.
-	debugf("spawnl called\n");
 	return spawn(prog, &args);
 }
