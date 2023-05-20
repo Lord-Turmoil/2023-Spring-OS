@@ -147,7 +147,11 @@ int parsecmd(char** argv, int* rightpipe)
 			 */
 			int p[2];
 			/* Exercise 6.5: Your code here. (3/3) */
-			pipe(&p);
+			if (pipe(p) != 0)
+			{
+				debugf("failed to creat pipe\n");
+				exit();
+			}
 			r = fork();
 			if (r < 0)
 			{
