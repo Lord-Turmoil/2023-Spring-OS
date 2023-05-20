@@ -147,9 +147,6 @@ int dup(int oldfdnum, int newfdnum)
 	newfd = (struct Fd*)INDEX2FD(newfdnum);
 	ova = fd2data(oldfd);
 	nva = fd2data(newfd);
-	r = syscall_mem_map(0, oldfd, 0, newfd, vpt[VPN(oldfd)] & (PTE_D | PTE_LIBRARY));
-	if (r < 0)
-		goto err;
 
 	if (vpd[PDX(ova)])
 	{
@@ -168,6 +165,10 @@ int dup(int oldfdnum, int newfdnum)
 			}
 		}
 	}
+
+	r = syscall_mem_map(0, oldfd, 0, newfd, vpt[VPN(oldfd)] & (PTE_D | PTE_LIBRARY));
+	if (r < 0)
+		goto err;
 
 	return newfdnum;
 

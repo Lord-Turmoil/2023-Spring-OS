@@ -3,23 +3,24 @@
 #include <mmu.h>
 #define debug 0
 
-static int pipe_close(struct Fd *);
-static int pipe_read(struct Fd *fd, void *buf, u_int n, u_int offset);
-static int pipe_stat(struct Fd *, struct Stat *);
-static int pipe_write(struct Fd *fd, const void *buf, u_int n, u_int offset);
+static int pipe_close(struct Fd*);
+static int pipe_read(struct Fd* fd, void* buf, u_int n, u_int offset);
+static int pipe_stat(struct Fd*, struct Stat*);
+static int pipe_write(struct Fd* fd, const void* buf, u_int n, u_int offset);
 
 struct Dev devpipe = {
-    .dev_id = 'p',
-    .dev_name = "pipe",
-    .dev_read = pipe_read,
-    .dev_write = pipe_write,
-    .dev_close = pipe_close,
-    .dev_stat = pipe_stat,
+	.dev_id = 'p',
+	.dev_name = "pipe",
+	.dev_read = pipe_read,
+	.dev_write = pipe_write,
+	.dev_close = pipe_close,
+	.dev_stat = pipe_stat,
 };
 
 #define BY2PIPE 32 // small to provoke races
 
-struct Pipe {
+struct Pipe
+{
 	u_int p_rpos;	       // read position
 	u_int p_wpos;	       // write position
 	u_char p_buf[BY2PIPE]; // data buffer
@@ -33,27 +34,32 @@ struct Pipe {
  *   write end of the pipe on success.
  *   Return an corresponding error code on error.
  */
-int pipe(int pfd[2]) {
+int pipe(int pfd[2])
+{
 	int r;
-	void *va;
-	struct Fd *fd0, *fd1;
+	void* va;
+	struct Fd* fd0, * fd1;
 
 	/* Step 1: Allocate the file descriptors. */
-	if ((r = fd_alloc(&fd0)) < 0 || (r = syscall_mem_alloc(0, fd0, PTE_D | PTE_LIBRARY)) < 0) {
+	if ((r = fd_alloc(&fd0)) < 0 || (r = syscall_mem_alloc(0, fd0, PTE_D | PTE_LIBRARY)) < 0)
+	{
 		goto err;
 	}
 
-	if ((r = fd_alloc(&fd1)) < 0 || (r = syscall_mem_alloc(0, fd1, PTE_D | PTE_LIBRARY)) < 0) {
+	if ((r = fd_alloc(&fd1)) < 0 || (r = syscall_mem_alloc(0, fd1, PTE_D | PTE_LIBRARY)) < 0)
+	{
 		goto err1;
 	}
 
 	/* Step 2: Allocate and map the page for the 'Pipe' structure. */
 	va = fd2data(fd0);
-	if ((r = syscall_mem_alloc(0, (void *)va, PTE_D | PTE_LIBRARY)) < 0) {
+	if ((r = syscall_mem_alloc(0, (void*)va, PTE_D | PTE_LIBRARY)) < 0)
+	{
 		goto err2;
 	}
-	if ((r = syscall_mem_map(0, (void *)va, 0, (void *)fd2data(fd1), PTE_D | PTE_LIBRARY)) <
-	    0) {
+	if ((r = syscall_mem_map(0, (void*)va, 0, (void*)fd2data(fd1), PTE_D | PTE_LIBRARY)) <
+		0)
+	{
 		goto err3;
 	}
 
@@ -72,7 +78,7 @@ int pipe(int pfd[2]) {
 	return 0;
 
 err3:
-	syscall_mem_unmap(0, (void *)va);
+	syscall_mem_unmap(0, (void*)va);
 err2:
 	syscall_mem_unmap(0, fd1);
 err1:
@@ -92,7 +98,8 @@ err:
  *   Use 'pageref' to get the reference count for
  *   the physical page mapped by the virtual page.
  */
-static int _pipe_is_closed(struct Fd *fd, struct Pipe *p) {
+static int _pipe_is_closed(struct Fd* fd, struct Pipe* p)
+{
 	// The 'pageref(p)' is the total number of readers and writers.
 	// The 'pageref(fd)' is the number of envs with 'fd' open
 	// (readers if fd is a reader, writers if fd is a writer).
@@ -107,8 +114,29 @@ static int _pipe_is_closed(struct Fd *fd, struct Pipe *p) {
 	// Keep retrying until 'env->env_runs' is unchanged before and after
 	// reading the reference counts.
 	/* Exercise 6.1: Your code here. (1/3) */
+	runs = env->env_runs;
+	do
+	{
+		fd_ref = pageref(fd);
+		pipe_ref = pageref(p);
+	} while (runs != env->env_runs);
+
+	/*
+	 * Check runs to prevent non-atomic comparison.
+	 */
+
 
 	return fd_ref == pipe_ref;
+}
+
+static int _pipe_is_empty(struct Pipe* p)
+{
+	return p->p_rpos >= p->p_wpos;
+}
+
+static int _pipe_is_full(struct Pipe* p)
+{
+	return p->p_wpos - p->p_rpos >= BY2PIPE;
 }
 
 /* Overview:
@@ -124,11 +152,8 @@ static int _pipe_is_closed(struct Fd *fd, struct Pipe *p) {
  *   Use '_pipe_is_closed' to check if the pipe is closed.
  *   The parameter 'offset' isn't used here.
  */
-static int pipe_read(struct Fd *fd, void *vbuf, u_int n, u_int offset) {
-	int i;
-	struct Pipe *p;
-	char *rbuf;
-
+static int pipe_read(struct Fd* fd, void* vbuf, u_int n, u_int offset)
+{
 	// Use 'fd2data' to get the 'Pipe' referred by 'fd'.
 	// Write a loop that transfers one byte in each iteration.
 	// Check if the pipe is closed by '_pipe_is_closed'.
@@ -137,6 +162,19 @@ static int pipe_read(struct Fd *fd, void *vbuf, u_int n, u_int offset) {
 	//    of bytes read so far.
 	//  - Otherwise, keep yielding until the buffer isn't empty or the pipe is closed.
 	/* Exercise 6.1: Your code here. (2/3) */
+	struct Pipe* p = (struct Pipe*)fd2data(fd);
+	int nbytes = 0;
+	// char* rbuf;
+	for (; ; )
+	{
+		while (!_pipe_is_empty(p) && nbytes < n)
+		{
+			*(u_char*)(vbuf + nbytes++) = p->p_buf[p->p_rpos++ % BY2PIPE];
+		}
+		if ((nbytes > 0) || _pipe_is_closed(fd, p))
+			return nbytes;
+		syscall_yield();
+	}
 
 	user_panic("pipe_read not implemented");
 }
@@ -152,11 +190,8 @@ static int pipe_read(struct Fd *fd, void *vbuf, u_int n, u_int offset) {
  *   Use '_pipe_is_closed' to judge if the pipe is closed.
  *   The parameter 'offset' isn't used here.
  */
-static int pipe_write(struct Fd *fd, const void *vbuf, u_int n, u_int offset) {
-	int i;
-	struct Pipe *p;
-	char *wbuf;
-
+static int pipe_write(struct Fd* fd, const void* vbuf, u_int n, u_int offset)
+{
 	// Use 'fd2data' to get the 'Pipe' referred by 'fd'.
 	// Write a loop that transfers one byte in each iteration.
 	// If the bytes of the pipe used equals to 'BY2PIPE', the pipe is regarded as full.
@@ -166,10 +201,21 @@ static int pipe_write(struct Fd *fd, const void *vbuf, u_int n, u_int offset) {
 	//  - If the pipe isn't closed, keep yielding until the buffer isn't full or the
 	//    pipe is closed.
 	/* Exercise 6.1: Your code here. (3/3) */
+	struct Pipe* p = (struct Pipe*)fd2data(fd);
+	int nbytes = 0;
+	// char* wbuf;
+	for (; ; )
+	{
+		while (!_pipe_is_full(p) && nbytes < n)
+		{
+			p->p_buf[p->p_wpos++ % BY2PIPE] = *(u_char*)(vbuf + nbytes++);
+		}
+		if (nbytes == n || _pipe_is_closed(fd, p))
+			return nbytes;
+		syscall_yield();
+	}
 
 	user_panic("pipe_write not implemented");
-
-	return n;
 }
 
 /* Overview:
@@ -183,17 +229,21 @@ static int pipe_write(struct Fd *fd, const void *vbuf, u_int n, u_int offset) {
  * Hint:
  *   Use '_pipe_is_closed'.
  */
-int pipe_is_closed(int fdnum) {
-	struct Fd *fd;
-	struct Pipe *p;
+int pipe_is_closed(int fdnum)
+{
+	struct Fd* fd;
+	struct Pipe* p;
 	int r;
 
 	// Step 1: Get the 'fd' referred by 'fdnum'.
-	if ((r = fd_lookup(fdnum, &fd)) < 0) {
+	if ((r = fd_lookup(fdnum, &fd)) < 0)
+	{
 		return r;
 	}
+
 	// Step 2: Get the 'Pipe' referred by 'fd'.
-	p = (struct Pipe *)fd2data(fd);
+	p = (struct Pipe*)fd2data(fd);
+
 	// Step 3: Use '_pipe_is_closed' to judge if the pipe is closed.
 	return _pipe_is_closed(fd, p);
 }
@@ -207,13 +257,20 @@ int pipe_is_closed(int fdnum) {
  * Hint:
  *   Use 'syscall_mem_unmap' to unmap the pages.
  */
-static int pipe_close(struct Fd *fd) {
+static int pipe_close(struct Fd* fd)
+{
 	// Unmap 'fd' and the referred Pipe.
-	syscall_mem_unmap(0, (void *)fd2data(fd));
 	syscall_mem_unmap(0, fd);
+
+	// <--- schedule may be called here!
+	
+	// Close pipe page after file descriptor to avoid 'fake' close!
+	syscall_mem_unmap(0, (void*)fd2data(fd));
+
 	return 0;
 }
 
-static int pipe_stat(struct Fd *fd, struct Stat *stat) {
+static int pipe_stat(struct Fd* fd, struct Stat* stat)
+{
 	return 0;
 }
