@@ -14,12 +14,12 @@ void _panic(const char*, int, const char*, const char*, ...)
 
 #define panic(...) _panic(__FILE__, __LINE__, __func__, __VA_ARGS__)
 
-#define panic_on(expr)                           \
-	do {                                         \
+#define panic_on(expr)                             \
+	do {                                           \
 		int __r = (expr);                          \
 		if (__r != 0) {                            \
 			panic("'" #expr "' returned %d", __r); \
-		}                                        \
+		}                                          \
 	} while (0)
 
 #endif /* _printk_h_ */

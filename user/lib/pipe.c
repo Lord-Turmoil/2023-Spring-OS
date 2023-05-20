@@ -125,7 +125,6 @@ static int _pipe_is_closed(struct Fd* fd, struct Pipe* p)
 	 * Check runs to prevent non-atomic comparison.
 	 */
 
-
 	return fd_ref == pipe_ref;
 }
 

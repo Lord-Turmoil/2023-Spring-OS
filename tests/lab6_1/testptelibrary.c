@@ -34,6 +34,7 @@ int main(int argc, char **argv) {
 		user_panic("spawn wrong: %d", r);
 	}
 	wait(r);
+	debugf("\tAfter wait...\n");
 	if (strcmp(TMPVA, msg2) == 0) {
 		debugf("spawn solved the problem of PTE_LIBRARY,congratulations!\n");
 	} else {

@@ -122,8 +122,10 @@ int spawn(char* prog, char** argv)
 		return fd;
 	}
 
-	// Step 2: Read the ELF header (of type 'Elf32_Ehdr') from the file into 'elfbuf' using
-	// 'readn()'.
+	debugf("\tfd openend!\n");
+
+	// Step 2: Read the ELF header (of type 'Elf32_Ehdr') from the file into
+	// 'elfbuf' using 'readn()'.
 	// If that fails (where 'readn' returns a different size than expected),
 	// set 'r' and 'goto err' to close the file and return the error.
 	int r;
@@ -135,6 +137,8 @@ int spawn(char* prog, char** argv)
 		goto err;
 	}
 
+	debugf("\tELF header loaded!\n");
+
 	const Elf32_Ehdr* ehdr = elf_from(elfbuf, sizeof(Elf32_Ehdr));
 	if (!ehdr)
 	{
@@ -143,8 +147,8 @@ int spawn(char* prog, char** argv)
 	}
 	u_long entrypoint = ehdr->e_entry;
 
-	// Step 3: Create a child using 'syscall_exofork()' and store its envid in 'child'.
-	// If the syscall fails, set 'r' and 'goto err'.
+	// Step 3: Create a child using 'syscall_exofork()' and store its envid in
+	// 'child'. If the syscall fails, set 'r' and 'goto err'.
 	u_int child;
 	/* Exercise 6.4: Your code here. (2/6) */
 	r = syscall_exofork();
@@ -152,11 +156,12 @@ int spawn(char* prog, char** argv)
 		goto err;
 	child = r;
 
-	// Step 4: Use 'init_stack(child, argv, &sp)' to initialize the stack of the child.
-	// 'goto err1' if that fails.
+	// Step 4: Use 'init_stack(child, argv, &sp)' to initialize the stack of the
+	// child. 'goto err1' if that fails.
 	u_int sp;
 	/* Exercise 6.4: Your code here. (3/6) */
-	init_stack(child, argv, &sp);
+	if ((r = init_stack(child, argv, &sp)) != 0)
+		goto err1;
 
 	// Step 5: Load the ELF segments in the file into the child's memory.
 	// This is similar to 'load_icode()' in the kernel.
@@ -169,8 +174,7 @@ int spawn(char* prog, char** argv)
 		// You may want to use 'seek' and 'readn'.
 		/* Exercise 6.4: Your code here. (4/6) */
 		seek(fd, ph_off);
-		r = readn(fd, elfbuf, ehdr->e_phentsize);
-		if (r != ehdr->e_phentsize)
+		if (readn(fd, elfbuf, ehdr->e_phentsize) != ehdr->e_phentsize)
 		{
 			r = -E_NOT_EXEC;
 			goto err1;
@@ -180,9 +184,8 @@ int spawn(char* prog, char** argv)
 		if (ph->p_type == PT_LOAD)
 		{
 			void* bin;
-			// Read and map the ELF data in the file at 'ph->p_offset' into our memory
-			// using 'read_map()'.
-			// 'goto err1' if that fails.
+			// Read and map the ELF data in the file at 'ph->p_offset' into our
+			// memory using 'read_map()'. 'goto err1' if that fails.
 			/* Exercise 6.4: Your code here. (5/6) */
 			if ((r = read_map(fd, ph_off, &bin)) != 0)
 				goto err1;
@@ -196,6 +199,8 @@ int spawn(char* prog, char** argv)
 		}
 	}
 	close(fd);
+
+	debugf("\tfd closed\n");
 
 	struct Trapframe tf = envs[ENVX(child)].env_tf;
 	tf.cp0_epc = entrypoint;
@@ -229,6 +234,8 @@ int spawn(char* prog, char** argv)
 		}
 	}
 
+	debugf("\tLibrary set!\n");
+
 	if ((r = syscall_set_env_status(child, ENV_RUNNABLE)) < 0)
 	{
 		debugf("spawn: syscall_set_env_status %x: %d\n", child, r);
@@ -250,5 +257,6 @@ int spawnl(char* prog, char* args, ...)
 {
 	// Thanks to MIPS calling convention, the layout of arguments on the stack
 	// are straightforward.
+	debugf("spawnl called\n");
 	return spawn(prog, &args);
 }
