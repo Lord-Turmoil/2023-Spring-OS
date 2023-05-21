@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 			printf("\nPASH HOST $ ");
 		ret = get_string(buffer, &opt);
 		printf("\n");
-		if (ret == -EOF)
+		if (ret == EOF)
 		{
 			debugf("End-of-File reached!\n");
 			return 0;
