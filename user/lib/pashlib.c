@@ -126,8 +126,8 @@ int get_string(char* buffer, const input_opt_t* options)
 		ret = _input_handler(&opt, &ctx);
 		if (ret == 0)
 			continue;
-		else if (ret == -EOF)	// EOF
-			return -EOF;
+		else if (ret == EOF)	// EOF
+			return EOF;
 		else if (ret < 0)	// interrupted
 			return ctx.length;
 		else				// ends normally
@@ -333,7 +333,7 @@ int _input_handler(const input_opt_t* opt, input_ctx_t* ctx)
 	int ch = getch();
 	
 	if (ch == EOF)
-		return -EOF;
+		return EOF;
 
 	if (is_terminator(ch))
 	{
@@ -378,7 +378,7 @@ int _special_root_handler(const input_opt_t* opt, input_ctx_t* ctx)
 	case 91:
 		return _special_direct_handler(opt, ctx);
 	case EOF:
-		return -EOF;
+		return EOF;
 	default:
 		return 0;
 	}
@@ -412,7 +412,7 @@ int _special_direct_handler(const input_opt_t* opt, input_ctx_t* ctx)
 	case 51:
 		return _special_extend_handler(opt, ctx);
 	case EOF:
-		return -EOF;
+		return EOF;
 	default:
 		return 0;
 	}
@@ -432,7 +432,7 @@ int _special_extend_handler(const input_opt_t* opt, input_ctx_t* ctx)
 	case 59:
 		return _special_ctrl_inter_handler(opt, ctx);
 	case EOF:
-		return -EOF;
+		return EOF;
 	default:
 		break;
 	}
@@ -449,7 +449,7 @@ int _special_ctrl_root_handler(const input_opt_t* opt, input_ctx_t* ctx)
 	case 59:
 		return _special_ctrl_inter_handler(opt, ctx);
 	case EOF:
-		return -EOF;
+		return EOF;
 	default:
 		break;
 	}
@@ -466,7 +466,7 @@ int _special_ctrl_inter_handler(const input_opt_t* opt, input_ctx_t* ctx)
 	case 53:
 		return _special_ctrl_direct_handler(opt, ctx);
 	case EOF:
-		return -EOF;
+		return EOF;
 	default:
 		break;
 	}
@@ -496,7 +496,7 @@ int _special_ctrl_direct_handler(const input_opt_t* opt, input_ctx_t* ctx)
 		_input_ctrl_delete(opt, ctx);
 		break;
 	case EOF:
-		return -EOF;
+		return EOF;
 	default:
 		break;
 	}

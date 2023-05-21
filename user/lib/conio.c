@@ -15,19 +15,19 @@ int getch()
 	struct Fd* fd;
 	int ret;
 	if ((ret = fd_lookup(0, &fd)) < 0)
-		return -EOF;
+		return EOF;
 
 	int ch;
 	if (fd->fd_dev_id == devcons.dev_id)
 	{
 		ch = syscall_getch();
 		if (ch == EOF)
-			return -EOF;
+			return EOF;
 	}
 	else
 	{
 		if (read(0, &ch, 1) != 1)
-			return -EOF;
+			return EOF;
 	}
 
 	return ch;
