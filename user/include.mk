@@ -10,7 +10,8 @@ USERLIB              := entry.o \
 			syscall_lib.o \
 			ipc.o \
 			conio.o \
-			ctype.o
+			ctype.o \
+			pashlib.o
 
 ifeq ($(call lab-ge,5), true)
 	INITAPPS     += devtst.x fstest.x
@@ -20,14 +21,10 @@ ifeq ($(call lab-ge,5), true)
 			fsipc.o \
 			console.o \
 			fprintf.o
-
 endif
 
 ifeq ($(call lab-ge,6), true)
-	INITAPPS     += icode.x \
-			testpipe.x \
-			testpiperace.x \
-			testptelibrary.x
+	INITAPPS     += icode.x
 
 	USERLIB      += wait.o spawn.o pipe.o
 	USERAPPS     := num.b  \
@@ -37,10 +34,10 @@ ifeq ($(call lab-ge,6), true)
 			sh.b  \
 			cat.b \
 			testarg.b \
-			testbss.b \
 			pingpong.b \
 			init.b \
-			testconio.b
+			testconio.b \
+			pash.b
 endif
 
 USERLIB := $(addprefix lib/, $(USERLIB)) $(wildcard ../lib/*.o)

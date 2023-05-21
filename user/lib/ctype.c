@@ -6,6 +6,8 @@
 ** This file is a mock for standard C header file ctype.h
 */
 
+#include <ctype.h>
+
 int iscntrl(int ch)
 {
 	return (ch < 32) || (ch == 127);

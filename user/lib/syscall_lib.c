@@ -79,10 +79,8 @@ int syscall_getch(void)
 {
 	int ch = 0;
 
-	do
-	{
-		ch = msyscall(SYS_getch);
-	} while (ch == 0);
+	while ((ch = msyscall(SYS_getch)) == 0)
+		syscall_yield();
 
 	return ch;
 }
