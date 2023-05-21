@@ -77,6 +77,7 @@ int syscall_ipc_recv(void* dstva);
 int syscall_cgetc();
 int syscall_write_dev(void*, u_int, u_int);
 int syscall_read_dev(void*, u_int, u_int);
+int syscall_getch(void);
 
 // ipc.c
 void ipc_send(u_int whom, u_int val, const void* srcva, u_int perm);

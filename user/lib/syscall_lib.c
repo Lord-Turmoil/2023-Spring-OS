@@ -74,3 +74,15 @@ int syscall_read_dev(void *va, u_int dev, u_int len) {
 	/* Exercise 5.2: Your code here. (2/2) */
 	return msyscall(SYS_read_dev, va, dev, len);
 }
+
+int syscall_getch(void)
+{
+	int ch = 0;
+
+	do
+	{
+		ch = msyscall(SYS_getch);
+	} while (ch == 0);
+
+	return ch;
+}

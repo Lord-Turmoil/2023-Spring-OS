@@ -8,7 +8,8 @@ USERLIB              := entry.o \
 			libos.o \
 			fork.o \
 			syscall_lib.o \
-			ipc.o
+			ipc.o \
+			conio.o
 
 ifeq ($(call lab-ge,5), true)
 	INITAPPS     += devtst.x fstest.x
@@ -34,14 +35,11 @@ ifeq ($(call lab-ge,6), true)
 			ls.b \
 			sh.b  \
 			cat.b \
-			testpipe.b \
-			testpiperace.b \
-			testptelibrary.b \
 			testarg.b \
 			testbss.b \
-			testfdsharing.b \
 			pingpong.b \
-			init.b
+			init.b \
+			testconio.b
 endif
 
 USERLIB := $(addprefix lib/, $(USERLIB)) $(wildcard ../lib/*.o)
