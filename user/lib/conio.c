@@ -21,7 +21,7 @@ int getch()
 	if (fd->fd_dev_id == devcons.dev_id)
 	{
 		ch = syscall_getch();
-		if (ch == EOF)
+		if (ch == -EOF)
 			return EOF;
 	}
 	else
