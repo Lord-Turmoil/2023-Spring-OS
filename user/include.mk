@@ -38,6 +38,7 @@ ifeq ($(call lab-ge,6), true)
 			pingpong.b \
 			init.b \
 			testconio.b \
+			tokentest.b \
 			pash.b
 endif
 

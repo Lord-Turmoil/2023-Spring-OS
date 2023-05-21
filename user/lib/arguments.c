@@ -10,8 +10,8 @@
 **   - https://gitee.com/tonys-studio/pass-bash-pro
 */
 
-
 #include <lib.h>
+#include <ctype.h>
 #include <arguments.h>
 
 static char _opt_buffer[128];
@@ -117,4 +117,126 @@ static void _initopt()
 	opterr = 0;
 	optopt = '?';
 	optind++;
+}
+
+
+/*
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+** Token
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+*/
+
+// const char ENTITIES[] = "<>();&|";
+const char ENTITIES[] = "<>;&|";	// for now, we do not support brackets
+
+static const char QUOTES[] = "\"\'";
+
+static token_t _get_token_type(char ch);
+
+static char* nextc;
+token_t get_token(char* str, char** token)
+{
+	if (str)
+		nextc = str;
+
+	// check emptiness
+	if (!nextc || !*nextc)
+	{
+		if (token)
+			*token = NULL;
+		return TK_EMPTY;
+	}
+
+	// skip leading white spaces
+	while (nextc && isspace(*nextc))
+		nextc++;
+	if (!nextc)
+	{
+		if (token)
+			*token = NULL;
+		return TK_EMPTY;;
+	}
+
+	// begin of a token is the return address
+	char* begin = nextc;
+	char quote = 0;		// whether in quote or not
+	while (*nextc)
+	{
+		if (quote == 0)	// not in quote
+		{
+			if (strchr(QUOTES, *nextc))	// encounter quote
+			{
+				quote = *nextc;
+				*nextc = '\0';
+				nextc++;
+				begin = nextc;			// begin also need to move forward
+				continue;
+			}
+			if (strchr(ENTITIES, *nextc))
+			{
+				if (token)
+					*token = NULL;	// if is token, this will be no-sense
+				return _get_token_type(*(nextc++));
+			}
+			if (isspace(*nextc))	// end of token
+			{
+				*(nextc++) = '\0';
+				if (token)
+					*token = begin;
+				return TK_WORD;
+			}
+
+			// then *nextc is a regular character
+			nextc++;
+		}
+		else	// in quotes
+		{
+			// Here, *nextc won't be '\0'.
+			if (*nextc == quote)	// end of quote, then end of token
+			{
+				*(nextc++) = '\0';
+				if (token)
+					*token = begin;
+				return TK_WORD;
+			}
+			nextc++;
+		}
+	}
+
+	// If reach here, it means the quote is not closed, or simply not white
+	// space after the last word.
+	if (token)
+		*token = begin;
+
+	if (quote)	// quote not closed
+	{
+		// then the caller decide whether to use this token
+		return TK_INVALID;
+	}
+	
+	return TK_WORD;
+}
+
+static token_t _get_token_type(char ch)
+{
+	// const char ENTITIES[] = "<>();&|";
+	switch (ch)
+	{
+	case '<':
+		return TK_REDIRECT_LEFT;
+	case '>':
+		return TK_REDIRECT_RIGHT;
+	case '(':
+		return TK_BRACKET_LEFT;
+	case ')':
+		return TK_BRACKET_RIGHT;
+	case ';':
+		return TK_SEMI_COLON;
+	case '&':
+		return TK_AMPERSAND;
+	case '|':
+		return TK_PIPE;
+	default:
+		return TK_INVALID;
+	}
 }

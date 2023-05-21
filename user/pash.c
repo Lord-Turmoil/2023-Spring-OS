@@ -21,10 +21,10 @@ static int echocmds;
 static char* filename;
 
 static void _usage(void);
-static int _parse_args(int argc, char* argv);
+static int _parse_args(int argc, char* argv[]);
 
-static int execute(char* cmd) { return 0; }
-static int excv() { return 0; }
+static int execute(char* cmd);
+static int excv();
 
 int main(int argc, char* argv[])
 {
@@ -44,6 +44,12 @@ int main(int argc, char* argv[])
 	opt.maxLen = PASH_BUFFER_SIZE - 1;
 	opt.interruptible = 1;
 	
+	printf("Pash Host for MOS v0.1.0\n");
+	printf("    Copyright (C) Tony's Studio 2023\n");
+	printf("Based on PassBash v3.x\n");
+	printf("__________________________________________________\n\n");
+
+
 	int ret;
 	for (; ; )
 	{
@@ -82,7 +88,7 @@ static void _usage(void)
 	exit();
 }
 
-static int _parse_args(int argc, char* argv)
+static int _parse_args(int argc, char* argv[])
 {
 	int opt;
 	int arg_cnt = 0;
@@ -131,3 +137,6 @@ static int _parse_args(int argc, char* argv)
 
 	return 0;
 }
+
+static int execute(char* cmd);
+static int excv();
