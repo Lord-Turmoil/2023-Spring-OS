@@ -9,7 +9,8 @@ USERLIB              := entry.o \
 			fork.o \
 			syscall_lib.o \
 			ipc.o \
-			conio.o
+			conio.o \
+			ctype.o
 
 ifeq ($(call lab-ge,5), true)
 	INITAPPS     += devtst.x fstest.x
