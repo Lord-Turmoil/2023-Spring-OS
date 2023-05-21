@@ -9,6 +9,8 @@
 #ifndef _CONIO_H_
 #define _CONIO_H_
 
+#define EOF 0x04
+
 int getch();
 void putch(int ch);
 

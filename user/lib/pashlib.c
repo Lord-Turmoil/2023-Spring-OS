@@ -21,8 +21,6 @@
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #endif
 
-const int PASH_BUFFER_SIZE = 1024;
-
 /*
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ** Input Options & Context
@@ -128,6 +126,8 @@ int get_string(char* buffer, const input_opt_t* options)
 		ret = _input_handler(&opt, &ctx);
 		if (ret == 0)
 			continue;
+		else if (ret == -EOF)	// EOF
+			return -EOF;
 		else if (ret < 0)	// interrupted
 			return ctx.length;
 		else				// ends normally
@@ -331,6 +331,10 @@ static void _input_ctrl_delete(const input_opt_t* opt, input_ctx_t* ctx)
 int _input_handler(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	int ch = getch();
+	
+	if (ch == EOF)
+		return -EOF;
+
 	if (is_terminator(ch))
 	{
 		if (ctx->length >= opt->minLen)
@@ -373,6 +377,8 @@ int _special_root_handler(const input_opt_t* opt, input_ctx_t* ctx)
 	{
 	case 91:
 		return _special_direct_handler(opt, ctx);
+	case EOF:
+		return -EOF;
 	default:
 		return 0;
 	}
@@ -405,6 +411,8 @@ int _special_direct_handler(const input_opt_t* opt, input_ctx_t* ctx)
 		return _special_ctrl_root_handler(opt, ctx);
 	case 51:
 		return _special_extend_handler(opt, ctx);
+	case EOF:
+		return -EOF;
 	default:
 		return 0;
 	}
@@ -423,6 +431,8 @@ int _special_extend_handler(const input_opt_t* opt, input_ctx_t* ctx)
 		break;
 	case 59:
 		return _special_ctrl_inter_handler(opt, ctx);
+	case EOF:
+		return -EOF;
 	default:
 		break;
 	}
@@ -438,6 +448,8 @@ int _special_ctrl_root_handler(const input_opt_t* opt, input_ctx_t* ctx)
 	{
 	case 59:
 		return _special_ctrl_inter_handler(opt, ctx);
+	case EOF:
+		return -EOF;
 	default:
 		break;
 	}
@@ -453,6 +465,8 @@ int _special_ctrl_inter_handler(const input_opt_t* opt, input_ctx_t* ctx)
 	{
 	case 53:
 		return _special_ctrl_direct_handler(opt, ctx);
+	case EOF:
+		return -EOF;
 	default:
 		break;
 	}
@@ -481,6 +495,8 @@ int _special_ctrl_direct_handler(const input_opt_t* opt, input_ctx_t* ctx)
 	case SPECIAL_DELETE:
 		_input_ctrl_delete(opt, ctx);
 		break;
+	case EOF:
+		return -EOF;
 	default:
 		break;
 	}
@@ -502,6 +518,19 @@ int is_terminator(int ch)
 int is_null_or_empty(const char* str)
 {
 	return !str || !*str;
+}
+
+int is_no_content(const char* str)
+{
+	if (is_null_or_empty(str))
+		return 1;
+	for (const char* p = str; *p; p++)
+	{
+		if (isprint(*p))
+			return 0;
+	}
+
+	return 1;
 }
 
 int is_the_same(const char* str1, const char* str2)

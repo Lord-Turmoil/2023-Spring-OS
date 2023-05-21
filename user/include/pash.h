@@ -49,6 +49,7 @@
 
 #define SPECIAL_DELETE 126
 
+#define CTRL_D 0x04
 
 /*
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -99,7 +100,7 @@ typedef struct _input_ctx_t
 void init_input_ctx(input_ctx_t* ctx);
 void copy_input_ctx(input_ctx_t* dst, const input_ctx_t* src);
 
-extern const int PASH_BUFFER_SIZE;
+#define PASH_BUFFER_SIZE 1024
 
 /*
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -118,6 +119,7 @@ int get_string(char* buffer, const input_opt_t* options);
 */
 int is_terminator(int ch);
 int is_null_or_empty(const char* str);
+int is_no_content(const char* str);
 
 int is_the_same(const char* str1, const char* str2);
 

@@ -97,9 +97,10 @@ int pipe_is_closed(int fdnum);
 // pageref.c
 int pageref(void*);
 
-// fprintf.c
-int fprintf(int fd, const char* fmt, ...);
+// printf.c
 int printf(const char* fmt, ...);
+int fprintf(int fd, const char* fmt, ...);
+int sprintf(char* buffer, const char* fmt, ...);
 
 // fsipc.c
 int fsipc_open(const char*, u_int, struct Fd*);

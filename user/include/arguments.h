@@ -1,0 +1,31 @@
+/********************************************************************
+** arguments.h
+**
+**     Copyright (C) Tony's Studio. All rights reserved.
+**
+** This file provides replica to Unix getopt() function.
+**
+** Based on PassBash.
+**   - https://github.com/Lord-Turmoil/PassBashPro
+**   - https://gitee.com/tonys-studio/pass-bash-pro
+*/
+
+#ifndef _ARGUMENTS_H_
+#define _ARGUMENTS_H_
+
+extern char* optarg;
+extern const char* optmsg;
+extern int opterr;
+extern int optopt;
+
+void resetopt();
+int getopt(int argc, char* argv[], const char* pattern);
+
+#define ERRNO_INVALID_OPTION   1
+#define ERRNO_MISSING_ARGUMENT 2
+
+#define ERRMSG_TOO_MANY "Too many arguments!"
+#define ERRMSG_TOO_FEW  "Too few arguments!"
+#define ERRMSG_ILLEGAL  "Arguments illegal!"
+
+#endif

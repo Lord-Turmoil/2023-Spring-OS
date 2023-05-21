@@ -11,6 +11,7 @@ USERLIB              := entry.o \
 			ipc.o \
 			conio.o \
 			ctype.o \
+			arguments.o \
 			pashlib.o
 
 ifeq ($(call lab-ge,5), true)
@@ -20,7 +21,7 @@ ifeq ($(call lab-ge,5), true)
 			file.o \
 			fsipc.o \
 			console.o \
-			fprintf.o
+			printf.o
 endif
 
 ifeq ($(call lab-ge,6), true)
