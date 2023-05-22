@@ -63,6 +63,17 @@ int open(const char* path, int mode)
 			return r;
 	}
 
+	if (ffd->f_file.f_type == FTYPE_LNK)
+	{
+		char target[MAXPATHLEN];
+		file_read(fd, target, MAXPATHLEN, 0);	// extra will be truncated
+		target[size] = '\0';
+		int file_num = open(target, mode);
+		if (file_num > 0)
+			close(fd2num(fd));
+		return file_num;
+	}
+
 	// Step 5: Return the number of file descriptor using 'fd2num'.
 	/* Exercise 5.9: Your code here. (5/5) */
 	return fd2num(fd);
