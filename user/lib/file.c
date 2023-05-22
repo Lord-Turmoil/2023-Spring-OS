@@ -68,6 +68,37 @@ int open(const char* path, int mode)
 	return fd2num(fd);
 }
 
+int openat(int dirfd, const char *path, int mode)
+{
+	int r;
+
+	struct Fd* dir;
+	if ((r = fd_lookup(dirfd, &dir)) < 0)
+		return r;
+	struct Filefd* dirffd = (struct Filefd*)dir;
+	u_int dir_fileid = dirffd->f_fileid;
+
+	struct Fd* fd;
+	if ((r = fd_alloc(&fd)) < 0)
+		return r;
+
+	if ((r = fsipc_openat(dir_fileid, path, mode, fd)) < 0)
+		return r;
+
+	char* va = fd2data(fd);
+	struct Filefd* ffd = (struct Filefd*)fd;
+	u_int fileid = ffd->f_fileid;
+	u_int size = ffd->f_file.f_size;
+
+	for (int i = 0; i < size; i += BY2PG)
+	{
+		if ((r = fsipc_map(fileid, i, va + i)) < 0)
+			return r;
+	}
+
+	return fd2num(fd);
+}
+
 // Overview:
 //  Close a file descriptor
 int file_close(struct Fd* fd)
