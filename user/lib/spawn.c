@@ -93,8 +93,13 @@ error:
 	return r;
 }
 
-static int spawn_mapper(void* data, u_long va, size_t offset, u_int perm, const void* src,
-						size_t len)
+static int spawn_mapper(
+	void* data,
+	u_long va,
+	size_t offset,
+	u_int perm,
+	const void* src,
+	size_t len)
 {
 	u_int child_id = *(u_int*)data;
 	try(syscall_mem_alloc(child_id, (void*)va, perm));

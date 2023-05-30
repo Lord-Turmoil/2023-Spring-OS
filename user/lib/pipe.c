@@ -57,8 +57,7 @@ int pipe(int pfd[2])
 	{
 		goto err2;
 	}
-	if ((r = syscall_mem_map(0, (void*)va, 0, (void*)fd2data(fd1), PTE_D | PTE_LIBRARY)) <
-		0)
+	if ((r = syscall_mem_map(0, (void*)va, 0, (void*)fd2data(fd1), PTE_D | PTE_LIBRARY)) < 0)
 	{
 		goto err3;
 	}
