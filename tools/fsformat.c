@@ -409,6 +409,7 @@ int main(int argc, char** argv)
 		char* name = argv[i];
 		struct stat stat_buf;
 		int r = stat(name, &stat_buf);
+		fprintf(stderr, "FSFORMAT: %s\n", name);
 		assert(r == 0);
 		if (S_ISDIR(stat_buf.st_mode))
 		{

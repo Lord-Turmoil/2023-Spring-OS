@@ -11,8 +11,7 @@ USERLIB              := entry.o \
 			ipc.o \
 			conio.o \
 			ctype.o \
-			arguments.o \
-			pashlib.o
+			arguments.o
 
 ifeq ($(call lab-ge,5), true)
 	INITAPPS     += devtst.x fstest.x

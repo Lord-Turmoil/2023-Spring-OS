@@ -4,7 +4,10 @@ tools_dir   := ../tools
 
 include include.mk
 
-.PRECIOUS: %.b %.b.c
+.PRECIOUS: %.o %.b %.b.c
+
+# all must be the first target!!!
+all: $(INITAPPS) $(USERAPPS) $(USERLIB)
 
 %.x: %.b.c
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -25,7 +28,15 @@ include include.mk
 
 .PHONY: all clean
 
-all: $(INITAPPS) $(USERAPPS) $(USERLIB)
-	
+pash.o: ./include/pash.h
+
+tokentest.o: ./include/pash.h
+
+pash.b: pash.o ./lib/pashlib.o $(USERLIB)
+	$(LD) -o $@ $(LDFLAGS) -T ./user.lds $^
+
+tokentest.b: tokentest.o ./lib/pashlib.o $(USERLIB)
+	$(LD) -o $@ $(LDFLAGS) -T ./user.lds $^
+
 clean:
 	rm -rf *~ *.o *.b.c *.x *.b lib/*.o
