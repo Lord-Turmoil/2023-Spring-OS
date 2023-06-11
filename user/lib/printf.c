@@ -81,3 +81,19 @@ int printf(const char* fmt, ...)
 	va_end(ap);
 	return r;
 }
+
+int printfc(int color, const char* fmt, ...)
+{
+	// set color
+	printf("\033[%dm", color);
+
+	va_list ap;
+	va_start(ap, fmt);
+	int r = vfprintf(1, fmt, ap);
+	va_end(ap);
+
+	// reset color
+	printf("\033[0m");
+
+	return r;
+}

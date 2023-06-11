@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 	for (; ; )
 	{
 		if (interactive)
-			printf("\nPASH HOST $ ");
+			printfc(FOREGROUND(GREEN), "\nPASH HOST $ ");
 		ret = get_string(buffer, &opt);
 		printf("\n");
 		if (ret == EOF)

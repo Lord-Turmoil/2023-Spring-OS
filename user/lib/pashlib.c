@@ -165,13 +165,13 @@ static void _insert_n_space(int n)
 
 static void _insert_backspace()
 {
-	putch('\b');
+	printf("\033[1D");
 }
 
 static void _insert_n_backspace(int n)
 {
-	for (int i = 0; i < n; i++)
-		_insert_backspace();
+	if (n > 0)
+		printf("\033[%dD", n);
 }
 
 static void _insert_delete()
@@ -228,7 +228,8 @@ void _input_arrow_left(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (ctx->pos > 0)
 	{
-		_insert_backspace();
+		//_insert_backspace();
+		printf("\033[1D");
 		ctx->pos--;
 	}
 }
@@ -237,7 +238,8 @@ void _input_arrow_right(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (ctx->pos < ctx->length)
 	{
-		_insert_char(ctx->buffer[ctx->pos]);
+		//_insert_char(ctx->buffer[ctx->pos]);
+		printf("\033[1C");
 		ctx->pos++;
 	}
 }

@@ -101,6 +101,26 @@ int pageref(void*);
 int printf(const char* fmt, ...);
 int fprintf(int fd, const char* fmt, ...);
 int sprintf(char* buffer, const char* fmt, ...);
+int printfc(int color, const char* fmt, ...);
+
+/********************************************************************
+** Console colors. Adapted from PassBash.
+*/
+#define BLACK   0
+#define RED     1
+#define GREEN   2
+#define YELLOW  3
+#define BLUE    4
+#define MAGENTA 5
+#define CYAN    6
+#define WHITE   7
+
+#define FOREGROUND(COLOR) ((COLOR) + 30)
+#define BACKGROUND(COLOR) ((COLOR) + 40)
+
+#define FOREGROUND_LIGHT(COLOR) (FOREGROUND(COLOR) + 60)
+#define BACKGROUND_LIGHT(COLOR) (BACKGROUND(COLOR) + 60)
+
 
 // fsipc.c
 int fsipc_open(const char*, u_int, struct Fd*);
