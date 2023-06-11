@@ -38,7 +38,9 @@ ifeq ($(call lab-ge,6), true)
 			init.b \
 			testconio.b \
 			tokentest.b \
-			pash.b
+			pash.b \
+			ampersand.b
 endif
 
+USERLIB      += lib.o
 USERLIB := $(addprefix lib/, $(USERLIB)) $(wildcard ../lib/*.o)

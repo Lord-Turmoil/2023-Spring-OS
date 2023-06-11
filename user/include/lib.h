@@ -83,6 +83,10 @@ int syscall_getch(void);
 void ipc_send(u_int whom, u_int val, const void* srcva, u_int perm);
 u_int ipc_recv(u_int* whom, void* dstva, u_int* perm);
 
+u_int get_time(u_int* us);
+void usleep(u_int us);
+void sleep(u_int ms);
+
 // wait.c
 void wait(u_int envid);
 
@@ -167,5 +171,12 @@ int sync(void);
 #define O_TRUNC 0x0200  /* truncate to zero length */
 #define O_EXCL  0x0400  /* error if already exists */
 #define O_MKDIR 0x0800  /* create directory, not regular file */
+
+/*
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+** Auxiliary functions
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+*/
+int atoi(const char* str);
 
 #endif

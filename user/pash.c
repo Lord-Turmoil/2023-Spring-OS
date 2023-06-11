@@ -190,8 +190,7 @@ static int _runcmd(char* cmd)
 	int ret;
 	int hasNext;
 	int needWait;
-	
-	int cnt = 0;
+
 	do
 	{
 		// initialize default behavior
