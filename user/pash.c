@@ -188,36 +188,70 @@ static int _runcmd(char* cmd)
 	int rightpipe = 0;
 
 	int ret;
+	int hasNext;
+	int needWait;
 	
-	ret = _parsecmd(cmd, &argc, argv, &rightpipe);
-	if (ret < 0)
+	int cnt = 0;
+	do
 	{
-		PASH_ERR(SYNTAX_ERR_MSG "Failed to parse command: %d\n", ret);
-		return ret;
-	}
-	if (argc == 0)
-	{
-		PASH_MSG("Empty line...\n");
-		return 0;
-	}
-	argv[argc] = NULL;
+		// initialize default behavior
+		hasNext = 0;
+		needWait = 1;
 
-	int child = spawn(argv[0], argv);
-	if (child < 0)
-	{
-		PASH_ERR("Failed to spawn '%s'\n", argv[0]);
-		return child;
-	}
-	close_all();
+		// parse command
+		ret = _parsecmd(cmd, &argc, argv, &rightpipe);
+		if (ret < 0)
+		{
+			PASH_ERR(SYNTAX_ERR_MSG "Failed to parse command: %d\n", ret);
+			return ret;
+		}
+		if (ret > 0)	// ; or &
+		{
+			hasNext = 1;
+			if (ret == 2)	// &
+				needWait = 0;
+			cmd = NULL;	// continue on previous cmd
+		}
+		argv[argc] = NULL;
 
-	wait(child);
+		// no command
+		if (argc == 0)
+		{
+			PASH_MSG("Empty line...\n");
+			return 0;
+		}
 
-	if (rightpipe)
-		wait(rightpipe);
+		// run new process
+		int child = spawn(argv[0], argv);
+		if (child < 0)
+		{
+			PASH_ERR("Failed to spawn '%s'\n", argv[0]);
+			if (hasNext)
+				continue;
+			else
+				return child;
+		}
+		
+		// If close all, later children will be unable to output...
+		// close_all();
+
+		if (needWait)
+			wait(child);
+
+		if (rightpipe)
+			wait(rightpipe);
+	} while (hasNext);
 
 	return 0;
 }
 
+/********************************************************************
+** Return value:
+**  < 0: error encountered
+**  = 0: good to go
+**  = 1: ';' encountered, wait, and parse again
+**  = 2: '&' encountered, no wait, and parse again
+*/
 static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 {
 	// initialize default value
@@ -233,7 +267,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 	if (type != TK_WORD)
 	{
 		PASH_ERR(SYNTAX_ERR_MSG "Command not begin with word\n");
-		return 1;
+		return -1;
 	}
 	argv[(*argc)++] = token;	// command name
 
@@ -254,7 +288,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			if (*argc >= PASH_MAXARGS)
 			{
 				PASH_ERR(ARGUMENT_ERR_MSG "Too many arguments\n");
-				return 2;
+				return -2;
 			}
 			argv[*argc++] = token;
 			break;
@@ -262,13 +296,13 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			if (get_token(NULL, &token) != TK_WORD)
 			{
 				PASH_ERR(SYNTAX_ERR_MSG "'<' not followed by word\n");
-				return 3;
+				return -3;
 			}
 			fd = open(token, O_RDONLY);
 			if (fd < 0)
 			{
 				PASH_ERR("Cannot open '%s' for reading\n", token);
-				return 4;
+				return -4;
 			}
 			dup(fd, 0);
 			close(fd);
@@ -277,13 +311,13 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			if (get_token(NULL, &token) != TK_WORD)
 			{
 				PASH_ERR(SYNTAX_ERR_MSG "'>' not followed by word\n");
-				return 5;
+				return -5;
 			}
 			fd = open(token, O_WRONLY);
 			if (fd < 0)
 			{
 				PASH_ERR("Cannot open '%s' for writing\n", token);
-				return 6;
+				return -6;
 			}
 			dup(fd, 1);
 			close(fd);
@@ -293,13 +327,13 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			if (ret != 0)
 			{
 				PASH_ERR("Failed to create pipe\n");
-				return 7;
+				return -7;
 			}
 			ret = fork();
 			if (ret < 0)
 			{
 				PASH_ERR("Failed to fork\n");
-				return 8;
+				return -8;
 			}
 			*rightpipe = ret;
 			if (ret == 0)
@@ -318,12 +352,14 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 				return 0;
 			}
 		case TK_SEMI_COLON:
-			break;
+			// printf("TK_SEMI_COLON\n");
+			return 1;
 		case TK_AMPERSAND:
-			break;
+			// printf("TK_AMPERSAND\n");
+			return 2;
 		default:
 			PASH_ERR("Unknown token\n");
-			return -1;
+			return -66;
 		}	// switch (type)
 	}
 

@@ -53,7 +53,8 @@ int main(int argc, char **argv) {
 
 	while (1) {
 		debugf("init: starting sh\n");
-		r = spawnl("sh.b", "sh", NULL);
+		//r = spawnl("sh.b", "sh", NULL);
+		r = spawnl("pash.b", "sh", NULL);
 		if (r < 0) {
 			debugf("init: spawn sh: %d\n", r);
 			return r;

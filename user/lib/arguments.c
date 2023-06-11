@@ -134,10 +134,24 @@ static const char QUOTES[] = "\"\'";
 static token_t _get_token_type(char ch);
 
 static char* nextc;
+static char cache = 0;
+
 token_t get_token(char* str, char** token)
 {
 	if (str)
+	{
 		nextc = str;
+		cache = 0;
+	}
+
+	if (cache)
+	{
+		if (token)
+			*token = NULL;
+		int ret = _get_token_type(cache);
+		cache = 0;
+		return ret;
+	}
 
 	// check emptiness
 	if (!nextc || !*nextc)
@@ -174,9 +188,21 @@ token_t get_token(char* str, char** token)
 			}
 			if (strchr(ENTITIES, *nextc))
 			{
-				if (token)
-					*token = NULL;	// if is token, this will be no-sense
-				return _get_token_type(*(nextc++));
+				// handle case like 'cd; ls.b'
+				if (begin == nextc)	// no previous
+				{
+					if (token)
+						*token = NULL;	// if is token, this will be no-sense
+					return _get_token_type(*(nextc++));
+				}
+				else
+				{
+					cache = *nextc;
+					*(nextc++) = '\0';
+					if (token)
+						*token = begin;
+					return TK_WORD;
+				}
 			}
 			if (isspace(*nextc))	// end of token
 			{

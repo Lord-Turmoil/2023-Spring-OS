@@ -585,27 +585,27 @@ static void _print_logo();
 
 int execute_internal(char* cmd)
 {
-	if (is_begins_with(cmd, "cd "))
+	if (is_the_same(cmd, "cd") || is_begins_with(cmd, "cd "))
 	{
-		printf("cd");
+		printf("cd\n");
 		return 0;
 	}
-	else if (is_the_same(cmd, "clear"))
+	else if (is_the_same(cmd, "clear") || is_begins_with(cmd, "clear "))
 	{
 		_clear_screen();
 		return 0;
 	}
-	else if (is_the_same(cmd, "exit"))
+	else if (is_the_same(cmd, "exit") || is_begins_with(cmd, "exit "))
 	{
 		printfc(FOREGROUND_INTENSE(MAGENTA), "See you later~\n");
 		exit();
 	}
-	else if (is_the_same(cmd, "version"))
+	else if (is_the_same(cmd, "version") || is_begins_with(cmd, "version "))
 	{
 		_print_version();
 		return 0;
 	}
-	else if (is_the_same(cmd, "pash"))
+	else if (is_the_same(cmd, "pash") || is_begins_with(cmd, "pash "))
 	{
 		_print_logo();
 		return 0;
