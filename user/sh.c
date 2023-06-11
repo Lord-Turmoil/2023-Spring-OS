@@ -19,7 +19,7 @@
  *   The buffer is modified to turn the spaces after words into zero bytes ('\0'), so that the
  *   returned token is a null-terminated string.
  */
-int _gettoken(char* s, char** p1, char** p2)
+static int _gettoken(char* s, char** p1, char** p2)
 {
 	*p1 = 0;
 	*p2 = 0;
@@ -55,7 +55,7 @@ int _gettoken(char* s, char** p1, char** p2)
 	return 'w';
 }
 
-int gettoken(char* s, char** p1)
+static int gettoken(char* s, char** p1)
 {
 	static int c, nc;
 	static char* np1, * np2;
@@ -73,7 +73,7 @@ int gettoken(char* s, char** p1)
 
 #define MAXARGS 128
 
-int parsecmd(char** argv, int* rightpipe)
+static int parsecmd(char** argv, int* rightpipe)
 {
 	int argc = 0;
 	while (1)
@@ -183,7 +183,7 @@ int parsecmd(char** argv, int* rightpipe)
 	return argc;
 }
 
-void runcmd(char* s)
+static void runcmd(char* s)
 {
 	gettoken(s, 0);
 
@@ -213,7 +213,7 @@ void runcmd(char* s)
 	exit();
 }
 
-void readline(char* buf, u_int n)
+static void readline(char* buf, u_int n)
 {
 	int r;
 	for (int i = 0; i < n; i++)
@@ -257,7 +257,7 @@ void readline(char* buf, u_int n)
 
 char buf[1024];
 
-void usage(void)
+static void usage(void)
 {
 	debugf("usage: sh [-dix] [command-file]\n");
 	exit();

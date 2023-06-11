@@ -125,6 +125,9 @@ int printfc(int color, const char* fmt, ...);
 #define FOREGROUND_INTENSE(COLOR) (FOREGROUND(COLOR) + 60)
 #define BACKGROUND_INTENSE(COLOR) (BACKGROUND(COLOR) + 60)
 
+#define MSG_COLOR   FOREGROUND(YELLOW)
+#define ERROR_COLOR FOREGROUND_INTENSE(RED)
+
 
 // fsipc.c
 int fsipc_open(const char*, u_int, struct Fd*);

@@ -1,115 +1,178 @@
+/********************************************************************
+** ls.c
+**
+**     Copyright (C) Tony's Studio. All rights reserved.
+**
+**   This file implements ls command.
+*/
+
 #include <lib.h>
+#include <arguments.h>
 
-int flag[256];
+static int enableClassify;
+static int enableLonglist;
+static int selfOnly;
+static int hasTarget;
 
-void lsdir(char*, char*);
-void ls1(char*, u_int, u_int, char*);
+static void init();
+static void usage();
+static int parse_args(int argc, char* argv[]);
 
-void ls(char* path, char* prefix)
+static void ls(const char* path, const char* prefix);
+static void _lsdir(const char* path, const char* prefix);
+static void _ls(const char* prefix, u_int isdir, u_int size, const char* name);
+
+int main(int argc, char* argv[])
 {
-	int r;
-	struct Stat st;
+	init();
+	if (parse_args(argc, argv) != 0)
+	{
+		usage();
+		return 1;
+	}
 
-	if ((r = stat(path, &st)) < 0)
-	{
-		user_panic("stat %s: %d", path, r);
-	}
-	if (st.st_isdir && !flag['d'])
-	{
-		lsdir(path, prefix);
-	}
+	if (!hasTarget)
+		ls("/", "");
 	else
 	{
-		ls1(0, st.st_isdir, st.st_size, path);
+		for (int i = 1; i < argc; i++)
+		{
+			if (argv[i][0] == '-')
+				continue;
+			ls(argv[i], strstripr(argv[i], '/'));
+		}
 	}
+
+	if (!enableLonglist)
+		printf("\n");
+
+	return 0;
 }
 
-void lsdir(char* path, char* prefix)
+static void init()
 {
-	int fd, n;
-	struct File f;
+	enableClassify = 0;
+	enableLonglist = 0;
+	selfOnly = 0;
+	hasTarget = 0;
+}
+
+static void usage()
+{
+	printfc(MSG_COLOR, "usage: pash [-dix] [command-file]\n");
+}
+
+static int parse_args(int argc, char* argv[])
+{
+	int opt;
+	int err = 0;
+	while (opt = getopt(argc, argv, "dFl"))
+	{
+		if (opterr != 0)
+		{
+			printfc(ERROR_COLOR, "Argument error: %s\n", optmsg);
+			err = 1;
+			resetopt();
+			break;
+		}
+		switch (opt)
+		{
+		case 'd':
+			selfOnly = 1;
+			break;
+		case 'F':
+			enableClassify = 1;
+			break;
+		case 'l':
+			enableLonglist = 1;
+			break;
+		case '!':
+			hasTarget = 1;
+			break;
+		case '?':
+			err = 1;
+			printfc(ERROR_COLOR, "Unknown parameter \"-%c\"\n", optopt);
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (err)
+	{
+		printfc(ERROR_COLOR, ERRMSG_ILLEGAL "\n");
+		return 1;
+	}
+
+	return 0;
+}
+
+static void ls(const char* path, const char* prefix)
+{
+	int ret;
+	struct Stat st;
+
+	if ((ret = stat(path, &st)) < 0)
+	{
+		printfc(ERROR_COLOR, "Failed to get stat of '%s': %d\n", path, ret);
+		return;
+	}
+
+	if (st.st_isdir && !selfOnly)
+		_lsdir(path, prefix);
+	else
+		_ls(NULL, st.st_isdir, st.st_size, path);
+}
+
+static void _lsdir(const char* path, const char* prefix)
+{
+	int fd;
+	int size;
+	struct File file;
 
 	if ((fd = open(path, O_RDONLY)) < 0)
 	{
-		user_panic("open %s: %d", path, fd);
+		printfc(ERROR_COLOR, "Failed to open '%s': %d\n", path, fd);
+		return;
 	}
-	while ((n = readn(fd, &f, sizeof f)) == sizeof f)
+
+	while ((size = readn(fd, &file, sizeof(struct File))) == sizeof(struct File))
 	{
-		if (f.f_name[0])
-		{
-			ls1(prefix, f.f_type == FTYPE_DIR, f.f_size, f.f_name);
-		}
+		if (file.f_name[0])
+			_ls(prefix, file.f_type == FTYPE_DIR, file.f_size, file.f_name);
 	}
-	if (n > 0)
-	{
-		user_panic("short read in directory %s", path);
-	}
-	if (n < 0)
-	{
-		user_panic("error reading directory %s: %d", path, n);
-	}
+	if (size > 0)
+		printfc(ERROR_COLOR, "Short read in directory '%s'\n", path);
+	if (size < 0)
+		printfc(ERROR_COLOR, "Error reading directory '%s': %d\n", path, size);
 }
 
-void ls1(char* prefix, u_int isdir, u_int size, char* name)
+static void _ls(const char* prefix, u_int isdir, u_int size, const char* name)
 {
 	char* sep;
+	int color;
 
-	if (flag['l'])
-	{
+	if (enableLonglist)
 		printf("%11d %c ", size, isdir ? 'd' : '-');
-	}
+
+	if (isdir)
+		color = FOREGROUND_INTENSE(BLUE);
+	else
+		color = FOREGROUND_INTENSE(CYAN);
+
 	if (prefix)
 	{
-		if (prefix[0] && prefix[strlen(prefix) - 1] != '/')
-		{
+		if (prefix[0] && prefix[strlen(prefix - 1)] != '/')
 			sep = "/";
-		}
 		else
-		{
 			sep = "";
-		}
-		printf("%s%s", prefix, sep);
+		printfc(color, "%s%s", prefix, sep);
 	}
-	printf("%s", name);
-	if (flag['F'] && isdir)
-	{
-		printf("/");
-	}
+
+	printfc(color, "%s", name);
+	if (isdir && enableClassify)
+		printfc(color, "/");
 	printf(" ");
-}
-
-void usage(void)
-{
-	printf("usage: ls [-dFl] [file...]\n");
-	exit();
-}
-
-int main(int argc, char** argv)
-{
-	int i;
-
-	ARGBEGIN{
-	default:
-		usage();
-	case 'd':
-	case 'F':
-	case 'l':
-		flag[(u_char)ARGC()]++;
-		break;
-	}
-		ARGEND
-
-		if (argc == 0)
-		{
-			ls("/", "");
-		}
-		else
-		{
-			for (i = 0; i < argc; i++)
-			{
-				ls(argv[i], argv[i]);
-			}
-		}
-	printf("\n");
-	return 0;
+	if (enableLonglist)
+		printf("\n");
 }

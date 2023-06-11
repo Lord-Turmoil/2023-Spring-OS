@@ -139,17 +139,51 @@ char* strstrip(char* str, int c)
 	char* left = base;
 	char* right = base + strlen(str) - 1;
 
-	if (left <= right)
-	{
-		while ((left <= right) && (*left == c))
-			left++;
-		while ((left <= right) && (*right == c))
-			right--;
+	while ((left <= right) && (*left == c))
+		left++;
+	while ((left <= right) && (*right == c))
+		right--;
 
-		for (char* p = left; p <= right; p++)
-			*(base++) = *p;
-		*base = '\0';
+	for (char* p = left; p <= right; p++)
+		*(base++) = *p;
+	*base = '\0';
+
+	return str;
+}
+
+char* strstripr(char* str, int c)
+{
+	if (!str)
+		return NULL;
+
+	char* base = str;
+	char* left = base;
+	char* right = base + strlen(str) - 1;
+
+	while ((left <= right) && (*right == c))
+	{
+		*right = '\0';
+		right--;
 	}
+
+	return str;
+}
+
+char* strstripl(char* str, int c)
+{
+	if (!str)
+		return NULL;
+
+	char* base = str;
+	char* left = base;
+	char* right = base + strlen(str) - 1;
+
+	while ((left <= right) && (*left == c))
+		left++;
+
+	for (char* p = left; p <= right; p++)
+		*(base++) = *p;
+	*base = '\0';
 
 	return str;
 }

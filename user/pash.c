@@ -20,10 +20,10 @@ static int interactive;
 static int echocmds;
 static char* filename;
 
-static void _usage(void);
-static int _parse_args(int argc, char* argv[]);
+static void usage(void);
+static int parse_args(int argc, char* argv[]);
 
-static void _print_prompt();
+static void print_prompt();
 
 static int execute(char* cmd);
 static int _runcmd(char* cmd);
@@ -36,9 +36,9 @@ int main(int argc, char* argv[])
 	echocmds = 1;
 	filename = NULL;
 
-	if (_parse_args(argc, argv) != 0)
+	if (parse_args(argc, argv) != 0)
 	{
-		_usage();
+		usage();
 		return 1;
 	}
 
@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
 	for (; ; )
 	{
 		if (interactive)
-			_print_prompt();
+			print_prompt();
 
 		ret = get_string(buffer, &opt);
 		printf("\n");
@@ -87,13 +87,12 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-static void _usage(void)
+static void usage(void)
 {
-	PASH_MSG("usage: sh [-dix] [command-file]\n");
-	exit();
+	PASH_MSG("usage: pash [-dix] [command-file]\n");
 }
 
-static int _parse_args(int argc, char* argv[])
+static int parse_args(int argc, char* argv[])
 {
 	int opt;
 	int arg_cnt = 0;
@@ -143,7 +142,7 @@ static int _parse_args(int argc, char* argv[])
 	return 0;
 }
 
-static void _print_prompt()
+static void print_prompt()
 {
 	printfc(FOREGROUND_INTENSE(GREEN), "tony");
 	printfc(FOREGROUND(WHITE), ":");

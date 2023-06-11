@@ -146,9 +146,6 @@ int execute_internal(char* cmd);
 #define SYNTAX_ERR_MSG "Syntax Error: "
 #define ARGUMENT_ERR_MSG "Argument Error: "
 
-#define MSG_COLOR   FOREGROUND(YELLOW)
-#define ERROR_COLOR FOREGROUND_INTENSE(RED)
-
 #define PASH_MSG(...) printfc(MSG_COLOR, __VA_ARGS__)
 #define PASH_ERR(...) printfc(ERROR_COLOR, __VA_ARGS__)
 
