@@ -23,6 +23,8 @@ static char* filename;
 static void _usage(void);
 static int _parse_args(int argc, char* argv[]);
 
+static void _print_prompt();
+
 static int execute(char* cmd);
 static int _runcmd(char* cmd);
 static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe);
@@ -45,17 +47,22 @@ int main(int argc, char* argv[])
 	opt.maxLen = PASH_BUFFER_SIZE - 1;
 	opt.interruptible = 1;
 
-	printf("\nPash Host for MOS v0.1.0\n\n");
+	printf("\n__________________________________________________\n\n");
+	printf("Pash Host for MOS\n\n");
 	printf("    Copyright (C) Tony's Studio 2023\n\n");
-	printf("Based on PassBash v3.x\n\n");
+	printf("Based on PassBash v3.x\n");
 	printf("__________________________________________________\n\n");
 
+	execute_internal("version");
+
+	printf("\n");
 
 	int ret;
 	for (; ; )
 	{
 		if (interactive)
-			printfc(FOREGROUND_INTENSE(GREEN), "PASH HOST $ ");
+			_print_prompt();
+
 		ret = get_string(buffer, &opt);
 		printf("\n");
 		if (ret == EOF)
@@ -133,6 +140,14 @@ static int _parse_args(int argc, char* argv[])
 	}
 
 	return 0;
+}
+
+static void _print_prompt()
+{
+	printfc(FOREGROUND_INTENSE(GREEN), "tony");
+	printfc(FOREGROUND(WHITE), ":");
+	printfc(FOREGROUND_INTENSE(BLUE), "/path");
+	printfc(FOREGROUND(WHITE), "$ ");
 }
 
 static int execute(char* cmd)

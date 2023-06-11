@@ -568,6 +568,10 @@ int is_begins_with(const char* str, const char* prefix)
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
 
+const char LOGO[] = "           _____                    _____                    _____                    _____          \n          /\\    \\                  /\\    \\                  /\\    \\                  /\\    \\         \n         /::\\    \\                /::\\    \\                /::\\    \\                /::\\____\\        \n        /::::\\    \\              /::::\\    \\              /::::\\    \\              /:::/    /        \n       /::::::\\    \\            /::::::\\    \\            /::::::\\    \\            /:::/    /         \n      /:::/\\:::\\    \\          /:::/\\:::\\    \\          /:::/\\:::\\    \\          /:::/    /          \n     /:::/__\\:::\\    \\        /:::/__\\:::\\    \\        /:::/__\\:::\\    \\        /:::/____/           \n    /::::\\   \\:::\\    \\      /::::\\   \\:::\\    \\       \\:::\\   \\:::\\    \\      /::::\\    \\           \n   /::::::\\   \\:::\\    \\    /::::::\\   \\:::\\    \\    ___\\:::\\   \\:::\\    \\    /::::::\\    \\   _____  \n  /:::/\\:::\\   \\:::\\    \\  /:::/\\:::\\   \\:::\\    \\  /\\   \\:::\\   \\:::\\    \\  /:::/\\:::\\    \\ /\\    \\ \n /:::/  \\:::\\   \\:::\\____\\/:::/  \\:::\\   \\:::\\____\\/::\\   \\:::\\   \\:::\\____\\/:::/  \\:::\\    /::\\____\\\n \\::/    \\:::\\  /:::/    /\\::/    \\:::\\  /:::/    /\\:::\\   \\:::\\   \\::/    /\\::/    \\:::\\  /:::/    /\n  \\/____/ \\:::\\/:::/    /  \\/____/ \\:::\\/:::/    /  \\:::\\   \\:::\\   \\/____/  \\/____/ \\:::\\/:::/    / \n           \\::::::/    /            \\::::::/    /    \\:::\\   \\:::\\    \\               \\::::::/    /  \n            \\::::/    /              \\::::/    /      \\:::\\   \\:::\\____\\               \\::::/    /   \n             \\::/    /               /:::/    /        \\:::\\  /:::/    /               /:::/    /    \n              \\/____/               /:::/    /          \\:::\\/:::/    /               /:::/    /     \n                                   /:::/    /            \\::::::/    /               /:::/    /      \n                                  /:::/    /              \\::::/    /               /:::/    /       \n                                  \\::/    /                \\::/    /                \\::/    /        \n                                   \\/____/                  \\/____/                  \\/____/         \n";
+const char BANNER[] = "                  C O P Y R I G H T (C)  T O N Y ' S  S T U D I O  2 0 2 0 - 2 0 2 3";
+const char THANKS[] = "                                T H A N K S  F O R  Y O U R  U S I N G";
+
 /********************************************************************
 ** Try execute internal command. For now, internal command does not
 ** support redirect or pipe. :(
@@ -575,25 +579,105 @@ int is_begins_with(const char* str, const char* prefix)
 ** return -1 means command not found, 0 means success. Other return
 ** value must greater than 0, and indicate failure.
 */
+static void _clear_screen();
+static void _print_version();
+static void _print_logo();
+
 int execute_internal(char* cmd)
 {
-	printf("\t[%s]\n", cmd);
-
 	if (is_begins_with(cmd, "cd "))
 	{
 		printf("cd");
+		return 0;
 	}
 	else if (is_the_same(cmd, "clear"))
 	{
-		printf("\033[2J");		// clear screen
-		printf("\033[0;0H");	// go to origin
+		_clear_screen();
 		return 0;
 	}
 	else if (is_the_same(cmd, "exit"))
 	{
-		printfc(FOREGROUND_INTENSE(GREEN), "See you later~\n");
+		printfc(FOREGROUND_INTENSE(MAGENTA), "See you later~\n");
 		exit();
+	}
+	else if (is_the_same(cmd, "version"))
+	{
+		_print_version();
+		return 0;
+	}
+	else if (is_the_same(cmd, "pash"))
+	{
+		_print_logo();
+		return 0;
 	}
 
 	return -1;
+}
+
+static void _clear_screen()
+{
+	printf("\033[2J");		// clear screen
+	printf("\033[0;0H");	// go to origin
+}
+
+static void _print_version()
+{
+	printfc(FOREGROUND_INTENSE(CYAN), "# Pash Host for MOS Version: %s\n",
+			"0.1.0");
+}
+
+static void _print_logo()
+{
+	const int COLOR[] = {
+		FOREGROUND(RED),
+		FOREGROUND(GREEN),
+		FOREGROUND(YELLOW),
+		FOREGROUND(BLUE),
+		FOREGROUND(MAGENTA),
+		FOREGROUND(CYAN),
+		FOREGROUND_INTENSE(RED),
+		FOREGROUND_INTENSE(GREEN),
+		FOREGROUND_INTENSE(YELLOW),
+		FOREGROUND_INTENSE(BLUE),
+		FOREGROUND_INTENSE(MAGENTA),
+		FOREGROUND_INTENSE(CYAN)
+	};
+
+	int color = 0;
+	const int COLOR_MAX = 12;
+
+	_clear_screen();
+	
+	// print version
+	_print_version();
+	printf("\n");
+
+	// print banner
+	for (const char* p = BANNER; *p; p++)
+	{
+		printfc(COLOR[color], "%c", *p);
+		color = (color + 1) % COLOR_MAX;
+	}
+	printf("\n");
+
+	// print logo
+	for (const char* p = LOGO; *p; p++)
+	{
+		if (*p == ':')
+		{
+			printfc(COLOR[color], "%c", *p);
+			color = (color + 1) % COLOR_MAX;
+		}
+		else
+			printf("%c", *p);
+	}
+	printf("\n");
+
+	// print thanks
+	for (const char* p = THANKS; *p; p++)
+	{
+		printfc(COLOR[color], "%c", *p);
+		color = (color + 1) % COLOR_MAX;
+	}
+	printf("\n\n");
 }
