@@ -187,7 +187,9 @@ static int _runcmd(char* cmd)
 	char* argv[PASH_MAXARGS];
 	int rightpipe = 0;
 
-	int ret = _parsecmd(cmd, &argc, argv, &rightpipe);
+	int ret;
+	
+	ret = _parsecmd(cmd, &argc, argv, &rightpipe);
 	if (ret < 0)
 	{
 		PASH_ERR(SYNTAX_ERR_MSG "Failed to parse command: %d\n", ret);

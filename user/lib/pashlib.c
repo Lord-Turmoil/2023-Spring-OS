@@ -649,8 +649,8 @@ static void _print_logo()
 	_clear_screen();
 	
 	// print version
-	_print_version();
-	printf("\n");
+	//_print_version();
+	//printf("\n");
 
 	// print banner
 	for (const char* p = BANNER; *p; p++)
@@ -671,7 +671,7 @@ static void _print_logo()
 		else
 			printf("%c", *p);
 	}
-	printf("\n");
+	//printf("\n");
 
 	// print thanks
 	for (const char* p = THANKS; *p; p++)
@@ -679,5 +679,5 @@ static void _print_logo()
 		printfc(COLOR[color], "%c", *p);
 		color = (color + 1) % COLOR_MAX;
 	}
-	printf("\n\n");
+	printf("\n");
 }
