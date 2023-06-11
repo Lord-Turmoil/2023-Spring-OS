@@ -238,6 +238,7 @@ int spawn(char* prog, char** argv)
 		debugf("spawn: syscall_set_env_status %x: %d\n", child, r);
 		goto err2;
 	}
+
 	return child;
 
 err2:

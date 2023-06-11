@@ -28,6 +28,7 @@ static void _print_prompt();
 static int execute(char* cmd);
 static int _runcmd(char* cmd);
 static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe);
+static int _execv(char* cmd, char* argv[]);
 
 int main(int argc, char* argv[])
 {
@@ -221,7 +222,7 @@ static int _runcmd(char* cmd)
 		}
 
 		// run new process
-		int child = spawn(argv[0], argv);
+		int child = _execv(argv[0], argv);
 		if (child < 0)
 		{
 			PASH_ERR("Failed to spawn '%s'\n", argv[0]);
@@ -363,4 +364,17 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 	}
 
 	return 0;
+}
+
+static int _execv(char* cmd, char* argv[])
+{
+	char prog[PASH_BUFFER_SIZE];
+
+	if (!is_ends_with(cmd, ".b"))
+	{
+		strcpy(prog, cmd);
+		strcat(prog, ".b");
+	}
+
+	return spawn(prog, argv);
 }

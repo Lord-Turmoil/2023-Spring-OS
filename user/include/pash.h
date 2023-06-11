@@ -124,6 +124,7 @@ int is_no_content(const char* str);
 int is_the_same(const char* str1, const char* str2);
 
 int is_begins_with(const char* str, const char* prefix);
+int is_ends_with(const char* str, const char* suffix);
 
 
 /*

@@ -117,6 +117,19 @@ int strcmp(const char* p, const char* q)
 	return 0;
 }
 
+char* strcat(char* dst, const char* src)
+{
+	char* p = dst;
+
+	while (*p)
+		p++;
+	while (*src)
+		*(p++) = *(src++);
+	*p = '\0';
+
+	return dst;
+}
+
 char* strstrip(char* str, int c)
 {
 	if (!str)

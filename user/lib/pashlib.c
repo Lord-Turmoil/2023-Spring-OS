@@ -544,12 +544,14 @@ int is_the_same(const char* str1, const char* str2)
 	return 0;
 }
 
-// please not pass NULL here
 int is_begins_with(const char* str, const char* prefix)
 {
-	if (!str || !prefix)
+	if (is_null_or_empty(prefix))
+		return 1;
+	if (is_null_or_empty(str))
 		return 0;
 
+	const char* original_str = str;
 	while (*prefix && *str)
 	{
 		if (*prefix != *str)
@@ -558,7 +560,28 @@ int is_begins_with(const char* str, const char* prefix)
 		str++;
 	}
 
-	return !(*prefix);
+	return !*prefix;
+}
+
+int is_ends_with(const char* str, const char* suffix)
+{
+	if (is_null_or_empty(suffix))
+		return 1;
+	if (is_null_or_empty(str))
+		return 0;
+
+	const char* str_end = str + strlen(str);
+	const char* suffix_end = suffix + strlen(suffix);
+
+	while (str_end >= str && suffix_end >= suffix)
+	{
+		if (*str_end != *suffix_end)
+			return 0;
+		str_end--;
+		suffix_end--;
+	}
+
+	return suffix_end < suffix;
 }
 
 
@@ -623,8 +646,7 @@ static void _clear_screen()
 
 static void _print_version()
 {
-	printfc(FOREGROUND_INTENSE(CYAN), "# Pash Host for MOS Version: %s\n",
-			"0.1.0");
+	printfc(FOREGROUND_INTENSE(CYAN), "# Pash Host for MOS Version: %s\n", "0.1.0");
 }
 
 static void _print_logo()
