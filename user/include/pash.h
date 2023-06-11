@@ -51,30 +51,30 @@
 
 #define CTRL_D 0x04
 
-/*
-**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-** Input History
-**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-*/
-
-/*
- * In Linux, it seems that input history will only be saved to .history
- * on exit. So they still need to be kept in memory. But here, we don't
- * have dynamic memory allocation, which makes this almost impossible.
+ /*
+ **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ ** Input History
+ **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 
-// ON HOLD
+ /*
+  * In Linux, it seems that input history will only be saved to .history
+  * on exit. So they still need to be kept in memory. But here, we don't
+  * have dynamic memory allocation, which makes this almost impossible.
+  */
 
-/*
-**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-** Input Options & Context
-**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-*/
+  // ON HOLD
 
-/*
- * These are inherited from PassBash, with signatures to better match C style.
- * Fancy abilities are removed or simplified due to the you-know-what limits.
- */
+  /*
+  **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  ** Input Options & Context
+  **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  */
+
+  /*
+   * These are inherited from PassBash, with signatures to better match C style.
+   * Fancy abilities are removed or simplified due to the you-know-what limits.
+   */
 
 typedef struct _input_opt_t
 {
@@ -122,5 +122,33 @@ int is_null_or_empty(const char* str);
 int is_no_content(const char* str);
 
 int is_the_same(const char* str1, const char* str2);
+
+int is_begins_with(const char* str, const char* prefix);
+
+
+/*
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+** Command Execution
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+*/
+#define PASH_MAXARGS 64
+
+int execute_internal(char* cmd);
+
+
+/*
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+** Errors
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+*/
+
+#define SYNTAX_ERR_MSG "Syntax Error: "
+#define ARGUMENT_ERR_MSG "Argument Error: "
+
+#define MSG_COLOR   FOREGROUND(YELLOW)
+#define ERROR_COLOR FOREGROUND_INTENSE(RED)
+
+#define PASH_MSG(...) printfc(MSG_COLOR, __VA_ARGS__)
+#define PASH_ERR(...) printfc(ERROR_COLOR, __VA_ARGS__)
 
 #endif

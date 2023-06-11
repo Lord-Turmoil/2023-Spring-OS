@@ -333,7 +333,7 @@ static void _input_ctrl_delete(const input_opt_t* opt, input_ctx_t* ctx)
 int _input_handler(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	int ch = getch();
-	
+
 	if (ch == EOF)
 		return EOF;
 
@@ -368,7 +368,7 @@ int _input_handler(const input_opt_t* opt, input_ctx_t* ctx)
 		}
 		break;
 	}
-	
+
 	return 0;
 }
 
@@ -539,7 +539,61 @@ int is_the_same(const char* str1, const char* str2)
 {
 	// if both are NULL, return 0
 
-	if (!!str1 & !!str2)
+	if (!!str1 && !!str2)
 		return strcmp(str1, str2) == 0;
 	return 0;
+}
+
+// please not pass NULL here
+int is_begins_with(const char* str, const char* prefix)
+{
+	if (!str || !prefix)
+		return 0;
+
+	while (*prefix && *str)
+	{
+		if (*prefix != *str)
+			return 0;
+		prefix++;
+		str++;
+	}
+
+	return !(*prefix);
+}
+
+
+/*
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+** Command Execution
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+*/
+
+/********************************************************************
+** Try execute internal command. For now, internal command does not
+** support redirect or pipe. :(
+** cmd is already stripped.
+** return -1 means command not found, 0 means success. Other return
+** value must greater than 0, and indicate failure.
+*/
+int execute_internal(char* cmd)
+{
+	printf("\t[%s]\n", cmd);
+
+	if (is_begins_with(cmd, "cd "))
+	{
+		printf("cd");
+	}
+	else if (is_the_same(cmd, "clear"))
+	{
+		printf("\033[2J");		// clear screen
+		printf("\033[0;0H");	// go to origin
+		return 0;
+	}
+	else if (is_the_same(cmd, "exit"))
+	{
+		printfc(FOREGROUND_INTENSE(GREEN), "See you later~\n");
+		exit();
+	}
+
+	return -1;
 }
