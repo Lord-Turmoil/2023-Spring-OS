@@ -655,8 +655,15 @@ static void _print_logo()
 	// print banner
 	for (const char* p = BANNER; *p; p++)
 	{
-		printfc(COLOR[color], "%c", *p);
-		color = (color + 1) % COLOR_MAX;
+		if (*p != ' ')
+		{
+			printfc(COLOR[color], "%c", *p);
+			color = (color + 1) % COLOR_MAX;
+		}
+		else
+		{
+			printf(" ");
+		}
 	}
 	printf("\n");
 
@@ -671,13 +678,20 @@ static void _print_logo()
 		else
 			printf("%c", *p);
 	}
-	//printf("\n");
+	printf("\n");
 
 	// print thanks
 	for (const char* p = THANKS; *p; p++)
 	{
-		printfc(COLOR[color], "%c", *p);
-		color = (color + 1) % COLOR_MAX;
+		if (*p != ' ')
+		{
+			printfc(COLOR[color], "%c", *p);
+			color = (color + 1) % COLOR_MAX;
+		}
+		else
+		{
+			printf(" ");
+		}
 	}
 	printf("\n");
 }
