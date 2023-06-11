@@ -43,7 +43,7 @@ void mips_init() {
 	kclock_init();
 	enable_irq();
 
-	printk("-- This is custom init.c.");
+	printk("-- This is custom init.c.\n");
 
 	while (1)
 	{

@@ -368,13 +368,11 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 
 static int _execv(char* cmd, char* argv[])
 {
-	char prog[PASH_BUFFER_SIZE];
+	char prog[PASH_BUFFER_SIZE] = "/bin/";
 
-	if (!is_ends_with(cmd, ".b"))
-	{
-		strcpy(prog, cmd);
+	strcpy(prog, cmd);
+	if (!is_ends_with(prog, ".b"))
 		strcat(prog, ".b");
-	}
 
 	return spawn(prog, argv);
 }

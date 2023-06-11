@@ -7,7 +7,6 @@ USERLIB     := $(addprefix $(user_dir)/, $(USERLIB))
 USERAPPS    := $(addprefix $(user_dir)/, $(USERAPPS))
 
 FSLIB       := fs.o ide.o
-FSIMGFILES  := rootfs/motd rootfs/newmotd $(USERAPPS) $(fs-files)
 
 .PRECIOUS: %.b %.b.c
 %.x: %.b.c
@@ -34,8 +33,22 @@ all: serv.x check.x $(FSLIB)
 clean:
 	rm -rf *~ *.o *.b.c *.b *.x
 
+
+# FSIMGFILES  := rootfs/motd rootfs/newmotd $(USERAPPS) $(fs-files)
+
+FSIMGFILES :=	rootfs/init.b  \
+				rootfs/motd    \
+				rootfs/newmotd \
+				rootfs/home/   \
+				rootfs/bin/    \
+				$(fs-files)
+
 image: $(tools_dir)/fsformat
 	dd if=/dev/zero of=../target/fs.img bs=4096 count=1024 2>/dev/null
 	# using awk to remove paths with identical basename from FSIMGFILES
-	$(tools_dir)/fsformat ../target/fs.img \
-		$$(printf '%s\n' $(FSIMGFILES) | awk -F/ '{ ns[$$NF]=$$0 } END { for (n in ns) { print ns[n] } }')
+	cp -vf $(USERAPPS) -t rootfs/bin/
+	mv -vf rootfs/bin/init.b rootfs/init.b
+
+	# $(tools_dir)/fsformat ../target/fs.img \
+	#	$$(printf '%s\n' $(FSIMGFILES) | awk -F/ '{ ns[$$NF]=$$0 } END { for (n in ns) { print ns[n] } }')
+	$(tools_dir)/fsformat ../target/fs.img $$(printf '%s\n' $(FSIMGFILES))
