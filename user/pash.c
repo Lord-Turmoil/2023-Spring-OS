@@ -290,7 +290,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 				PASH_ERR(ARGUMENT_ERR_MSG "Too many arguments\n");
 				return -2;
 			}
-			argv[*argc++] = token;
+			argv[(*argc)++] = token;
 			break;
 		case TK_REDIRECT_LEFT:
 			if (get_token(NULL, &token) != TK_WORD)
