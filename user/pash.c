@@ -370,7 +370,7 @@ static int _execv(char* cmd, char* argv[])
 {
 	char prog[PASH_BUFFER_SIZE] = "/bin/";
 
-	strcpy(prog, cmd);
+	strcat(prog, cmd);
 	if (!is_ends_with(prog, ".b"))
 		strcat(prog, ".b");
 

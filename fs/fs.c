@@ -687,6 +687,8 @@ int walk_path(char* path, struct File** pdir, struct File** pfile, char* lastele
 	// find the target file by name recursively.
 	while (*path != '\0')
 	{
+		// debugf("WALK: %s\n", path);
+
 		dir = file;
 		p = path;
 
