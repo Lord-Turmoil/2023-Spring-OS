@@ -617,6 +617,7 @@ int execute_internal(char* cmd)
 static void _clear_screen()
 {
 	printf("\033[2J");		// clear screen
+	printf("\033[3J");		// history
 	printf("\033[0;0H");	// go to origin
 }
 

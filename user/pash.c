@@ -266,7 +266,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 	if (type != TK_WORD)
 	{
 		PASH_ERR(SYNTAX_ERR_MSG "Command not begin with word\n");
-		return -1;
+		return 0;
 	}
 	argv[(*argc)++] = token;	// command name
 
