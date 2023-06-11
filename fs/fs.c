@@ -650,9 +650,8 @@ int dir_alloc_file(struct File* dir, struct File** file)
 char* skip_slash(char* p)
 {
 	while (*p == '/')
-	{
 		p++;
-	}
+
 	return p;
 }
 
@@ -666,8 +665,91 @@ char* skip_slash(char* p)
 //  *pdir and copy the final path element into lastelem.
 // 
 // 2023/05/05 TS: Make pfile nullable.
+// 2023/06/11 TS: Advanced walk_path.
+
+static int _walk_path_aux(char* path, struct File* root, struct File** pdir, struct File** pfile, char* lastelem)
+{
+	struct File* fileCursor[MAXFILEDEPTH];
+	struct File* curFile = root;
+	int cursor = 0;
+
+	fileCursor[0] = root;
+
+	char name[MAXNAMELEN];
+	char* p;
+	int ret;
+
+	name[0] = '\0';
+
+	if (pdir)
+		*pdir = NULL;
+	if (pfile)
+		*pfile = NULL;
+
+	// must place here, in case walk '/'
+	path = skip_slash(path);
+
+	// find the target file by name recursively.
+	while (*path != '\0')
+	{
+		curFile = fileCursor[cursor];
+		if (curFile->f_type != FTYPE_DIR)
+			return -E_NOT_FOUND;
+
+		// Get current directory name.
+		p = path;
+		while (*path != '/' && *path != '\0')
+			path++;
+		if (path - p >= MAXNAMELEN)
+			return -E_BAD_PATH;
+		memcpy(name, p, path - p);
+		name[path - p] = '\0';
+		path = skip_slash(path);
+		
+		if (strcmp(name, "..") == 0)	// go to parent
+		{
+			if (cursor > 0)
+				cursor--;
+			continue;
+		}
+		else if (strcmp(name, ".") == 0)	// stay still
+		{
+			continue;
+		}
+
+		if ((ret = dir_lookup(curFile, name, &fileCursor[cursor + 1])) < 0)
+		{
+			if (ret == -E_NOT_FOUND && *path == '\0')
+			{
+				if (pdir)
+					*pdir = curFile;
+				if (lastelem)
+					strcpy(lastelem, name);
+				*pfile = NULL;
+			}
+			return ret;
+		}
+
+		
+		cursor++;
+		if (cursor >= MAXFILEDEPTH)
+			return -E_NOT_FOUND;
+	}
+
+	if (pdir)
+		*pdir = curFile;
+	if (pfile)
+		*pfile = fileCursor[cursor];
+
+	return 0;
+}
+
 int walk_path(char* path, struct File** pdir, struct File** pfile, char* lastelem)
 {
+	return _walk_path_aux(path, &super->s_root, pdir, pfile, lastelem);
+}
+
+#if 0
 	char name[MAXNAMELEN];
 	int r;
 
@@ -723,7 +805,9 @@ int walk_path(char* path, struct File** pdir, struct File** pfile, char* lastele
 		*pfile = file;
 
 	return 0;
-}
+#endif
+
+
 
 // Overview:
 //  Open "path".
@@ -847,13 +931,13 @@ void file_flush(struct File* f)
 	u_int nblocks;
 	u_int bno;
 	u_int diskno;
-	int r;
+	int ret;
 
 	nblocks = f->f_size / BY2BLK + 1;
 
 	for (bno = 0; bno < nblocks; bno++)
 	{
-		if ((r = file_map_block(f, bno, &diskno, 0)) < 0)
+		if ((ret = file_map_block(f, bno, &diskno, 0)) < 0)
 		{
 			continue;
 		}
@@ -894,13 +978,13 @@ void file_close(struct File* f)
 //  Remove a file by truncating it and then zeroing the name.
 int file_remove(char* path)
 {
-	int r;
+	int ret;
 	struct File* f;
 
 	// Step 1: find the file on the disk.
-	if ((r = walk_path(path, 0, &f, 0)) < 0)
+	if ((ret = walk_path(path, 0, &f, 0)) < 0)
 	{
-		return r;
+		return ret;
 	}
 
 	// Step 2: truncate it's size to zero.

@@ -370,7 +370,10 @@ static int _execv(char* cmd, char* argv[])
 {
 	char prog[PASH_BUFFER_SIZE] = "/bin/";
 
-	strcat(prog, cmd);
+	if (cmd[0] == '/' || cmd[0] == '.')	// use directory to call command
+		strcpy(prog, cmd);
+	else
+		strcat(prog, cmd);
 	if (!is_ends_with(prog, ".b"))
 		strcat(prog, ".b");
 

@@ -15,6 +15,9 @@
 // Maximum size of a complete pathname, including null
 #define MAXPATHLEN 1024
 
+// Support maximum 16 level of sub directories.
+#define MAXFILEDEPTH 16
+
 // Number of (direct) block pointers in a File descriptor
 #define NDIRECT 10
 #define NINDIRECT (BY2BLK / 4)
