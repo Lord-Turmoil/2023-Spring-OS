@@ -338,6 +338,7 @@ int env_alloc(struct Env** new, u_int parent_id)
 	e->env_parent_id = parent_id;
 
 	// init env pwd
+	memset(e->env_pwd, 0, sizeof(e->env_pwd));
 	strcpy(e->env_pwd, "/");
 
 	/* Step 4: Initialize the sp and 'cp0_status' in 'e->env_tf'. */

@@ -143,17 +143,19 @@ static int parse_args(int argc, char* argv[])
 	return 0;
 }
 
+/********************************************************************
+** I don't understand, why this pwd can't be declared as a static
+** global variable, and placed in .bss or .data section. >:(
+*/
 static void print_prompt()
 {
+	char pwd[MAXPATHLEN];
+
 	printfc(FOREGROUND_INTENSE(GREEN), "tony");
-	printfc(FOREGROUND(WHITE), ":");
-
-	debugf("pwd 1: %s\n", pwd);
+	printfc(FOREGROUND_INTENSE(WHITE), ":");
 	getcwd(pwd);
-	debugf("pwd 2: %s\n", pwd);
 	printfc(FOREGROUND_INTENSE(BLUE), "%s", pwd);
-
-	printfc(FOREGROUND(WHITE), "$ ");
+	printfc(FOREGROUND_INTENSE(WHITE), "$ ");
 }
 
 static int execute(char* cmd)

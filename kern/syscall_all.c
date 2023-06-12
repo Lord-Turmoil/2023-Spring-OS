@@ -291,9 +291,7 @@ int sys_exofork(void)
 	e->env_status = ENV_NOT_RUNNABLE;
 	e->env_pri = curenv->env_pri;
 
-	printk("curenv->env_pwd: %s\n", curenv->env_pwd);
-	strcpy(e->env_pwd, curenv->env_pwd);	// inherit present working directory
-	printk("e->env_pwd: %s\n", e->env_pwd);
+	strcpy(e->env_pwd, curenv->env_pwd);
 
 	return e->env_id;
 }
@@ -587,11 +585,11 @@ void sys_get_pwd(char* path)
 }
 
 void* syscall_table[MAX_SYSNO] = {
-	[SYS_putchar]           = sys_putchar,
-	[SYS_print_cons]        = sys_print_cons,
-	[SYS_getenvid]          = sys_getenvid,
-	[SYS_yield]             = sys_yield,
-	[SYS_env_destroy]       = sys_env_destroy,
+	[SYS_putchar] = sys_putchar,
+	[SYS_print_cons] = sys_print_cons,
+	[SYS_getenvid] = sys_getenvid,
+	[SYS_yield] = sys_yield,
+	[SYS_env_destroy] = sys_env_destroy,
 	[SYS_set_tlb_mod_entry] = sys_set_tlb_mod_entry,
 	[SYS_mem_alloc] = sys_mem_alloc,
 	[SYS_mem_map] = sys_mem_map,

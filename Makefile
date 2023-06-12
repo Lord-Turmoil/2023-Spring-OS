@@ -27,7 +27,7 @@ ifeq ($(call lab-ge,5),true)
 	targets         += fs-image
 endif
 
-gxemul_flags            += -T -C R3000 -M 64
+gxemul_flags            += -T -C R3000 -M 256
 CFLAGS                  += -DLAB=$(shell echo $(lab) | cut -f1 -d_)
 
 objects                 := $(addsuffix /*.o, $(modules)) $(addsuffix /*.x, $(user_modules))

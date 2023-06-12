@@ -45,7 +45,7 @@ struct Env {
 	u_int env_runs; // number of times been env_run'ed
 
 	// Lab 6 challenge
-	char env_pwd[800];	// to make Env precisely one page
+	char env_pwd[804];	// to make Env precisely one page
 };
 
 LIST_HEAD(Env_list, Env);
