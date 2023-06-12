@@ -567,6 +567,7 @@ int execute_internal(char* argv[])
 	{
 		printfc(FOREGROUND_INTENSE(MAGENTA), "See you later~\n");
 		exit();
+		printfc(FOREGROUND_INTENSE(RED), "Why you're still here?\n");
 	}
 	else if (is_the_same(argv[0], "version"))
 	{

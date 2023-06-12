@@ -17,9 +17,9 @@
 static char buffer[PASH_BUFFER_SIZE];
 
 static int redirect;
-static int fdBackup[2] = { 10, 11 };
+static int backupfd[2];
 
-static int trivial;	// indicate if the shell is a child
+static int trivial;	// indicate if is trivial for pipe
 
 static int interactive;
 static int echocmds;
@@ -44,8 +44,13 @@ int main(int argc, char* argv[])
 	echocmds = 0;
 	filename = NULL;
 
-	fdBackup[0] = dup1(0);
-	fdBackup[1] = dup1(1);
+	if (!interactive)
+	{
+		backupfd[0] = dup(0, 10);
+		backupfd[1] = dup(1, 11);
+		panic_on(backupfd[0] < 0);
+		panic_on(backupfd[1] < 0);
+	}
 
 	if (parse_args(argc, argv) != 0)
 	{
@@ -59,7 +64,6 @@ int main(int argc, char* argv[])
 	opt.maxLen = PASH_BUFFER_SIZE - 1;
 	opt.interruptible = 1;
 
-	// header
 	if (interactive)
 	{
 		printf("\n__________________________________________________\n\n");
@@ -358,7 +362,6 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			if (ret == 0)
 			{
 				trivial = 1;
-
 				dup(pipefd[0], 0);
 				close(pipefd[0]);
 				close(pipefd[1]);
@@ -408,12 +411,15 @@ static int _execv(char* cmd, char* argv[])
 
 static void _restore_stream()
 {
-	debugf("restore(%d)... %d, %d\n", redirect, fdBackup[0], fdBackup[1]);
-
-	if (redirect)
+	if (!interactive)
 	{
-		panic_on(dup(fdBackup[0], 0) < 0);
-		panic_on(dup(fdBackup[1], 1) < 0);
-		redirect = 0;
+		dup(backupfd[0], 0);
+		dup(backupfd[1], 1);
+	}
+	else
+	{
+		close_all();
+		panic_on(opencons());
+		panic_on(dup(0, 1) < 0);
 	}
 }
