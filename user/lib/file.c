@@ -43,7 +43,18 @@ int open(const char* path, int mode)
 	 * our file system process, and file system will create such fd for us
 	 * and send a page of fd to this fd.
 	 */
-	if ((r = fsipc_open(path, mode, fd)) < 0)
+	char dir[MAXPATHLEN] = { '\0' };
+	while (*path && (*path == ' '))
+		path++;
+	if (*path != '/')	// relative
+	{
+		getcwd(dir);
+		if (strcmp(dir, "/") != 0)
+			strcat(dir, "/");
+	}
+	strcat(dir, path);
+
+	if ((r = fsipc_open(dir, mode, fd)) < 0)
 		return r;
 
 	// Step 3: Set 'va' to the address of the page where the 'fd''s data is cached,
@@ -67,6 +78,24 @@ int open(const char* path, int mode)
 	/* Exercise 5.9: Your code here. (5/5) */
 	return fd2num(fd);
 }
+
+int fullpath(const char* filename, char* path)
+{
+	char dir[MAXPATHLEN] = { '\0' };
+
+	while (*filename && (*filename == ' '))
+		filename++;
+	if (filename[0] != '/')
+	{
+		getcwd(dir);
+		if (strcmp(dir, "/") != 0)
+			strcat(dir, "/");
+	}
+	strcat(dir, filename);
+
+	return fsipc_fullpath(dir, path);
+}
+
 
 // Overview:
 //  Close a file descriptor

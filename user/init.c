@@ -64,7 +64,7 @@ int main(int argc, char** argv)
 		user_panic("dup: %d", r);
 	}
 
-	panic_on(chdir("/home"));
+	chdir("/home");
 
 	while (1)
 	{

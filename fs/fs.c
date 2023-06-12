@@ -587,7 +587,7 @@ int dir_lookup(struct File* dir, char* name, struct File** file)
 			 * If we find the target file, set '*file' to it and set up its
 			 * 'f_dir' field.
 			 */
-			/* Exercise 5.8: Your code here. (3/3) */
+			 /* Exercise 5.8: Your code here. (3/3) */
 			if (strcmp(f->f_name, name) == 0)	// Karabast! ' == 0'!
 			{
 				f->f_dir = dir;	// set this every time it is accessed?
@@ -705,7 +705,7 @@ static int _walk_path_aux(char* path, struct File* root, struct File** pdir, str
 		memcpy(name, p, path - p);
 		name[path - p] = '\0';
 		path = skip_slash(path);
-		
+
 		if (strcmp(name, "..") == 0)	// go to parent
 		{
 			if (cursor > 0)
@@ -730,7 +730,6 @@ static int _walk_path_aux(char* path, struct File* root, struct File** pdir, str
 			return ret;
 		}
 
-		
 		cursor++;
 		if (cursor >= MAXFILEDEPTH)
 			return -E_NOT_FOUND;
@@ -749,62 +748,146 @@ int walk_path(char* path, struct File** pdir, struct File** pfile, char* lastele
 	return _walk_path_aux(path, &super->s_root, pdir, pfile, lastelem);
 }
 
-#if 0
-	char name[MAXNAMELEN];
-	int r;
+int _walk_fullpath_aux(char* path, struct File* root, char* fullpath)
+{
+	struct File* fileCursor[MAXFILEDEPTH];
+	struct File* curFile = root;
+	int cursor = 0;
 
-	// start at the root.
-	path = skip_slash(path);
-	struct File* file = &super->s_root;
-	struct File* dir = NULL;
+	fileCursor[0] = root;
+
+	char name[MAXNAMELEN];
 	char* p;
+	int ret;
 
 	name[0] = '\0';
 
-	if (pdir)
-		*pdir = NULL;
-	if (pfile)
-		*pfile = NULL;
+	// must place here, in case walk '/'
+	path = skip_slash(path);
 
 	// find the target file by name recursively.
 	while (*path != '\0')
 	{
-		// debugf("WALK: %s\n", path);
+		curFile = fileCursor[cursor];
+		if (curFile->f_type != FTYPE_DIR)
+			return -E_NOT_FOUND;
 
-		dir = file;
+		// Get current directory name.
 		p = path;
-
 		while (*path != '/' && *path != '\0')
 			path++;
 		if (path - p >= MAXNAMELEN)
 			return -E_BAD_PATH;
-
 		memcpy(name, p, path - p);
 		name[path - p] = '\0';
 		path = skip_slash(path);
-		if (dir->f_type != FTYPE_DIR)
-			return -E_NOT_FOUND;
 
-		if ((r = dir_lookup(dir, name, &file)) < 0)
+		if (strcmp(name, "..") == 0)	// go to parent
 		{
-			if (r == -E_NOT_FOUND && *path == '\0')
-			{
-				if (pdir)
-					*pdir = dir;
-				if (lastelem)
-					strcpy(lastelem, name);
-				*pfile = NULL;
-			}
-			return r;
+			if (cursor > 0)
+				cursor--;
+			continue;
 		}
+		else if (strcmp(name, ".") == 0)	// stay still
+		{
+			continue;
+		}
+
+		if ((ret = dir_lookup(curFile, name, &fileCursor[cursor + 1])) < 0)
+		{
+			if (ret == -E_NOT_FOUND && *path == '\0')
+				fullpath[0] = '\0';
+			return ret;
+		}
+
+		cursor++;
+		if (cursor >= MAXFILEDEPTH)
+			return -E_NOT_FOUND;
 	}
 
-	if (pdir)
-		*pdir = dir;
-	if (pfile)
-		*pfile = file;
+	if (cursor == 0)
+	{
+		strcpy(fullpath, "/");
+		return 0;
+	}
+
+	for (int i = 1; i <= cursor; i++)
+	{
+		if (fileCursor[i]->f_name[0] == '\0')
+			continue;
+		strcat(fullpath, "/");
+		strcat(fullpath, fileCursor[i]->f_name);
+	}
 
 	return 0;
+}
+
+int walk_fullpath(char* path, char* fullpath)
+{
+	while (*path && (*path == ' '))
+		path++;
+
+	fullpath[0] = '\0';
+
+	return _walk_fullpath_aux(path, &super->s_root, fullpath);
+}
+
+#if 0
+char name[MAXNAMELEN];
+int r;
+
+// start at the root.
+path = skip_slash(path);
+struct File* file = &super->s_root;
+struct File* dir = NULL;
+char* p;
+
+name[0] = '\0';
+
+if (pdir)
+*pdir = NULL;
+if (pfile)
+*pfile = NULL;
+
+// find the target file by name recursively.
+while (*path != '\0')
+{
+	// debugf("WALK: %s\n", path);
+
+	dir = file;
+	p = path;
+
+	while (*path != '/' && *path != '\0')
+		path++;
+	if (path - p >= MAXNAMELEN)
+		return -E_BAD_PATH;
+
+	memcpy(name, p, path - p);
+	name[path - p] = '\0';
+	path = skip_slash(path);
+	if (dir->f_type != FTYPE_DIR)
+		return -E_NOT_FOUND;
+
+	if ((r = dir_lookup(dir, name, &file)) < 0)
+	{
+		if (r == -E_NOT_FOUND && *path == '\0')
+		{
+			if (pdir)
+				*pdir = dir;
+			if (lastelem)
+				strcpy(lastelem, name);
+			*pfile = NULL;
+		}
+		return r;
+	}
+}
+
+if (pdir)
+*pdir = dir;
+if (pfile)
+*pfile = file;
+
+return 0;
 #endif
 
 
@@ -815,7 +898,7 @@ int walk_path(char* path, struct File** pdir, struct File** pfile, char* lastele
 // Post-Condition:
 //  On success set *pfile to point at the file and return 0.
 //  On error return < 0.
-int file_open(char* path, struct File** file)
+int file_open(const char* path, struct File** file)
 {
 	return walk_path(path, 0, file, 0);
 }
@@ -947,6 +1030,12 @@ void file_flush(struct File* f)
 		}
 	}
 }
+
+int file_fullpath(const char* path, char* fullpath)
+{
+	return walk_fullpath(path, fullpath);
+}
+
 
 // Overview:
 //  Sync the entire file system.  A big hammer.

@@ -13,32 +13,44 @@
 #define FSREQ_DIRTY    5
 #define FSREQ_REMOVE   6
 #define FSREQ_SYNC     7
+#define FSREQ_FULLPATH 8
 
-struct Fsreq_open {
+struct Fsreq_open
+{
 	char req_path[MAXPATHLEN];
 	u_int req_omode;
 };
 
-struct Fsreq_map {
+struct Fsreq_fullpath
+{
+	char req_path[MAXPATHLEN];
+};
+
+struct Fsreq_map
+{
 	int req_fileid;
 	u_int req_offset;
 };
 
-struct Fsreq_set_size {
+struct Fsreq_set_size
+{
 	int req_fileid;
 	u_int req_size;
 };
 
-struct Fsreq_close {
+struct Fsreq_close
+{
 	int req_fileid;
 };
 
-struct Fsreq_dirty {
+struct Fsreq_dirty
+{
 	int req_fileid;
 	u_int req_offset;
 };
 
-struct Fsreq_remove {
+struct Fsreq_remove
+{
 	char req_path[MAXPATHLEN];
 };
 

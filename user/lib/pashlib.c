@@ -551,7 +551,6 @@ int is_begins_with(const char* str, const char* prefix)
 	if (is_null_or_empty(str))
 		return 0;
 
-	const char* original_str = str;
 	while (*prefix && *str)
 	{
 		if (*prefix != *str)
@@ -600,35 +599,40 @@ const char THANKS[] = "                                T H A N K S  F O R  Y O U
 ** support redirect or pipe. :(
 ** cmd is already stripped.
 ** return -1 means command not found, 0 means success. Other return
-** value must greater than 0, and indicate failure.
+** value must less than -1, and indicate failure.
 */
 static void _clear_screen();
 static void _print_version();
 static void _print_logo();
 
-int execute_internal(char* cmd)
+static int _cd(int argc, char* argv[]);
+
+int execute_internal(char* argv[])
 {
-	if (is_the_same(cmd, "cd") || is_begins_with(cmd, "cd "))
+	int argc = 0;
+	while (argv[argc])
+		argc++;
+
+	if (is_the_same(argv[0], "cd"))
 	{
-		printf("cd\n");
-		return 0;
+		return _cd(argc, argv);
 	}
-	else if (is_the_same(cmd, "clear") || is_begins_with(cmd, "clear "))
+	else if (is_the_same(argv[0], "clear"))
 	{
 		_clear_screen();
 		return 0;
 	}
-	else if (is_the_same(cmd, "exit") || is_begins_with(cmd, "exit "))
+	else if (is_the_same(argv[0], "exit"))
 	{
 		printfc(FOREGROUND_INTENSE(MAGENTA), "See you later~\n");
 		exit();
 	}
-	else if (is_the_same(cmd, "version") || is_begins_with(cmd, "version "))
+	else if (is_the_same(argv[0], "version"))
 	{
 		_print_version();
 		return 0;
 	}
-	else if (is_the_same(cmd, "pash") || is_begins_with(cmd, "pash "))
+	else if (is_the_same(argv[0], "pash"))
 	{
 		_print_logo();
 		return 0;
@@ -717,4 +721,67 @@ static void _print_logo()
 		}
 	}
 	printf("\n");
+}
+
+static oldPath[MAXPATHLEN];
+
+// cd
+static int _cd(int argc, char* argv[])
+{
+	if (argc > 2)
+	{
+		PASH_ERR("Too many arguments\n");
+		PASH_MSG("Usage: cd [dir]\n");
+		return -2;
+	}
+
+	if ((argc == 2) && is_the_same(argv[1], "-"))
+	{
+		if (*oldPath)
+		{
+			chdir(oldPath);
+			oldPath[0] = '\0';
+		}
+		else
+			printfc(ERROR_COLOR, "No previous directory");
+		return 0;
+	}
+	
+	getcwd(oldPath);
+
+	if (argc == 1)
+	{
+		chdir("/home");
+		return 0;
+	}
+	if (is_the_same(argv[1], "~"))
+	{
+		chdir("/home");
+		return 0;
+	}
+	else if (is_the_same(argv[1], "/"))
+	{
+		chdir("/");
+		return 0;
+	}
+
+	if (!access(argv[1], FTYPE_DIR))
+	{
+		PASH_ERR("No such file or directory\n");
+		return -3;
+	}
+
+	char dir[MAXPATHLEN];
+	int ret = fullpath(argv[1], dir);
+	if (ret != 0)
+	{
+		printfc(ERROR_COLOR, "fullpath: %d\n", ret);
+		return ret;
+	}
+
+	debugf("fullpath result: %s\n", dir);
+	if (is_the_same(dir, ""))
+		return chdir("/");
+
+	return chdir(dir);
 }

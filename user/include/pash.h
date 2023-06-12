@@ -134,7 +134,7 @@ int is_ends_with(const char* str, const char* suffix);
 */
 #define PASH_MAXARGS 64
 
-int execute_internal(char* cmd);
+int execute_internal(char* argv[]);
 
 
 /*

@@ -32,7 +32,11 @@ int main(int argc, char* argv[])
 	}
 
 	if (!hasTarget)
-		ls("/", "");
+	{
+		char dir[MAXPATHLEN];
+		getcwd(dir);
+		ls(dir, "");
+	}
 	else
 	{
 		for (int i = 1; i < argc; i++)
@@ -153,7 +157,7 @@ static void _ls(const char* prefix, u_int isdir, u_int size, const char* name)
 	int color;
 
 	if (enableLonglist)
-		printf("%11d %c ", size, isdir ? 'd' : '-');
+		printf("%11dB %11dKB %c ", size, size / 1024, isdir ? 'd' : '-');
 
 	if (isdir)
 		color = FOREGROUND_INTENSE(BLUE);

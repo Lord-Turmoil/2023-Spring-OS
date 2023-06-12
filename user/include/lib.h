@@ -81,9 +81,6 @@ int syscall_getch(void);
 void syscall_get_pwd(char* path);
 void syscall_set_pwd(const char* path);
 
-int syscall_set_pwd(const char* path);
-int syscall_get_pwd(char* path);
-
 // ipc.c
 void ipc_send(u_int whom, u_int val, const void* srcva, u_int perm);
 u_int ipc_recv(u_int* whom, void* dstva, u_int* perm);
@@ -136,6 +133,7 @@ int printfc(int color, const char* fmt, ...);
 
 // fsipc.c
 int fsipc_open(const char*, u_int, struct Fd*);
+int fsipc_fullpath(const char*, char*);
 int fsipc_map(u_int, u_int, void*);
 int fsipc_set_size(u_int, u_int);
 int fsipc_close(u_int);
@@ -157,6 +155,7 @@ int stat(const char* path, struct Stat* stat);
 
 // file.c
 int open(const char* path, int mode);
+int fullpath(const char* filename, char* path);
 int read_map(int fd, u_int offset, void** blk);
 int remove(const char* path);
 int ftruncate(int fd, u_int size);
@@ -182,8 +181,9 @@ int sync(void);
 
 // lib.c
 
+int access(char* path, int type);
 void getcwd(char* path);
-void chdir(const char* path);
+int chdir(const char* path);
 
 int atoi(const char* str);
 

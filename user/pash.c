@@ -15,7 +15,7 @@
 #include <arguments.h>
 
 static char buffer[PASH_BUFFER_SIZE];
-static char pwd[MAXPATHLEN];
+static int redirect;
 
 static int interactive;
 static int echocmds;
@@ -30,6 +30,7 @@ static int execute(char* cmd);
 static int _runcmd(char* cmd);
 static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe);
 static int _execv(char* cmd, char* argv[]);
+static void _restore_stream();
 
 int main(int argc, char* argv[])
 {
@@ -163,28 +164,9 @@ static int execute(char* cmd)
 	int ret;
 
 	strstrip(cmd, ' ');
-
-	ret = execute_internal(cmd);
-	if (ret >= 0)
-		return ret;
-
-	// execute external commands
-	ret = fork();
-	if (ret < 0)
-	{
-		PASH_ERR("Failed to execute due to fork: %d\n", ret);
-		return ret;
-	}
-
-	if (ret == 0)
-	{
-		ret = _runcmd(cmd);
-		if (ret != 0)
-			PASH_ERR("Command returned: %d\n", ret);
-		exit();
-	}
-	else
-		wait(ret);
+	ret = _runcmd(cmd);
+	if (ret != 0)
+		PASH_ERR("Failed to run command '%s': %d\n", cmd, ret);
 
 	return 0;
 }
@@ -204,6 +186,7 @@ static int _runcmd(char* cmd)
 		// initialize default behavior
 		hasNext = 0;
 		needWait = 1;
+		redirect = 0;
 
 		// parse command
 		ret = _parsecmd(cmd, &argc, argv, &rightpipe);
@@ -232,21 +215,27 @@ static int _runcmd(char* cmd)
 		int child = _execv(argv[0], argv);
 		if (child < 0)
 		{
-			PASH_ERR("Failed to spawn '%s'\n", argv[0]);
+			PASH_ERR("Failed to execute '%s'\n", argv[0]);
 			if (hasNext)
-				continue;
+			{
+				if (redirect)
+					_restore_stream();
+			}
 			else
 				return child;
 		}
-		
+
 		// If close all, later children will be unable to output...
 		// close_all();
 
-		if (needWait)
+		if ((child > 0) && needWait)
 			wait(child);
 
 		if (rightpipe)
 			wait(rightpipe);
+
+		if (redirect)
+			_restore_stream();
 	} while (hasNext);
 
 	return 0;
@@ -313,6 +302,9 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			}
 			dup(fd, 0);
 			close(fd);
+
+			redirect = 1;
+			
 			break;
 		case TK_REDIRECT_RIGHT:
 			if (get_token(NULL, &token) != TK_WORD)
@@ -328,6 +320,9 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			}
 			dup(fd, 1);
 			close(fd);
+
+			redirect = 1;
+
 			break;
 		case TK_PIPE:
 			ret = pipe(pipefd);
@@ -336,6 +331,9 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 				PASH_ERR("Failed to create pipe\n");
 				return -7;
 			}
+			
+			redirect = 1;
+
 			ret = fork();
 			if (ret < 0)
 			{
@@ -348,7 +346,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 				dup(pipefd[0], 0);
 				close(pipefd[0]);
 				close(pipefd[1]);
-				// NULL to continue parsing on current cmd strinrg
+				// NULL to continue parsing on current cmd string
 				return _parsecmd(NULL, argc, argv, rightpipe);
 			}
 			else
@@ -375,6 +373,10 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 
 static int _execv(char* cmd, char* argv[])
 {
+	int ret = execute_internal(argv);
+	if (ret != -1)	// execute success or failed
+		return ret;
+
 	char prog[PASH_BUFFER_SIZE] = "/bin/";
 
 	if (cmd[0] == '/' || cmd[0] == '.')	// use directory to call command
@@ -385,4 +387,11 @@ static int _execv(char* cmd, char* argv[])
 		strcat(prog, ".b");
 
 	return spawn(prog, argv);
+}
+
+static void _restore_stream()
+{
+	close_all();
+	panic_on(opencons());
+	panic_on(dup(0, 1) < 0);
 }

@@ -4,7 +4,8 @@
 
 #define debug 0
 
-u_char fsipcbuf[BY2PG] __attribute__((aligned(BY2PG)));
+u_char fsipc_send[BY2PG] __attribute__((aligned(BY2PG)));
+u_char fsipc_recv[BY2PG] __attribute__((aligned(BY2PG)));
 
 // Overview:
 //  Send an IPC request to the file server, and wait for a reply.
@@ -41,7 +42,7 @@ int fsipc_open(const char* path, u_int omode, struct Fd* fd)
 	u_int perm;
 	struct Fsreq_open* req;
 
-	req = (struct Fsreq_open*)fsipcbuf;
+	req = (struct Fsreq_open*)fsipc_send;
 
 	// The path is too long.
 	if (strlen(path) >= MAXPATHLEN)
@@ -52,6 +53,32 @@ int fsipc_open(const char* path, u_int omode, struct Fd* fd)
 
 	return fsipc(FSREQ_OPEN, req, fd, &perm);
 }
+
+
+// request fullpath
+int fsipc_fullpath(const char* filename, char* fullpath)
+{
+	u_int perm;
+	struct Fsreq_fullpath* req;
+
+	req = (struct Fsreq_fullpath*)fsipc_send;
+
+	if (strlen(filename) >= MAXPATHLEN)
+		return -E_BAD_PATH;
+
+	strcpy(req->req_path, filename);
+	debugf("Before: %s\n", req->req_path);
+
+	int ret = fsipc(FSREQ_FULLPATH, req, (void*)fsipc_recv, &perm);
+	if (ret != 0)
+		return ret;
+
+	strcpy(fullpath, (const char*)fsipc_recv);
+	debugf("After: %s\n", fullpath);
+	
+	return 0;
+}
+
 
 // Overview:
 //  Make a map-block request to the file server. We send the fileid and
@@ -67,7 +94,7 @@ int fsipc_map(u_int fileid, u_int offset, void* dstva)
 	u_int perm;
 	struct Fsreq_map* req;
 
-	req = (struct Fsreq_map*)fsipcbuf;
+	req = (struct Fsreq_map*)fsipc_send;
 	req->req_fileid = fileid;
 	req->req_offset = offset;
 
@@ -90,7 +117,7 @@ int fsipc_set_size(u_int fileid, u_int size)
 {
 	struct Fsreq_set_size* req;
 
-	req = (struct Fsreq_set_size*)fsipcbuf;
+	req = (struct Fsreq_set_size*)fsipc_send;
 	req->req_fileid = fileid;
 	req->req_size = size;
 	return fsipc(FSREQ_SET_SIZE, req, 0, 0);
@@ -102,7 +129,7 @@ int fsipc_close(u_int fileid)
 {
 	struct Fsreq_close* req;
 
-	req = (struct Fsreq_close*)fsipcbuf;
+	req = (struct Fsreq_close*)fsipc_send;
 	req->req_fileid = fileid;
 	return fsipc(FSREQ_CLOSE, req, 0, 0);
 }
@@ -113,7 +140,7 @@ int fsipc_dirty(u_int fileid, u_int offset)
 {
 	struct Fsreq_dirty* req;
 
-	req = (struct Fsreq_dirty*)fsipcbuf;
+	req = (struct Fsreq_dirty*)fsipc_send;
 	req->req_fileid = fileid;
 	req->req_offset = offset;
 
@@ -132,7 +159,7 @@ int fsipc_remove(const char* path)
 		return -E_BAD_PATH;
 
 	// Step 2: Use 'fsipcbuf' as a 'struct Fsreq_remove'.
-	struct Fsreq_remove* req = (struct Fsreq_remove*)fsipcbuf;
+	struct Fsreq_remove* req = (struct Fsreq_remove*)fsipc_send;
 
 	// Step 3: Copy 'path' into the path in 'req' using 'strcpy'.
 	/* Exercise 5.12: Your code here. (2/3) */
@@ -148,5 +175,5 @@ int fsipc_remove(const char* path)
 //  blocks in the buffer cache.
 int fsipc_sync(void)
 {
-	return fsipc(FSREQ_SYNC, fsipcbuf, 0, 0);
+	return fsipc(FSREQ_SYNC, fsipc_send, 0, 0);
 }
