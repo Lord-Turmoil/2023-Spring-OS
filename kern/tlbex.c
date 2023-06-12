@@ -7,12 +7,12 @@ static void passive_alloc(u_int va, Pde* pgdir, u_int asid)
 
 	if (va < UTEMP)
 	{
-		panic("address too low");
+		panic("address '%x' too low", va);
 	}
 
 	if (va >= USTACKTOP && va < USTACKTOP + BY2PG)
 	{
-		panic("invalid memory");
+		panic("invalid memory at '%x'", va);
 	}
 
 	if (va >= UENVS && va < UPAGES)

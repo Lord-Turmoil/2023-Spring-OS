@@ -1,7 +1,8 @@
-void tlb_refill_check(void) {
-	Pde *boot_pgdir = alloc(BY2PG, BY2PG, 1);
+void tlb_refill_check(void)
+{
+	Pde* boot_pgdir = alloc(BY2PG, BY2PG, 1);
 	cur_pgdir = boot_pgdir;
-	struct Page *pp, *pp0, *pp1, *pp2, *pp3, *pp4;
+	struct Page* pp, * pp0, * pp1, * pp2, * pp3, * pp4;
 
 	// should be able to allocate three pages
 	pp0 = pp1 = pp2 = pp3 = pp4 = 0;
@@ -27,7 +28,7 @@ void tlb_refill_check(void) {
 	extern void do_tlb_refill(void);
 	extern Pte _do_tlb_refill(u_long va, u_int asid);
 
-	Pte *walk_pte;
+	Pte* walk_pte;
 	Pte ret_pte = _do_tlb_refill(BY2PG, 0);
 	assert(page_lookup(boot_pgdir, BY2PG, &walk_pte) != NULL);
 	assert(ret_pte == *walk_pte);
@@ -59,19 +60,20 @@ void tlb_refill_check(void) {
 	asm volatile("mtc0 %0, $10" : : "r"(entryhi));
 	asm volatile("mtc0 %0, $2" : : "r"(entrylo));
 	asm volatile("mtc0 %0, $0" : : "r"(index));
-	asm volatile("tlbp" : :);
-	asm volatile("nop" : :);
+	asm volatile("tlbp" : : );
+	asm volatile("nop" : : );
 
-	asm volatile("mfc0 %0, $0" : "=r"(index) :);
+	asm volatile("mfc0 %0, $0" : "=r"(index) : );
 	assert(index >= 0);
-	asm volatile("tlbr" : :);
-	asm volatile("mfc0 %0, $2" : "=r"(entrylo) :);
+	asm volatile("tlbr" : : );
+	asm volatile("mfc0 %0, $2" : "=r"(entrylo) : );
 	assert(entrylo == ret_pte);
 
 	printk("tlb_refill_check() succeed!\n");
 }
 
-void mips_init() {
+void mips_init()
+{
 	printk("init.c:\tmips_init() is called\n");
 
 	mips_detect_memory();

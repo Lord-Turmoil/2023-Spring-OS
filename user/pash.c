@@ -148,7 +148,9 @@ static void print_prompt()
 	printfc(FOREGROUND_INTENSE(GREEN), "tony");
 	printfc(FOREGROUND(WHITE), ":");
 
+	debugf("pwd 1: %s\n", pwd);
 	getcwd(pwd);
+	debugf("pwd 2: %s\n", pwd);
 	printfc(FOREGROUND_INTENSE(BLUE), "%s", pwd);
 
 	printfc(FOREGROUND(WHITE), "$ ");

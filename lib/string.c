@@ -74,13 +74,16 @@ size_t strlen(const char* s)
 	return n;
 }
 
+/********************************************************************
+** Who implemented this? ****
+*/
 char* strcpy(char* dst, const char* src)
 {
 	char* ret = dst;
 
-	while ((*dst++ = *src++) != 0)
-	{
-	}
+	for (const char* p = src; *p; p++)
+		*(dst++) = *p;
+	*dst = '\0';
 
 	return ret;
 }

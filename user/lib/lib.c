@@ -28,6 +28,7 @@ int access(char* path)
 
 int getcwd(char* path)
 {
+	debugf("pwd 3: %s\n", path);
 	return syscall_get_pwd(path);
 }
 

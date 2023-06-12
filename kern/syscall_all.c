@@ -5,6 +5,7 @@
 #include <printk.h>
 #include <sched.h>
 #include <syscall.h>
+#include <string.h>
 
 extern struct Env* curenv;
 
@@ -290,7 +291,9 @@ int sys_exofork(void)
 	e->env_status = ENV_NOT_RUNNABLE;
 	e->env_pri = curenv->env_pri;
 
+	printk("curenv->env_pwd: %s\n", curenv->env_pwd);
 	strcpy(e->env_pwd, curenv->env_pwd);	// inherit present working directory
+	printk("e->env_pwd: %s\n", e->env_pwd);
 
 	return e->env_id;
 }
@@ -581,7 +584,17 @@ int sys_set_pwd(const char* path)
 
 int sys_get_pwd(char* path)
 {
-	strcpy(path, curenv->env_pwd);
+	printk("K: %x %x\n", path, curenv->env_pwd);
+
+	char* ret = path;
+	for (const char* p = curenv->env_pwd; *p; p++)
+	{
+		printk("%c", *p);
+		 *(ret++) = *p;
+	}
+	*ret = '\0';
+	printk("Kx: 0x%x\n", path);
+	printk("K: %s\n", path);
 	return 0;
 }
 
