@@ -722,7 +722,8 @@ static int _cd(int argc, char* argv[])
 		return ret;
 	}
 
-	debugf("fullpath result: %s\n", dir);
+	// debugf("fullpath result: %s\n", dir);
+
 	if (is_the_same(dir, ""))
 		return chdir("/");
 

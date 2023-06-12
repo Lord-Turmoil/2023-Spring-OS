@@ -56,7 +56,8 @@ int main(int argc, char* argv[])
 	printf("Based on PassBash v3.x\n");
 	printf("__________________________________________________\n\n");
 
-	execute_internal("version");
+	char* args[] = { "version", NULL };
+	execute_internal(args);
 
 	printf("\n");
 
@@ -187,12 +188,15 @@ static int _runcmd(char* cmd)
 		hasNext = 0;
 		needWait = 1;
 		redirect = 0;
+		rightpipe = 0;
 
 		// parse command
 		ret = _parsecmd(cmd, &argc, argv, &rightpipe);
 		if (ret < 0)
 		{
 			PASH_ERR(SYNTAX_ERR_MSG "Failed to parse command: %d\n", ret);
+			if (redirect)
+				_restore_stream();
 			return ret;
 		}
 		if (ret > 0)	// ; or &
@@ -208,6 +212,8 @@ static int _runcmd(char* cmd)
 		if (argc == 0)
 		{
 			PASH_MSG("Empty line...\n");
+			if (redirect)
+				_restore_stream();
 			return 0;
 		}
 
@@ -216,11 +222,10 @@ static int _runcmd(char* cmd)
 		if (child < 0)
 		{
 			PASH_ERR("Failed to execute '%s'\n", argv[0]);
+			if (redirect)
+				_restore_stream();
 			if (hasNext)
-			{
-				if (redirect)
-					_restore_stream();
-			}
+				continue;
 			else
 				return child;
 		}
@@ -231,11 +236,12 @@ static int _runcmd(char* cmd)
 		if ((child > 0) && needWait)
 			wait(child);
 
+		if (redirect)
+			_restore_stream();
+
 		if (rightpipe)
 			wait(rightpipe);
 
-		if (redirect)
-			_restore_stream();
 	} while (hasNext);
 
 	return 0;
@@ -351,6 +357,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			}
 			else
 			{
+				// debugf("\tChild: %08x\n", ret);
 				dup(pipefd[1], 1);
 				close(pipefd[0]);
 				close(pipefd[1]);

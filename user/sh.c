@@ -305,7 +305,7 @@ int main(int argc, char** argv)
 		readline(buf, sizeof buf);
 
 		if (buf[0] == '#')
-			continue;
+			break;
 		if (echocmds)
 			printf("# %s\n", buf);
 
