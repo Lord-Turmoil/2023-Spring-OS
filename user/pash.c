@@ -44,18 +44,18 @@ int main(int argc, char* argv[])
 	echocmds = 0;
 	filename = NULL;
 
-	if (!interactive)
-	{
-		backupfd[0] = dup(0, 10);
-		backupfd[1] = dup(1, 11);
-		panic_on(backupfd[0] < 0);
-		panic_on(backupfd[1] < 0);
-	}
-
 	if (parse_args(argc, argv) != 0)
 	{
 		usage();
 		return 1;
+	}
+
+	if (!interactive)
+	{
+		backupfd[0] = dup(0, 10);
+		panic_on(backupfd[0] < 0);
+		backupfd[1] = dup(1, 11);
+		panic_on(backupfd[1] < 0);
 	}
 
 	input_opt_t opt;
@@ -86,6 +86,7 @@ int main(int argc, char* argv[])
 
 		ret = get_string(buffer, &opt);
 		printf("\n");
+
 		if (ret == EOF)
 		{
 			PASH_MSG("End-of-File reached!\n");
@@ -244,13 +245,14 @@ static int _runcmd(char* cmd)
 				return child;
 		}
 
+		// why this has to be placed before wait?
+		_restore_stream();
+		
 		if ((child > 0) && needWait)
 			wait(child);
 
 		if (rightpipe)
 			wait(rightpipe);
-
-		_restore_stream();
 	} while (hasNext);
 
 	if (trivial)
@@ -370,7 +372,6 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			}
 			else
 			{
-				// debugf("\tChild: %08x\n", ret);
 				dup(pipefd[1], 1);
 				close(pipefd[0]);
 				close(pipefd[1]);
@@ -414,7 +415,7 @@ static void _restore_stream()
 	if (!redirect)
 		return;
 
-	debugf("restore %d", interactive);
+	// debugf("restore %d", interactive);
 	
 	if (!interactive)
 	{
@@ -423,8 +424,8 @@ static void _restore_stream()
 	}
 	else
 	{
-		close_all();
-		panic_on(opencons());
+		close(0);
+		panic_on(opencons() != 0);
 		panic_on(dup(0, 1) < 0);
 	}
 }

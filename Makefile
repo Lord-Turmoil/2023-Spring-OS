@@ -29,6 +29,7 @@ endif
 
 gxemul_flags            += -T -C R3000 -M 256
 CFLAGS                  += -DLAB=$(shell echo $(lab) | cut -f1 -d_)
+# CFLAGS                  += -DLAB=$(shell echo $(lab) | cut -f1 -d_) -DMOS_VERBOSE
 
 objects                 := $(addsuffix /*.o, $(modules)) $(addsuffix /*.x, $(user_modules))
 modules                 += $(user_modules)
