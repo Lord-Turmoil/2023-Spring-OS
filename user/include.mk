@@ -27,19 +27,19 @@ ifeq ($(call lab-ge,6), true)
 	INITAPPS     += icode.x
 
 	USERLIB      += wait.o spawn.o pipe.o
-	USERAPPS     := num.b  \
-			echo.b \
-			halt.b \
-			ls.b \
-			sh.b  \
-			cat.b \
-			testarg.b \
-			pingpong.b \
-			init.b \
-			testconio.b \
-			tokentest.b \
-			pash.b \
-			ampersand.b
+	USERAPPS     :=	init.b \
+					halt.b \
+					pash.b \
+					echo.b \
+					ls.b \
+					cat.b \
+					tree.b \
+					sh.b  \
+					testarg.b \
+					pingpong.b \
+					testconio.b \
+					tokentest.b \
+					ampersand.b
 endif
 
 USERLIB      += lib.o

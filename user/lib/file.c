@@ -11,12 +11,12 @@ static int file_stat(struct Fd* fd, struct Stat* stat);
 // Dot represents choosing the member within the struct declaration
 // to initialize, with no need to consider the order of members.
 struct Dev devfile = {
-	.dev_id    = 'f',
-	.dev_name  = "file",
-	.dev_read  = file_read,
+	.dev_id = 'f',
+	.dev_name = "file",
+	.dev_read = file_read,
 	.dev_write = file_write,
 	.dev_close = file_close,
-	.dev_stat  = file_stat,
+	.dev_stat = file_stat,
 };
 
 // Overview:
@@ -171,7 +171,7 @@ int read_map(int fdnum, u_int offset, void** blk)
 
 	if (fd->fd_dev_id != devfile.dev_id)
 		return -E_INVAL;
-	
+
 	va = fd2data(fd) + offset;
 
 	if (offset >= MAXFILESIZE)
@@ -220,7 +220,7 @@ static int file_stat(struct Fd* fd, struct Stat* st)
 	strcpy(st->st_name, f->f_file.f_name);
 	st->st_size = f->f_file.f_size;
 	st->st_isdir = f->f_file.f_type == FTYPE_DIR;
-	
+
 	return 0;
 }
 
@@ -285,4 +285,21 @@ int remove(const char* path)
 int sync(void)
 {
 	return fsipc_sync();
+}
+
+int basename(const char* path, char* basename)
+{
+	const char* p = path + (strlen(path) - 1);
+	while ((p > path) && (*p == '/'))
+		p--;
+	while ((p > path) && (*p != '/'))
+		p--;
+
+	strcpy(basename, path);
+	strstrip(basename, '/');
+
+	if (basename[0] == '\0')
+		strcpy(basename, "/");
+
+	return 0;
 }

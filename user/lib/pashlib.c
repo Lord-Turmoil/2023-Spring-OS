@@ -517,72 +517,6 @@ int is_terminator(int ch)
 	return ch == LINEFEED || ch == CARRIGE;
 }
 
-int is_null_or_empty(const char* str)
-{
-	return !str || !*str;
-}
-
-int is_no_content(const char* str)
-{
-	if (is_null_or_empty(str))
-		return 1;
-	for (const char* p = str; *p; p++)
-	{
-		if (isprint(*p))
-			return 0;
-	}
-
-	return 1;
-}
-
-int is_the_same(const char* str1, const char* str2)
-{
-	// if both are NULL, return 0
-
-	if (!!str1 && !!str2)
-		return strcmp(str1, str2) == 0;
-	return 0;
-}
-
-int is_begins_with(const char* str, const char* prefix)
-{
-	if (is_null_or_empty(prefix))
-		return 1;
-	if (is_null_or_empty(str))
-		return 0;
-
-	while (*prefix && *str)
-	{
-		if (*prefix != *str)
-			return 0;
-		prefix++;
-		str++;
-	}
-
-	return !*prefix;
-}
-
-int is_ends_with(const char* str, const char* suffix)
-{
-	if (is_null_or_empty(suffix))
-		return 1;
-	if (is_null_or_empty(str))
-		return 0;
-
-	const char* str_end = str + strlen(str);
-	const char* suffix_end = suffix + strlen(suffix);
-
-	while (str_end >= str && suffix_end >= suffix)
-	{
-		if (*str_end != *suffix_end)
-			return 0;
-		str_end--;
-		suffix_end--;
-	}
-
-	return suffix_end < suffix;
-}
-
 
 /*
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -606,16 +540,23 @@ static void _print_version();
 static void _print_logo();
 
 static int _cd(int argc, char* argv[]);
+static int _pwd(int argc, char* argv[]);
 
 int execute_internal(char* argv[])
 {
 	int argc = 0;
 	while (argv[argc])
 		argc++;
+	if (argc == 0)
+		return -1;
 
 	if (is_the_same(argv[0], "cd"))
 	{
 		return _cd(argc, argv);
+	}
+	else if (is_the_same(argv[0], "pwd"))
+	{
+		return _pwd(argc, argv);
 	}
 	else if (is_the_same(argv[0], "clear"))
 	{
@@ -786,4 +727,15 @@ static int _cd(int argc, char* argv[])
 		return chdir("/");
 
 	return chdir(dir);
+}
+
+static int _pwd(int argc, char* argv[])
+{
+	char path[MAXPATHLEN];
+
+	getcwd(path);
+
+	printf("%s\n", path);
+
+	return 0;
 }

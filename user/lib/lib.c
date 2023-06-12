@@ -36,7 +36,7 @@ int access(char* path, int type)
 		return st.st_isdir;
 	else if (type == FTYPE_REG)
 		return !st.st_isdir;
-	
+
 	return 1;
 }
 
@@ -53,7 +53,7 @@ int chdir(const char* path)
 		return -E_NOT_FOUND;
 	while (*path && *path == ' ')
 		path++;
-	
+
 	if (path[0] != '/')     // relative change
 	{
 		syscall_get_pwd(dir);
@@ -97,4 +97,90 @@ int atoi(const char* str)
 	}
 
 	return ret * sign;
+}
+
+int isdir(const char* path)
+{
+	struct Stat st;
+
+	if (stat(path, &st) < 0)
+		return 0;
+
+	return st.st_isdir;
+}
+
+int isreg(const char* path)
+{
+	struct Stat st;
+
+	if (stat(path, &st) < 0)
+		return 0;
+
+	return !st.st_isdir;
+}
+
+int is_the_same(const char* str1, const char* str2)
+{
+	// if both are NULL, return 0
+
+	if (!!str1 && !!str2)
+		return strcmp(str1, str2) == 0;
+	return 0;
+}
+
+int is_null_or_empty(const char* str)
+{
+	return !str || !*str;
+}
+
+int is_no_content(const char* str)
+{
+	if (is_null_or_empty(str))
+		return 1;
+	for (const char* p = str; *p; p++)
+	{
+		if (isprint(*p))
+			return 0;
+	}
+
+	return 1;
+}
+
+int is_begins_with(const char* str, const char* prefix)
+{
+	if (is_null_or_empty(prefix))
+		return 1;
+	if (is_null_or_empty(str))
+		return 0;
+
+	while (*prefix && *str)
+	{
+		if (*prefix != *str)
+			return 0;
+		prefix++;
+		str++;
+	}
+
+	return !*prefix;
+}
+
+int is_ends_with(const char* str, const char* suffix)
+{
+	if (is_null_or_empty(suffix))
+		return 1;
+	if (is_null_or_empty(str))
+		return 0;
+
+	const char* str_end = str + strlen(str);
+	const char* suffix_end = suffix + strlen(suffix);
+
+	while (str_end >= str && suffix_end >= suffix)
+	{
+		if (*str_end != *suffix_end)
+			return 0;
+		str_end--;
+		suffix_end--;
+	}
+
+	return suffix_end < suffix;
 }

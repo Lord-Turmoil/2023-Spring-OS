@@ -160,6 +160,7 @@ int read_map(int fd, u_int offset, void** blk);
 int remove(const char* path);
 int ftruncate(int fd, u_int size);
 int sync(void);
+int basename(const char* path, char* basename);
 
 #define user_assert(x)                                                                             \
 	do {                                                                                       \
@@ -184,7 +185,17 @@ int sync(void);
 int access(char* path, int type);
 void getcwd(char* path);
 int chdir(const char* path);
+int isdir(const char* path);
+int isreg(const char* path);
 
 int atoi(const char* str);
+
+int is_null_or_empty(const char* str);
+int is_no_content(const char* str);
+
+int is_the_same(const char* str1, const char* str2);
+
+int is_begins_with(const char* str, const char* prefix);
+int is_ends_with(const char* str, const char* suffix);
 
 #endif
