@@ -121,7 +121,7 @@ static void ls(const char* path, const char* prefix)
 
 	if ((ret = stat(path, &st)) < 0)
 	{
-		printfc(ERROR_COLOR, "Failed to get stat of '%s': %d\n", path, ret);
+		printfc(ERROR_COLOR, "cannot access '%s': No such file or directory\n", path);
 		return;
 	}
 
@@ -169,7 +169,7 @@ static void _ls(const char* prefix, u_int isdir, u_int size, const char* name)
 
 	if (prefix)
 	{
-		if (prefix[0] && prefix[strlen(prefix - 1)] != '/')
+		if (prefix[0] && prefix[strlen(prefix) - 1] != '/')
 			sep = "/";
 		else
 			sep = "";

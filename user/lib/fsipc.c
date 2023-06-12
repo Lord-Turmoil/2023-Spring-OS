@@ -67,14 +67,14 @@ int fsipc_fullpath(const char* filename, char* fullpath)
 		return -E_BAD_PATH;
 
 	strcpy(req->req_path, filename);
-	debugf("Before: %s\n", req->req_path);
+	// debugf("Before: %s\n", req->req_path);
 
 	int ret = fsipc(FSREQ_FULLPATH, req, (void*)fsipc_recv, &perm);
 	if (ret != 0)
 		return ret;
 
 	strcpy(fullpath, (const char*)fsipc_recv);
-	debugf("After: %s\n", fullpath);
+	// debugf("After: %s\n", fullpath);
 	
 	return 0;
 }

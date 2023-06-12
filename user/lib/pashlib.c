@@ -739,14 +739,16 @@ static int _cd(int argc, char* argv[])
 	{
 		if (*oldPath)
 		{
+			char temp[MAXPATHLEN];
+			getcwd(temp);
 			chdir(oldPath);
-			oldPath[0] = '\0';
+			strcpy(oldPath, temp);
 		}
 		else
-			printfc(ERROR_COLOR, "No previous directory");
+			printfc(ERROR_COLOR, "No previous directory\n");
 		return 0;
 	}
-	
+
 	getcwd(oldPath);
 
 	if (argc == 1)
