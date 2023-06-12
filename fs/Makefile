@@ -32,6 +32,7 @@ all: serv.x check.x $(FSLIB)
 
 clean:
 	rm -rf *~ *.o *.b.c *.b *.x
+	rm -rf rootfs/*.b rootfs/bin/*.b
 
 
 # FSIMGFILES  := rootfs/motd rootfs/newmotd $(USERAPPS) $(fs-files)

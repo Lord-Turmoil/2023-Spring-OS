@@ -84,3 +84,13 @@ int syscall_getch(void)
 
 	return ch;
 }
+
+int syscall_set_pwd(const char* path)
+{
+	return msyscall(SYS_set_pwd, path);
+}
+
+int syscall_get_pwd(char* path)
+{
+	return msyscall(SYS_get_pwd, path);
+}

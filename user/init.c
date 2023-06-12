@@ -64,6 +64,8 @@ int main(int argc, char** argv)
 		user_panic("dup: %d", r);
 	}
 
+	panic_on(chdir("/home") < 0);
+
 	while (1)
 	{
 		debugf("init: starting sh\n");

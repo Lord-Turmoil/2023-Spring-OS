@@ -15,6 +15,7 @@
 #include <arguments.h>
 
 static char buffer[PASH_BUFFER_SIZE];
+static char pwd[MAXPATHLEN];
 
 static int interactive;
 static int echocmds;
@@ -146,7 +147,10 @@ static void print_prompt()
 {
 	printfc(FOREGROUND_INTENSE(GREEN), "tony");
 	printfc(FOREGROUND(WHITE), ":");
-	printfc(FOREGROUND_INTENSE(BLUE), "/path");
+
+	getcwd(pwd);
+	printfc(FOREGROUND_INTENSE(BLUE), "%s", pwd);
+
 	printfc(FOREGROUND(WHITE), "$ ");
 }
 

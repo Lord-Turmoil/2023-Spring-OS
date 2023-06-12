@@ -266,15 +266,17 @@ int sys_exofork(void)
 	/* Exercise 4.9: Your code here. (1/4) */
 	try(env_alloc(&e, curenv->env_id));
 
-	/* Step 2: Copy the current Trapframe below 'KSTACKTOP' to the new env's
-	   'env_tf'. */
-	   /* Exercise 4.9: Your code here. (2/4) */
-	   /*
-		* Since env_tf is only save for next run in env_run. Here, the value of
-		* curenv->tf is the break point of the current run start of the current
-		* process's, which is not up to date. So we should use directly the
-		* memory area to get child process's trapframe.
-		*/
+	/*
+	 * Step 2: Copy the current Trapframe below 'KSTACKTOP' to the new env's
+	 * 'env_tf'.
+	 */
+	 /* Exercise 4.9: Your code here. (2/4) */
+	 /*
+	  * Since env_tf is only save for next run in env_run. Here, the value of
+	  * curenv->tf is the break point of the current run start of the current
+	  * process's, which is not up to date. So we should use directly the
+	  * memory area to get child process's trapframe.
+	  */
 	e->env_tf = *((struct Trapframe*)KSTACKTOP - 1);
 
 	/* Step 3: Set the new env's 'env_tf.regs[2]' to 0 to indicate the return
@@ -287,6 +289,8 @@ int sys_exofork(void)
 	/* Exercise 4.9: Your code here. (4/4) */
 	e->env_status = ENV_NOT_RUNNABLE;
 	e->env_pri = curenv->env_pri;
+
+	strcpy(e->env_pwd, curenv->env_pwd);	// inherit present working directory
 
 	return e->env_id;
 }
@@ -520,9 +524,9 @@ static inline int is_illegal_dev_pa_range(u_long pa, u_int len)
 		return 0;
 	if (pa + len < pa)
 		return 1;
-	if (!(in_range(0x10000000, 0x20,   pa, len) ||
+	if (!(in_range(0x10000000, 0x20, pa, len) ||
 		  in_range(0x13000000, 0x4200, pa, len) ||
-		  in_range(0x15000000, 0x200,  pa, len)))
+		  in_range(0x15000000, 0x200, pa, len)))
 	{
 		return 1;
 	}
@@ -569,26 +573,40 @@ int sys_getch(void)
 	return scancharc();
 }
 
+int sys_set_pwd(const char* path)
+{
+	strcpy(curenv->env_pwd, path);
+	return 0;
+}
+
+int sys_get_pwd(char* path)
+{
+	strcpy(path, curenv->env_pwd);
+	return 0;
+}
+
 void* syscall_table[MAX_SYSNO] = {
-	[SYS_putchar]           = sys_putchar,
-	[SYS_print_cons]        = sys_print_cons,
-	[SYS_getenvid]          = sys_getenvid,
-	[SYS_yield]             = sys_yield,
-	[SYS_env_destroy]       = sys_env_destroy,
+	[SYS_putchar] = sys_putchar,
+	[SYS_print_cons] = sys_print_cons,
+	[SYS_getenvid] = sys_getenvid,
+	[SYS_yield] = sys_yield,
+	[SYS_env_destroy] = sys_env_destroy,
 	[SYS_set_tlb_mod_entry] = sys_set_tlb_mod_entry,
-	[SYS_mem_alloc]         = sys_mem_alloc,
-	[SYS_mem_map]           = sys_mem_map,
-	[SYS_mem_unmap]         = sys_mem_unmap,
-	[SYS_exofork]           = sys_exofork,
-	[SYS_set_env_status]    = sys_set_env_status,
-	[SYS_set_trapframe]     = sys_set_trapframe,
-	[SYS_panic]             = sys_panic,
-	[SYS_ipc_try_send]      = sys_ipc_try_send,
-	[SYS_ipc_recv]          = sys_ipc_recv,
-	[SYS_cgetc]             = sys_cgetc,
-	[SYS_write_dev]         = sys_write_dev,
-	[SYS_read_dev]          = sys_read_dev,
-	[SYS_getch]             = sys_getch
+	[SYS_mem_alloc] = sys_mem_alloc,
+	[SYS_mem_map] = sys_mem_map,
+	[SYS_mem_unmap] = sys_mem_unmap,
+	[SYS_exofork] = sys_exofork,
+	[SYS_set_env_status] = sys_set_env_status,
+	[SYS_set_trapframe] = sys_set_trapframe,
+	[SYS_panic] = sys_panic,
+	[SYS_ipc_try_send] = sys_ipc_try_send,
+	[SYS_ipc_recv] = sys_ipc_recv,
+	[SYS_cgetc] = sys_cgetc,
+	[SYS_write_dev] = sys_write_dev,
+	[SYS_read_dev] = sys_read_dev,
+	[SYS_getch] = sys_getch,
+	[SYS_set_pwd] = sys_set_pwd,
+	[SYS_get_pwd] = sys_get_pwd
 };
 
 /* Overview:

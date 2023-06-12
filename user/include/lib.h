@@ -79,6 +79,9 @@ int syscall_write_dev(void*, u_int, u_int);
 int syscall_read_dev(void*, u_int, u_int);
 int syscall_getch(void);
 
+int syscall_set_pwd(const char* path);
+int syscall_get_pwd(char* path);
+
 // ipc.c
 void ipc_send(u_int whom, u_int val, const void* srcva, u_int perm);
 u_int ipc_recv(u_int* whom, void* dstva, u_int* perm);
@@ -174,6 +177,17 @@ int sync(void);
 #define O_TRUNC 0x0200  /* truncate to zero length */
 #define O_EXCL  0x0400  /* error if already exists */
 #define O_MKDIR 0x0800  /* create directory, not regular file */
+
+/*
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+** Directory related
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+*/
+
+int access(char* path);
+int getcwd(char* path);
+int chdir(const char* path);
+
 
 /*
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
