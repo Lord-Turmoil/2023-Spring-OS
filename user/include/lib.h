@@ -78,6 +78,8 @@ int syscall_cgetc();
 int syscall_write_dev(void*, u_int, u_int);
 int syscall_read_dev(void*, u_int, u_int);
 int syscall_getch(void);
+void syscall_get_pwd(char* path);
+void syscall_set_pwd(const char* path);
 
 int syscall_set_pwd(const char* path);
 int syscall_get_pwd(char* path);
@@ -178,22 +180,11 @@ int sync(void);
 #define O_EXCL  0x0400  /* error if already exists */
 #define O_MKDIR 0x0800  /* create directory, not regular file */
 
-/*
-**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-** Directory related
-**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-*/
+// lib.c
 
-int access(char* path);
-int getcwd(char* path);
-int chdir(const char* path);
+void getcwd(char* path);
+void chdir(const char* path);
 
-
-/*
-**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-** Auxiliary functions
-**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-*/
 int atoi(const char* str);
 
 #endif
