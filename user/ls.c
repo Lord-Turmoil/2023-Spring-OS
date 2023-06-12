@@ -66,7 +66,7 @@ static void init()
 
 static void usage()
 {
-	printfc(MSG_COLOR, "usage: pash [-dix] [path]\n");
+	printfc(MSG_COLOR, "usage: ls [-d -F -l] [path]\n");
 }
 
 static int parse_args(int argc, char* argv[])

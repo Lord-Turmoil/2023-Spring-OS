@@ -70,7 +70,7 @@ int main(int argc, char** argv)
 	{
 		debugf("init: starting sh\n");
 		// r = spawnl("sh.b", "sh", NULL);
-		r = spawnl("/bin/pash.b", "pash", "-x", "-i", NULL);
+		r = spawnl("/bin/pash.b", "pash", "-i", NULL);
 		if (r < 0)
 		{
 			debugf("init: spawn sh: %d\n", r);
