@@ -132,6 +132,7 @@ const char ENTITIES[] = "<>;&|";	// for now, we do not support brackets
 static const char QUOTES[] = "\"\'";
 
 static token_t _get_token_type(char ch);
+int get_token_character(token_t token);
 
 static char* nextc;
 static char cache = 0;
@@ -264,5 +265,28 @@ static token_t _get_token_type(char ch)
 		return TK_PIPE;
 	default:
 		return TK_INVALID;
+	}
+}
+
+int get_token_character(token_t token)
+{
+	switch (token)
+	{
+	case TK_REDIRECT_LEFT:
+		return '<';
+	case TK_REDIRECT_RIGHT:
+		return '>';
+	case TK_BRACKET_LEFT:
+		return '(';
+	case TK_BRACKET_RIGHT:
+		return ')';
+	case TK_SEMI_COLON:
+		return ';';
+	case TK_AMPERSAND:
+		return '&';
+	case TK_PIPE:
+		return '|';
+	default:
+		return '?';
 	}
 }

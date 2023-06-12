@@ -228,7 +228,7 @@ static int _runcmd(char* cmd)
 		// no command
 		if (argc == 0)
 		{
-			PASH_MSG("Empty line...\n");
+			// PASH_MSG("Empty line...\n");
 			_restore_stream();
 			return 0;
 		}
@@ -282,7 +282,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 		return 0;
 	if (type != TK_WORD)
 	{
-		PASH_ERR(SYNTAX_ERR_MSG "Command not begin with word\n");
+		PASH_ERR(SYNTAX_ERR_MSG "syntax error near unexpected token `%c'\n", get_token_character(type));
 		return 0;
 	}
 	argv[(*argc)++] = token;	// command name

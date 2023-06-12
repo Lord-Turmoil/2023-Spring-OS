@@ -52,6 +52,7 @@ typedef enum _token_t
 	TK_COUNT
 } token_t;
 
+int get_token_character(token_t token);
 token_t get_token(char* str, char** token);
 
 #endif
