@@ -665,7 +665,7 @@ static void _print_logo()
 	printf("\n");
 }
 
-static oldPath[MAXPATHLEN];
+static char oldPath[MAXPATHLEN];
 
 // cd
 static int _cd(int argc, char* argv[])
