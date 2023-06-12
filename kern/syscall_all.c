@@ -576,34 +576,22 @@ int sys_getch(void)
 	return scancharc();
 }
 
-int sys_set_pwd(const char* path)
+void sys_set_pwd(const char* path)
 {
 	strcpy(curenv->env_pwd, path);
-	return 0;
 }
 
-int sys_get_pwd(char* path)
+void sys_get_pwd(char* path)
 {
-	printk("K: %x %x\n", path, curenv->env_pwd);
-
-	char* ret = path;
-	for (const char* p = curenv->env_pwd; *p; p++)
-	{
-		printk("%c", *p);
-		 *(ret++) = *p;
-	}
-	*ret = '\0';
-	printk("Kx: 0x%x\n", path);
-	printk("K: %s\n", path);
-	return 0;
+	strcpy(path, curenv->env_pwd);
 }
 
 void* syscall_table[MAX_SYSNO] = {
-	[SYS_putchar] = sys_putchar,
-	[SYS_print_cons] = sys_print_cons,
-	[SYS_getenvid] = sys_getenvid,
-	[SYS_yield] = sys_yield,
-	[SYS_env_destroy] = sys_env_destroy,
+	[SYS_putchar]           = sys_putchar,
+	[SYS_print_cons]        = sys_print_cons,
+	[SYS_getenvid]          = sys_getenvid,
+	[SYS_yield]             = sys_yield,
+	[SYS_env_destroy]       = sys_env_destroy,
 	[SYS_set_tlb_mod_entry] = sys_set_tlb_mod_entry,
 	[SYS_mem_alloc] = sys_mem_alloc,
 	[SYS_mem_map] = sys_mem_map,
