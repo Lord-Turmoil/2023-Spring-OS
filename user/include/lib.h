@@ -150,6 +150,7 @@ int seek(int fd, u_int offset);
 void close_all(void);
 int readn(int fd, void* buf, u_int nbytes);
 int dup(int oldfd, int newfd);
+int dup1(int oldfdnum);
 int fstat(int fdnum, struct Stat* stat);
 int stat(const char* path, struct Stat* stat);
 

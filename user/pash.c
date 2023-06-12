@@ -15,7 +15,11 @@
 #include <arguments.h>
 
 static char buffer[PASH_BUFFER_SIZE];
+
 static int redirect;
+static int fdBackup[2] = { 10, 11 };
+
+static int trivial;	// indicate if the shell is a child
 
 static int interactive;
 static int echocmds;
@@ -34,9 +38,14 @@ static void _restore_stream();
 
 int main(int argc, char* argv[])
 {
+	trivial = 0;
+
 	interactive = iscons(0);
-	echocmds = 1;
+	echocmds = 0;
 	filename = NULL;
+
+	fdBackup[0] = dup1(0);
+	fdBackup[1] = dup1(1);
 
 	if (parse_args(argc, argv) != 0)
 	{
@@ -50,16 +59,20 @@ int main(int argc, char* argv[])
 	opt.maxLen = PASH_BUFFER_SIZE - 1;
 	opt.interruptible = 1;
 
-	printf("\n__________________________________________________\n\n");
-	printf("Pash Host for MOS\n\n");
-	printf("    Copyright (C) Tony's Studio 2023\n\n");
-	printf("Based on PassBash v3.x\n");
-	printf("__________________________________________________\n\n");
+	// header
+	if (interactive)
+	{
+		printf("\n__________________________________________________\n\n");
+		printf("Pash Host for MOS\n\n");
+		printf("    Copyright (C) Tony's Studio 2023\n\n");
+		printf("Based on PassBash v3.x\n");
+		printf("__________________________________________________\n\n");
 
-	char* args[] = { "version", NULL };
-	execute_internal(args);
+		char* args[] = { "version", NULL };
+		execute_internal(args);
 
-	printf("\n");
+		printf("\n");
+	}
 
 	int ret;
 	for (; ; )
@@ -195,8 +208,7 @@ static int _runcmd(char* cmd)
 		if (ret < 0)
 		{
 			PASH_ERR(SYNTAX_ERR_MSG "Failed to parse command: %d\n", ret);
-			if (redirect)
-				_restore_stream();
+			_restore_stream();
 			return ret;
 		}
 		if (ret > 0)	// ; or &
@@ -212,8 +224,7 @@ static int _runcmd(char* cmd)
 		if (argc == 0)
 		{
 			PASH_MSG("Empty line...\n");
-			if (redirect)
-				_restore_stream();
+			_restore_stream();
 			return 0;
 		}
 
@@ -222,27 +233,24 @@ static int _runcmd(char* cmd)
 		if (child < 0)
 		{
 			PASH_ERR("Failed to execute '%s'\n", argv[0]);
-			if (redirect)
-				_restore_stream();
+			_restore_stream();
 			if (hasNext)
 				continue;
 			else
 				return child;
 		}
 
-		// If close all, later children will be unable to output...
-		// close_all();
-
 		if ((child > 0) && needWait)
 			wait(child);
-
-		if (redirect)
-			_restore_stream();
 
 		if (rightpipe)
 			wait(rightpipe);
 
+		_restore_stream();
 	} while (hasNext);
+
+	if (trivial)
+		exit();
 
 	return 0;
 }
@@ -349,6 +357,8 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			*rightpipe = ret;
 			if (ret == 0)
 			{
+				trivial = 1;
+
 				dup(pipefd[0], 0);
 				close(pipefd[0]);
 				close(pipefd[1]);
@@ -398,7 +408,12 @@ static int _execv(char* cmd, char* argv[])
 
 static void _restore_stream()
 {
-	close_all();
-	panic_on(opencons());
-	panic_on(dup(0, 1) < 0);
+	debugf("restore(%d)... %d, %d\n", redirect, fdBackup[0], fdBackup[1]);
+
+	if (redirect)
+	{
+		panic_on(dup(fdBackup[0], 0) < 0);
+		panic_on(dup(fdBackup[1], 1) < 0);
+		redirect = 0;
+	}
 }

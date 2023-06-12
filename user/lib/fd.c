@@ -117,7 +117,7 @@ int close(int fdnum)
 
 	r = (*dev->dev_close)(fd);
 	fd_close(fd);
-	
+
 	return r;
 }
 
@@ -181,6 +181,17 @@ err:
 	}
 
 	return r;
+}
+
+int dup1(int oldfdnum)
+{
+	int r;
+	struct Fd* newfd;
+
+	if ((r = fd_alloc(&newfd)) < 0)
+		return r;
+
+	return dup(oldfdnum, fd2num(newfd));
 }
 
 // Overview:
@@ -248,7 +259,7 @@ int readn(int fdnum, void* buf, u_int n)
 int write(int fdnum, const void* buf, u_int n)
 {
 	int r;
-	
+
 	struct Fd* fd;
 	if ((r = fd_lookup(fdnum, &fd)) < 0)
 		return r;
