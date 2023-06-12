@@ -43,7 +43,10 @@ int main(int argc, char* argv[])
 		{
 			if (argv[i][0] == '-')
 				continue;
-			ls(argv[i], strstripr(argv[i], '/'));
+			if (strcmp(argv[i], "/") == 0)
+				ls(argv[i], argv[i]);
+			else
+				ls(argv[i], strstripr(argv[i], '/'));
 		}
 	}
 
