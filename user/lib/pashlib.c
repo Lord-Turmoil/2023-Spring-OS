@@ -574,7 +574,7 @@ int execute_internal(char* argv[])
 		_print_version();
 		return 0;
 	}
-	else if (is_the_same(argv[0], "pash"))
+	else if (is_the_same(argv[0], "psh"))
 	{
 		_print_logo();
 		return 0;
