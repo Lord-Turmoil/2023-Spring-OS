@@ -13,7 +13,8 @@
 #define MAXNAMELEN 128
 
 // Maximum size of a complete pathname, including null
-#define MAXPATHLEN 1024
+// #define MAXPATHLEN 1024
+#define MAXPATHLEN 800	// compromised due to env pwd size
 
 // Support maximum 16 level of sub directories.
 #define MAXFILEDEPTH 16

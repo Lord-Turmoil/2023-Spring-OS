@@ -337,6 +337,8 @@ int env_alloc(struct Env** new, u_int parent_id)
 	panic_on(asid_alloc(&(e->env_asid)));
 	e->env_parent_id = parent_id;
 
+	// init env pwd
+	strcpy(e->env_pwd, "/");
 
 	/* Step 4: Initialize the sp and 'cp0_status' in 'e->env_tf'. */
 	// Timer interrupt (STATUS_IM4) will be enabled.
