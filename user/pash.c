@@ -411,6 +411,11 @@ static int _execv(char* cmd, char* argv[])
 
 static void _restore_stream()
 {
+	if (!redirect)
+		return;
+
+	debugf("restore %d", interactive);
+	
 	if (!interactive)
 	{
 		dup(backupfd[0], 0);
