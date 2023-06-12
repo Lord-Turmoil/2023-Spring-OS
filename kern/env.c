@@ -480,7 +480,9 @@ void env_free(struct Env* e)
 	u_int pdeno, pteno, pa;
 
 	/* Hint: Note the environment's demise.*/
+#ifdef MOS_VERBOSE
 	printk("[%08x] free env %08x\n", curenv ? curenv->env_id : 0, e->env_id);
+#endif
 
 	/* Hint: Flush all mapped pages in the user portion of the address space */
 	for (pdeno = 0; pdeno < PDX(UTOP); pdeno++)
@@ -532,7 +534,11 @@ void env_destroy(struct Env* e)
 	if (curenv == e)
 	{
 		curenv = NULL;
+
+#ifdef MOS_VERBOSE
 		printk("i am killed ... \n");
+#endif
+
 		schedule(1);
 	}
 }
