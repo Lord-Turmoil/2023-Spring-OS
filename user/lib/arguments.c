@@ -62,8 +62,8 @@ int getopt(int argc, char* argv[], const char* pattern)
 		if (!pos)	// not valid option
 		{
 			opt = '?';
-			opterr = ERRNO_INVALID_OPTION;
-			sprintf(_opt_buffer, "Illegal argument %c", opt);
+			// opterr = ERRNO_INVALID_OPTION;
+			// sprintf(_opt_buffer, "Illegal argument %c", opt);
 		}
 		else
 		{
