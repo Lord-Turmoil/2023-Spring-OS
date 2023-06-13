@@ -152,7 +152,7 @@ static int _create(const char* path, int create, int final)
 	}
 
 	if (enableVerbose)
-		printfc(MSG_COLOR, "Created directory '%s'", path);
+		printfc(MSG_COLOR, "Created directory '%s'\n", path);
 
 	return 0;
 }
