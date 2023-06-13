@@ -52,7 +52,6 @@ static void usage()
 static int parse_args(int argc, char* argv[])
 {
 	int opt;
-	int arg_cnt = 0;
 	int err = 0;
 	while ((opt = getopt(argc, argv, "v")))
 	{
