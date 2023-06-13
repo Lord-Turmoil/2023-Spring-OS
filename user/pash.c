@@ -282,7 +282,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 		return 0;
 	if (type != TK_WORD)
 	{
-		PASH_ERR(SYNTAX_ERR_MSG "syntax error near unexpected token `%c'\n", get_token_character(type));
+		PASH_ERR(SYNTAX_ERR_MSG "syntax error near unexpected token `%s'\n", get_token_str(type));
 		return 0;
 	}
 	argv[(*argc)++] = token;	// command name
@@ -311,7 +311,8 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 		case TK_REDIRECT_LEFT:
 			if (get_token(NULL, &token) != TK_WORD)
 			{
-				PASH_ERR(SYNTAX_ERR_MSG "'<' not followed by word\n");
+				PASH_ERR("Syntax error near unexpected token `<'\n");
+				PASH_MSG("`<' not followed by word\n");
 				return -3;
 			}
 			fd = open(token, O_RDONLY);
@@ -329,14 +330,16 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 		case TK_REDIRECT_RIGHT:
 			if (get_token(NULL, &token) != TK_WORD)
 			{
-				PASH_ERR(SYNTAX_ERR_MSG "'>' not followed by word\n");
-				return -5;
+				PASH_ERR("Syntax error near unexpected token `>'\n");
+				PASH_MSG("`>' not followed by word\n");
+				return -3;
 			}
-			fd = open(token, O_WRONLY);
+			// create new file if not exists
+			fd = open(token, O_WRONLY | O_CREAT);
 			if (fd < 0)
 			{
 				PASH_ERR("Cannot open '%s' for writing\n", token);
-				return -6;
+				return -4;
 			}
 			dup(fd, 1);
 			close(fd);
@@ -344,12 +347,34 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			redirect = 1;
 
 			break;
+
+		case TK_REDIRECT_DOUBLE:
+			if (get_token(NULL, &token) != TK_WORD)
+			{
+				PASH_ERR("Syntax error near unexpected token `>>'\n");
+				PASH_MSG("`>>' not followed by word\n");
+				return -3;
+			}
+			// create new file if not exists
+			fd = open(token, O_WRONLY | O_CREAT | O_APPEND);
+			if (fd < 0)
+			{
+				PASH_ERR("Cannot open '%s' for writing\n", token);
+				return -4;
+			}
+			dup(fd, 1);
+			close(fd);
+
+			redirect = 1;
+
+			break;
+
 		case TK_PIPE:
 			ret = pipe(pipefd);
 			if (ret != 0)
 			{
 				PASH_ERR("Failed to create pipe\n");
-				return -7;
+				return -5;
 			}
 			
 			redirect = 1;
@@ -358,7 +383,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			if (ret < 0)
 			{
 				PASH_ERR("Failed to fork\n");
-				return -8;
+				return -6;
 			}
 			*rightpipe = ret;
 			if (ret == 0)
@@ -377,6 +402,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 				close(pipefd[1]);
 				return 0;
 			}
+			break;
 		case TK_SEMI_COLON:
 			// printf("TK_SEMI_COLON\n");
 			return 1;

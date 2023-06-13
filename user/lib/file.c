@@ -64,7 +64,16 @@ int open(const char* path, int mode)
 	_make_fullpath(path, dir);
 
 	if ((r = fsipc_open(dir, mode, fd)) < 0)
-		return r;
+	{
+		if (mode & O_CREAT)
+			creat(dir, FTYPE_REG);
+		else
+			return r;
+
+		r = fsipc_open(dir, mode, fd);
+		if (r < 0)
+			return r;
+	}
 
 	// Step 3: Set 'va' to the address of the page where the 'fd''s data is cached,
 	// using 'fd2data'.
@@ -83,9 +92,13 @@ int open(const char* path, int mode)
 			return r;
 	}
 
+	int fdnum = fd2num(fd);
+	if (mode & O_APPEND)
+		seek(fdnum, size);
+
 	// Step 5: Return the number of file descriptor using 'fd2num'.
 	/* Exercise 5.9: Your code here. (5/5) */
-	return fd2num(fd);
+	return fdnum;
 }
 
 int creat(const char* path, int mode)

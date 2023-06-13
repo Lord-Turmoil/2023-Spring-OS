@@ -131,8 +131,9 @@ const char ENTITIES[] = "<>;&|";	// for now, we do not support brackets
 
 static const char QUOTES[] = "\"\'";
 
+static int _is_redirect_double(const char* p);
 static token_t _get_token_type(char ch);
-int get_token_character(token_t token);
+const char* get_token_str(token_t token);
 
 static char* nextc;
 static char cache = 0;
@@ -194,12 +195,28 @@ token_t get_token(char* str, char** token)
 				{
 					if (token)
 						*token = NULL;	// if is token, this will be no-sense
-					return _get_token_type(*(nextc++));
+					if (_is_redirect_double(nextc))
+					{
+						nextc += 2;
+						return _get_token_type('}');
+					}
+					else
+						return _get_token_type(*(nextc++));
 				}
 				else
 				{
-					cache = *nextc;
-					*(nextc++) = '\0';
+					if (_is_redirect_double(nextc))
+					{
+						cache = '}';
+						*nextc = '\0';
+						*(nextc + 1) = '\0';
+						nextc += 2;
+					}
+					else
+					{
+						cache = *nextc;
+						*(nextc++) = '\0';
+					}
 					if (token)
 						*token = begin;
 					return TK_WORD;
@@ -244,6 +261,11 @@ token_t get_token(char* str, char** token)
 	return TK_WORD;
 }
 
+static int _is_redirect_double(const char* p)
+{
+	return (*p == '>') && (*(p + 1) == '>');
+}
+
 static token_t _get_token_type(char ch)
 {
 	// const char ENTITIES[] = "<>();&|";
@@ -253,6 +275,9 @@ static token_t _get_token_type(char ch)
 		return TK_REDIRECT_LEFT;
 	case '>':
 		return TK_REDIRECT_RIGHT;
+	case '}':
+		// >> will be converted to '}'
+		return TK_REDIRECT_DOUBLE;
 	case '(':
 		return TK_BRACKET_LEFT;
 	case ')':
@@ -268,25 +293,27 @@ static token_t _get_token_type(char ch)
 	}
 }
 
-int get_token_character(token_t token)
+const char* get_token_str(token_t token)
 {
 	switch (token)
 	{
 	case TK_REDIRECT_LEFT:
-		return '<';
+		return "<";
 	case TK_REDIRECT_RIGHT:
-		return '>';
+		return ">";
+	case TK_REDIRECT_DOUBLE:
+		return ">>";
 	case TK_BRACKET_LEFT:
-		return '(';
+		return "(";
 	case TK_BRACKET_RIGHT:
-		return ')';
+		return ")";
 	case TK_SEMI_COLON:
-		return ';';
+		return ";";
 	case TK_AMPERSAND:
-		return '&';
+		return "&";
 	case TK_PIPE:
-		return '|';
+		return "|";
 	default:
-		return '?';
+		return "?";
 	}
 }

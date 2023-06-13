@@ -38,6 +38,7 @@ typedef enum _token_t
 
 	TK_REDIRECT_LEFT,
 	TK_REDIRECT_RIGHT,
+	TK_REDIRECT_DOUBLE,
 
 	TK_BRACKET_LEFT,
 	TK_BRACKET_RIGHT,
@@ -52,7 +53,7 @@ typedef enum _token_t
 	TK_COUNT
 } token_t;
 
-int get_token_character(token_t token);
+const char* get_token_str(token_t token);
 token_t get_token(char* str, char** token);
 
 #endif
