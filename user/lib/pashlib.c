@@ -189,14 +189,12 @@ int get_string(char* buffer, const input_opt_t* options)
 		strstripr(buffer, ' ');	// remove trailing spaces, since no space at left
 		if (!is_the_same(buffer, last_record))
 		{
+			// history count will be changed in append callback by the caller
 			if (opt.history->append(buffer) == 0)
-			{
-				options->history->count++;	// change outside options.
 				strcpy(last_record, buffer);
-			}
 			else
 			{
-				debugf("Failed to save history!");
+				// debugf("Failed to save history!");
 			}
 		}
 	}

@@ -44,6 +44,7 @@ USERBINS := init.b \
 			mkdir.b \
 			touch.b \
 			rm.b \
+			history.b \
 			sh.b
 
 USERLIB      += lib.o

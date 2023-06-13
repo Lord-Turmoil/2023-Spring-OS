@@ -322,3 +322,20 @@ int stat(const char* path, struct Stat* stat)
 	close(fd);
 	return r;
 }
+
+int readline(int fd, char* buffer)
+{
+	char ch;
+	int ret = 0;
+
+	while (read(fd, &ch, 1) == 1)
+	{
+		*(buffer++) = ch;
+		ret++;
+		if (ch == '\n')
+			break;
+	}
+	*buffer = '\0';
+
+	return ret;
+}

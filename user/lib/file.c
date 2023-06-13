@@ -95,6 +95,8 @@ int open(const char* path, int mode)
 	int fdnum = fd2num(fd);
 	if (mode & O_APPEND)
 		seek(fdnum, size);
+	else if (mode & O_WRONLY) // clear file content
+		ftruncate(fdnum, 0);
 
 	// Step 5: Return the number of file descriptor using 'fd2num'.
 	/* Exercise 5.9: Your code here. (5/5) */

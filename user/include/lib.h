@@ -154,6 +154,7 @@ int dup(int oldfd, int newfd);
 int dup1(int oldfdnum);
 int fstat(int fdnum, struct Stat* stat);
 int stat(const char* path, struct Stat* stat);
+int readline(int fd, char* buffer);
 
 // file.c
 int open(const char* path, int mode);

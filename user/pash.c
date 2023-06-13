@@ -40,6 +40,8 @@ static int init_history();
 static int append_history(const char* record);
 static int get_history(int index, char* record);
 
+input_history_t history;
+
 int main(int argc, char* argv[])
 {
 	trivial = 0;
@@ -63,7 +65,6 @@ int main(int argc, char* argv[])
 	}
 
 	// init history, only enable when interactive
-	input_history_t history;
 	if (interactive)
 	{
 		history.get = get_history;
@@ -447,7 +448,7 @@ static int _execv(char* cmd, char* argv[])
 
 	char prog[PASH_BUFFER_SIZE] = "/bin/";
 
-	if (cmd[0] == '/' || cmd[0] == '.')	// use directory to call command
+	if (strchr(cmd, '/') || cmd[0] == '.')	// use directory to call command
 		strcpy(prog, cmd);
 	else
 		strcat(prog, cmd);
@@ -515,27 +516,9 @@ static int append_history(const char* record)
 
 	close(fd);
 
+	history.count++;
+
 	return 0;
-}
-
-static int _readline(int fd, char* buffer)
-{
-	char ch;
-	int ret = 0;
-
-	while (read(fd, &ch, 1) == 1)
-	{
-		if (ch == '\n')
-			break;
-		*(buffer++) = ch;
-		ret++;
-	}
-	*buffer = '\0';
-
-	if (ch != '\n')	// incomplete line!
-		return -1;
-	
-	return ret;
 }
 
 static int get_history(int index, char* record)
@@ -545,17 +528,21 @@ static int get_history(int index, char* record)
 		return fd;
 
 	int count = 0;
-	while (_readline(fd, record) >= 0)
+	while (readline(fd, record) > 0)
 	{
 		if (count == index)
 		{
 			close(fd);
+			strstripr(record, '\n');
 			return 0;
 		}
 		count++;
 	}
 	
 	close(fd);
+
+	// reset history
+	history.count = count;
 
 	// not found
 	return -1;
