@@ -52,7 +52,7 @@ static void init()
 
 static void usage()
 {
-	printfc(MSG_COLOR, "Usage: mkdir [-p -v] path [path ...]");
+	printfc(MSG_COLOR, "Usage: mkdir [-p -v] path [path ...]\n");
 }
 
 static int parse_args(int argc, char* argv[])
