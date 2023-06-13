@@ -28,16 +28,11 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	// to make everything easier
-	// panic_on(chdir("/"));
-
-	// char path[MAXPATHLEN];
 	for (int i = 1; i < argc; i++)
 	{
 		if (argv[i][0] == '-')
 			continue;
-		// fullpath(argv[i], path);
-		// mkdir(path);
+
 		mkdir(argv[i]);
 	}
 
@@ -58,9 +53,8 @@ static void usage()
 static int parse_args(int argc, char* argv[])
 {
 	int opt;
-	int arg_cnt = 0;
 	int err = 0;
-	while (opt = getopt(argc, argv, "pv"))
+	while ((opt = getopt(argc, argv, "pv")))
 	{
 		if (opterr != 0)
 		{
@@ -136,7 +130,7 @@ static int _create(const char* path, int create, int final)
 		return 12;
 	}
 
-	// now, there is not such a file
+	// now, there is no such a file
 	if (!create && !final)
 	{
 		printfc(ERROR_COLOR, "Cannot create directory '%s': No such file or directory\n", path);
