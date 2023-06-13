@@ -213,7 +213,7 @@ static void runcmd(char* s)
 	exit();
 }
 
-static void readline(char* buf, u_int n)
+static void _readline(char* buf, u_int n)
 {
 	int r;
 	for (int i = 0; i < n; i++)
@@ -302,7 +302,7 @@ int main(int argc, char** argv)
 	{
 		if (interactive)
 			printf("\n$ ");
-		readline(buf, sizeof buf);
+		_readline(buf, sizeof buf);
 
 		if (buf[0] == '#')
 			break;
