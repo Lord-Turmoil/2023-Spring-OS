@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
 
 static void usage(void)
 {
-	PASH_MSG("usage: pash [-dix] [command-file]\n");
+	PASH_MSG("Usage: pash [-ix] [command-file]\n");
 }
 
 static int parse_args(int argc, char* argv[])

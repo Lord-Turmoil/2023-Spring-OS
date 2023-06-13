@@ -66,7 +66,7 @@ static void init()
 
 static void usage()
 {
-	printfc(MSG_COLOR, "usage: ls [-d -F -l] [path]\n");
+	printfc(MSG_COLOR, "Usage: ls [-d -F -l] [path]\n");
 }
 
 static int parse_args(int argc, char* argv[])
@@ -121,7 +121,7 @@ static void ls(const char* path, const char* prefix)
 
 	if ((ret = stat(path, &st)) < 0)
 	{
-		printfc(ERROR_COLOR, "cannot access '%s': No such file or directory\n", path);
+		printfc(ERROR_COLOR, "Cannot access '%s': No such file or directory\n", path);
 		return;
 	}
 

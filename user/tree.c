@@ -54,7 +54,7 @@ static void init()
 
 static void usage()
 {
-	printfc(MSG_COLOR, "usage: tree [-d] [path]\n");
+	printfc(MSG_COLOR, "Usage: tree [-d] [path]\n");
 }
 
 static int parse_args(int argc, char* argv[])
@@ -119,7 +119,7 @@ static void tree(const char* path)
 
 	if ((ret = stat(path, &st)) < 0)
 	{
-		printfc(ERROR_COLOR, "cannot access '%s': No such directory\n", path);
+		printfc(ERROR_COLOR, "Cannot access '%s': No such directory\n", path);
 		return;
 	}
 
