@@ -33,22 +33,22 @@ all: serv.x check.x $(FSLIB)
 
 clean:
 	rm -rf *~ *.o *.b.c *.b *.x
-	rm -rf rootfs/*.b rootfs/bin/*.b
+	rm -rf rootfs/*.b rootfs/bin/*.b rootfs/usr/bin/*.b
 
 
 # FSIMGFILES  := rootfs/motd rootfs/newmotd $(USERAPPS) $(fs-files)
 
 FSIMGFILES :=	rootfs/init.b  \
-				rootfs/motd    \
-				rootfs/newmotd \
-				rootfs/home/   \
 				rootfs/bin/    \
+				rootfs/usr/    \
+				rootfs/home/   \
+				rootfs/etc/    \
 				$(fs-files)
 
 image: $(tools_dir)/fsformat
 	dd if=/dev/zero of=../target/fs.img bs=4096 count=1024 2>/dev/null
 	# using awk to remove paths with identical basename from FSIMGFILES
-	cp -vf $(USERAPPS) -t rootfs/home/tony
+	cp -vf $(USERAPPS) -t rootfs/usr/bin
 	cp -vf $(USERBINS) -t rootfs/bin
 	mv -vf rootfs/bin/init.b rootfs/init.b
 

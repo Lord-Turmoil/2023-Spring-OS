@@ -45,18 +45,18 @@ static void fs_check()
 	user_assert(!(bitmap[r / 32] & (1 << (r % 32))));
 	debugf("alloc_block is good\n");
 
-	if ((r = file_open("/not-found", &f)) < 0 && r != -E_NOT_FOUND)
+	if ((r = file_open("/etc/not-found", &f)) < 0 && r != -E_NOT_FOUND)
 	{
-		user_panic("file_open /not-found: %e", r);
+		user_panic("file_open /etc/not-found: %e", r);
 	}
 	else if (r == 0)
 	{
-		user_panic("file_open /not-found succeeded!");
+		user_panic("file_open /etc/not-found succeeded!");
 	}
 
-	if ((r = file_open("/newmotd", &f)) < 0)
+	if ((r = file_open("/etc/newmotd", &f)) < 0)
 	{
-		user_panic("file_open /newmotd: %d", r);
+		user_panic("file_open /etc/newmotd: %d", r);
 	}
 
 	debugf("file_open is good\n");
