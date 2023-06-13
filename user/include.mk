@@ -27,21 +27,22 @@ ifeq ($(call lab-ge,6), true)
 	INITAPPS     += icode.x
 
 	USERLIB      += wait.o spawn.o pipe.o
-	USERAPPS     :=	init.b \
-					halt.b \
-					pash.b \
-					echo.b \
-					ls.b \
-					cat.b \
-					tree.b \
-					mkdir.b \
-					sh.b  \
-					testarg.b \
+	USERAPPS     :=	testarg.b \
 					pingpong.b \
 					testconio.b \
 					tokentest.b \
 					ampersand.b
 endif
+
+USERBINS := init.b \
+			halt.b \
+			pash.b \
+			echo.b \
+			ls.b \
+			cat.b \
+			tree.b \
+			mkdir.b \
+			sh.b
 
 USERLIB      += lib.o
 USERLIB := $(addprefix lib/, $(USERLIB)) $(wildcard ../lib/*.o)

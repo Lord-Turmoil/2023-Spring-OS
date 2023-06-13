@@ -5,6 +5,7 @@ INCLUDES    := -I../include -I$(user_dir)/include
 include $(user_dir)/include.mk
 USERLIB     := $(addprefix $(user_dir)/, $(USERLIB))
 USERAPPS    := $(addprefix $(user_dir)/, $(USERAPPS))
+USERBINS    := $(addprefix $(user_dir)/, $(USERBINS))
 
 FSLIB       := fs.o ide.o
 
@@ -47,7 +48,8 @@ FSIMGFILES :=	rootfs/init.b  \
 image: $(tools_dir)/fsformat
 	dd if=/dev/zero of=../target/fs.img bs=4096 count=1024 2>/dev/null
 	# using awk to remove paths with identical basename from FSIMGFILES
-	cp -vf $(USERAPPS) -t rootfs/bin/
+	cp -vf $(USERAPPS) -t rootfs/home/tony
+	cp -vf $(USERBINS) -t rootfs/bin
 	mv -vf rootfs/bin/init.b rootfs/init.b
 
 	# $(tools_dir)/fsformat ../target/fs.img \

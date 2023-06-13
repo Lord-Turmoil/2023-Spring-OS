@@ -7,7 +7,7 @@ include include.mk
 .PRECIOUS: %.o %.b %.b.c
 
 # all must be the first target!!!
-all: $(INITAPPS) $(USERAPPS) $(USERLIB)
+all: $(INITAPPS) $(USERBINS) $(USERAPPS) $(USERLIB)
 
 %.x: %.b.c
 	$(CC) $(CFLAGS) -c -o $@ $<
