@@ -51,30 +51,37 @@
 
 #define CTRL_D 0x04
 
- /*
- **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- ** Input History
- **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+/*
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+** Input History
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+*/
+
+/*
+ * In Linux, it seems that input history will only be saved to .history
+ * on exit. So they still need to be kept in memory. But here, we don't
+ * have dynamic memory allocation, which makes this almost impossible.
  */
 
- /*
-  * In Linux, it seems that input history will only be saved to .history
-  * on exit. So they still need to be kept in memory. But here, we don't
-  * have dynamic memory allocation, which makes this almost impossible.
-  */
+typedef struct _input_history_t
+{
+	int count;
+	int (*append)(const char*);
+	int (*get)(int, char*);
+} input_history_t;
 
-  // ON HOLD
+void init_input_history(input_history_t* history);
 
-  /*
-  **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  ** Input Options & Context
-  **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  */
+/*
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+** Input Options & Context
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+*/
 
-  /*
-   * These are inherited from PassBash, with signatures to better match C style.
-   * Fancy abilities are removed or simplified due to the you-know-what limits.
-   */
+/*
+ * These are inherited from PassBash, with signatures to better match C style.
+ * Fancy abilities are removed or simplified due to the you-know-what limits.
+ */
 
 typedef struct _input_opt_t
 {
@@ -82,6 +89,8 @@ typedef struct _input_opt_t
 	int maxLen;
 
 	int interruptible;
+
+	input_history_t* history;
 } input_opt_t;
 
 void init_input_opt(input_opt_t* opt);
@@ -91,10 +100,13 @@ void copy_input_opt(input_opt_t* dst, const input_opt_t* src);
 typedef struct _input_ctx_t
 {
 	char* buffer;	// where the display string stored
+
 	int pos;        // current cursor position
 	int length;     // current input length
 
-	int ch;        // next character to put into buffer
+	int ch;	        // next character to put into buffer
+
+	int index;		// history index
 } input_ctx_t;
 
 void init_input_ctx(input_ctx_t* ctx);
@@ -126,7 +138,8 @@ int is_terminator(int ch);
 */
 #define PASH_MAXARGS 64
 
-int execute_internal(char* argv[]);
+int execli(const char* prog, ...);
+int execvi(const char* prog, char* argv[]);
 
 
 /*

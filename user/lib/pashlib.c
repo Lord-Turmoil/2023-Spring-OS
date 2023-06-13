@@ -23,14 +23,40 @@
 
 /*
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+** Input history
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+*/
+static int _default_append(const char* record)
+{
+	return 0;
+}
+
+static int _default_get(int index, char* record)
+{
+	return 0;
+}
+
+void init_input_history(input_history_t* history)
+{
+	history->count = 0;
+
+	// initialize handler to avoid NULL exception.
+	history->append = _default_append;
+	history->get = _default_get;
+}
+
+
+/*
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ** Input Options & Context
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
 void init_input_opt(input_opt_t* opt)
 {
-	opt->maxLen = 1023;
+	opt->maxLen = PASH_BUFFER_SIZE - 1;
 	opt->minLen = 1;
 	opt->interruptible = 0;
+	opt->history = NULL;
 }
 
 void copy_input_opt(input_opt_t* dst, const input_opt_t* src)
@@ -45,6 +71,7 @@ void init_input_ctx(input_ctx_t* ctx)
 	ctx->length = 0;
 	ctx->pos = 0;
 	ctx->ch = 0;
+	ctx->index = 0;
 }
 
 void copy_input_ctx(input_ctx_t* dst, const input_ctx_t* src)
@@ -62,10 +89,12 @@ static void _insert_char(int ch);	// insert a character at current caret
 static void _insert_n_char(int ch, int n);
 static void _insert_space();		// insert a space at current caret
 static void _insert_n_space(int n);
-static void _insert_backspace();	// move caret left by one character
+static void _insert_left();		// move caret left by one character
+static void _insert_n_left(int n);
+static void _insert_right();	// move caret right by one character
+static void _insert_n_right(int n);
+static void _insert_backspace();		// delete character before caret
 static void _insert_n_backspace(int n);
-static void _insert_delete();		// delete character before caret
-static void _insert_n_delete(int n);
 
 typedef void _input_action_t(const input_opt_t* opt, input_ctx_t* ctx);
 typedef int _input_handler_t(const input_opt_t* opt, input_ctx_t* ctx);
@@ -92,6 +121,10 @@ static _input_action_t _input_arrow_ctrl_right;
 
 static _input_action_t _input_ctrl_delete;
 
+static _input_action_t _reset_input;
+static _input_action_t _reset_history;
+
+
 // input infinite machine node
 // Ahhh.... NAMING!!!
 static _input_handler_t _input_handler;
@@ -105,36 +138,68 @@ static _input_handler_t _special_ctrl_inter_handler;
 static _input_handler_t _special_ctrl_direct_handler;
 
 
+static char last_record[PASH_BUFFER_SIZE];
+static char current_record[PASH_BUFFER_SIZE];
+static int reserve_history;	// whether keep history index
+
 int get_string(char* buffer, const input_opt_t* options)
 {
 	// initialize options and context
 	input_opt_t opt;
 	input_ctx_t ctx;
 
-	copy_input_opt(&opt, options);
+	if (!options)
+		init_input_opt(&opt);
+	else
+		copy_input_opt(&opt, options);
 	opt.minLen = max(opt.minLen, 0);
 	opt.maxLen = min(opt.maxLen, PASH_BUFFER_SIZE - 1);
 
 	init_input_ctx(&ctx);
 	ctx.buffer = buffer;
 	ctx.buffer[0] = '\0';
+	if (opt.history)
+		ctx.index = opt.history->count;
 
 	// Get string, huh?
 	int ret;
 	for (; ; )
 	{
+		reserve_history = 0;
+
 		ret = _input_handler(&opt, &ctx);
 		if (ret == 0)
 			continue;
 		else if (ret == EOF)	// EOF
 			return EOF;
-		else if (ret < 0)	// interrupted
+		else if (ret < 0)		// interrupted
 			return ctx.length;
-		else				// ends normally
+		else					// ends normally
 			break;
+
+		if (!reserve_history)
+			_reset_history(&opt, &ctx);
 	}
 
 	// record history
+	// curious, Linux won't record history that starts with space. :D
+	if (opt.history && (!(*buffer == '\0' || *buffer == ' ')))
+	{
+		// if opt.history is not NULL, it means options is not NULL
+		strstripr(buffer, ' ');	// remove trailing spaces, since no space at left
+		if (!is_the_same(buffer, last_record))
+		{
+			if (opt.history->append(buffer) == 0)
+			{
+				options->history->count++;	// change outside options.
+				strcpy(last_record, buffer);
+			}
+			else
+			{
+				debugf("Failed to save history!");
+			}
+		}
+	}
 
 	return ctx.length;
 }
@@ -163,28 +228,39 @@ static void _insert_n_space(int n)
 		_insert_space();
 }
 
-static void _insert_backspace()
+static void _insert_left()
 {
 	printf("\033[1D");
 }
 
-static void _insert_n_backspace(int n)
+static void _insert_n_left(int n)
 {
 	if (n > 0)
 		printf("\033[%dD", n);
 }
 
-static void _insert_delete()
+static void _insert_right()
 {
-	_insert_backspace();
-	_insert_space();
-	_insert_backspace();
+	printf("\033[1C");
 }
 
-static void _insert_n_delete(int n)
+static void _insert_n_right(int n)
+{
+	if (n > 0)
+		printf("\033[%dC", n);
+}
+
+static void _insert_backspace()
+{
+	_insert_left();
+	_insert_space();
+	_insert_left();
+}
+
+static void _insert_n_backspace(int n)
 {
 	for (int i = 0; i < n; i++)
-		_insert_delete();
+		_insert_backspace();
 }
 
 // input actions
@@ -201,7 +277,7 @@ void _input_char(const input_opt_t* opt, input_ctx_t* ctx)
 	for (int i = ctx->pos; i < ctx->length; i++)
 		_insert_char(ctx->buffer[i]);
 	ctx->pos++;
-	_insert_n_backspace(ctx->length - ctx->pos);
+	_insert_n_left(ctx->length - ctx->pos);
 }
 
 
@@ -211,14 +287,14 @@ void _input_backspace(const input_opt_t* opt, input_ctx_t* ctx)
 	if (ctx->pos <= 0)
 		return;
 
-	_insert_delete();
+	_insert_backspace();
 	for (int i = ctx->pos; i < ctx->length; i++)
 	{
 		_insert_char(ctx->buffer[i]);
 		ctx->buffer[i - 1] = ctx->buffer[i];
 	}
 	_insert_space();
-	_insert_n_backspace(ctx->length - ctx->pos + 1);
+	_insert_n_left(ctx->length - ctx->pos + 1);
 	ctx->pos--;
 	ctx->length--;
 	ctx->buffer[ctx->length] = '\0';
@@ -228,8 +304,7 @@ void _input_arrow_left(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (ctx->pos > 0)
 	{
-		//_insert_backspace();
-		printf("\033[1D");
+		_insert_left();
 		ctx->pos--;
 	}
 }
@@ -238,18 +313,40 @@ void _input_arrow_right(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (ctx->pos < ctx->length)
 	{
-		//_insert_char(ctx->buffer[ctx->pos]);
-		printf("\033[1C");
+		_insert_right();
 		ctx->pos++;
 	}
 }
 
 void _input_arrow_up(const input_opt_t* opt, input_ctx_t* ctx)
 {
+	if (!opt->history)
+		return;
+
+	reserve_history = 1;
+
+	if (ctx->index > 0)
+	{
+		// first leave, record history for backup
+		if (ctx->index == opt->history->count)
+			strcpy(current_record, ctx->buffer);
+		ctx->index--;
+		_reset_input(opt, ctx);
+	}
 }
 
 void _input_arrow_down(const input_opt_t* opt, input_ctx_t* ctx)
 {
+	if (!opt->history)
+		return;
+
+	reserve_history = 1;
+
+	if (ctx->index < opt->history->count)
+	{
+		ctx->index++;
+		_reset_input(opt, ctx);
+	}
 }
 
 void _input_delete(const input_opt_t* opt, input_ctx_t* ctx)
@@ -262,22 +359,20 @@ void _input_delete(const input_opt_t* opt, input_ctx_t* ctx)
 		_insert_char(ctx->buffer[i]);
 	}
 	_insert_space();
-	_insert_n_backspace(ctx->length - ctx->pos);
+	_insert_n_left(ctx->length - ctx->pos);
 	ctx->length--;
 	ctx->buffer[ctx->length] = '\0';
 }
 
 void _input_home(const input_opt_t* opt, input_ctx_t* ctx)
 {
-	_insert_n_backspace(ctx->pos);
+	_insert_n_left(ctx->pos);
 	ctx->pos = 0;
 }
 
 void _input_end(const input_opt_t* opt, input_ctx_t* ctx)
 {
-	for (int i = ctx->pos; i < ctx->length; i++)
-		_insert_char(ctx->buffer[i]);
-
+	_insert_n_right(ctx->length - ctx->pos);
 	ctx->pos = ctx->length;
 }
 
@@ -293,12 +388,12 @@ static void _input_arrow_ctrl_left(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	while ((ctx->pos > 0) && !isalnum(ctx->buffer[ctx->pos - 1]))
 	{
-		_insert_backspace();
+		_insert_left();
 		ctx->pos--;
 	}
 	while ((ctx->pos > 0) && isalnum(ctx->buffer[ctx->pos - 1]))
 	{
-		_insert_backspace();
+		_insert_left();
 		ctx->pos--;
 	}
 }
@@ -328,6 +423,40 @@ static void _input_ctrl_delete(const input_opt_t* opt, input_ctx_t* ctx)
 		_input_delete(opt, ctx);
 }
 
+static void _reset_input(const input_opt_t* opt, input_ctx_t* ctx)
+{
+	if (!opt->history)
+		return;
+
+	// clear current input
+	_input_end(opt, ctx);
+	_insert_n_backspace(ctx->length);
+	ctx->pos = 0;
+	ctx->length = 0;
+
+	// restore history
+	if (ctx->index < opt->history->count)
+	{
+		// fetch history
+		if (opt->history->get(ctx->index, ctx->buffer) != 0)
+			return;
+	}
+	else
+	{
+		// point at current command, restore it
+		strcpy(ctx->buffer, current_record);
+	}
+
+	ctx->length = strlen(ctx->buffer);
+	ctx->pos = ctx->length;
+	printf("%s", ctx->buffer);
+}
+
+static void _reset_history(const input_opt_t* opt, input_ctx_t* ctx)
+{
+	if (opt->history)
+		ctx->index = opt->history->count;
+}
 
 // special handlers
 int _input_handler(const input_opt_t* opt, input_ctx_t* ctx)
@@ -542,7 +671,26 @@ static void _print_logo();
 static int _cd(int argc, char* argv[]);
 static int _pwd(int argc, char* argv[]);
 
-int execute_internal(char* argv[])
+int execli(const char* prog, ...)
+{
+	char* argv[PASH_MAXARGS];
+	int argc = 0;
+	char* arg;
+	va_list args;
+
+	va_start(args, prog);
+	arg = va_arg(args, char*);
+	while (arg)
+	{
+		argv[argc++] = arg;
+		arg = va_arg(args, char*);
+	}
+	argv[argc] = NULL;
+
+	return execvi(argv[0], argv);
+}
+
+int execvi(const char* prog, char* argv[])
 {
 	int argc = 0;
 	while (argv[argc])
@@ -592,7 +740,7 @@ static void _clear_screen()
 
 static void _print_version()
 {
-	printfc(FOREGROUND_INTENSE(CYAN), "# Pash Host for MOS Version: %s\n", "0.1.0");
+	printfc(FOREGROUND_INTENSE(CYAN), "# Pash Host for MOS Version: %s\n", "1.0.0");
 }
 
 static void _print_logo()
@@ -616,7 +764,7 @@ static void _print_logo()
 	const int COLOR_MAX = 12;
 
 	_clear_screen();
-	
+
 	// print version
 	//_print_version();
 	//printf("\n");

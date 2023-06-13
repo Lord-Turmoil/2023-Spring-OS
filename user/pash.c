@@ -36,6 +36,10 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe);
 static int _execv(char* cmd, char* argv[]);
 static void _restore_stream();
 
+static int init_history();
+static int append_history(const char* record);
+static int get_history(int index, char* record);
+
 int main(int argc, char* argv[])
 {
 	trivial = 0;
@@ -58,22 +62,39 @@ int main(int argc, char* argv[])
 		panic_on(backupfd[1] < 0);
 	}
 
+	// init history, only enable when interactive
+	input_history_t history;
+	if (interactive)
+	{
+		history.get = get_history;
+		history.append = append_history;
+		history.count = init_history();
+		if (history.count < 0)
+		{
+			printfc(ERROR_COLOR, "Failed to initialize history!\n");
+			printfc(MSG_COLOR, "History disabled.\n");
+		}
+	}
+
 	input_opt_t opt;
 	init_input_opt(&opt);
 	opt.minLen = 1;
 	opt.maxLen = PASH_BUFFER_SIZE - 1;
 	opt.interruptible = 1;
+	if (interactive && (history.count >= 0))
+		opt.history = &history;
 
 	if (interactive)
 	{
-		printf("\n__________________________________________________\n\n");
+		execli("clear", "clear", NULL);
+
+		printf("__________________________________________________\n\n");
 		printf("Pash Host for MOS\n\n");
 		printf("    Copyright (C) Tony's Studio 2023\n\n");
 		printf("Based on PassBash v3.x\n");
 		printf("__________________________________________________\n\n");
 
-		char* args[] = { "version", NULL };
-		execute_internal(args);
+		execli("version", "version", NULL);
 
 		printf("\n");
 	}
@@ -420,7 +441,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 
 static int _execv(char* cmd, char* argv[])
 {
-	int ret = execute_internal(argv);
+	int ret = execvi(cmd, argv);
 	if (ret != -1)	// execute success or failed
 		return ret;
 
@@ -454,4 +475,88 @@ static void _restore_stream()
 		panic_on(opencons() != 0);
 		panic_on(dup(0, 1) < 0);
 	}
+}
+
+/*
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+** History
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+*/
+static const char HISTORY_FILE[] = "/home/tony/.history";
+
+static int init_history()
+{
+	int fd = open(HISTORY_FILE, O_RDONLY | O_CREAT);
+	if (fd < 0)
+		return fd;
+
+	int count = 0;
+	char buffer;
+
+	while (read(fd, &buffer, 1) == 1)
+	{
+		if (buffer == '\n')
+			count++;
+	}
+
+	close(fd);
+
+	return count;
+}
+
+static int append_history(const char* record)
+{
+	int fd = open(HISTORY_FILE, O_WRONLY | O_CREAT | O_APPEND);
+	if (fd < 0)
+		return fd;
+
+	write(fd, record, strlen(record));
+	write(fd, "\n", 1);
+
+	close(fd);
+
+	return 0;
+}
+
+static int _readline(int fd, char* buffer)
+{
+	char ch;
+	int ret = 0;
+
+	while (read(fd, &ch, 1) == 1)
+	{
+		if (ch == '\n')
+			break;
+		*(buffer++) = ch;
+		ret++;
+	}
+	*buffer = '\0';
+
+	if (ch != '\n')	// incomplete line!
+		return -1;
+	
+	return ret;
+}
+
+static int get_history(int index, char* record)
+{
+	int fd = open(HISTORY_FILE, O_RDONLY | O_CREAT);
+	if (fd < 0)
+		return fd;
+
+	int count = 0;
+	while (_readline(fd, record) >= 0)
+	{
+		if (count == index)
+		{
+			close(fd);
+			return 0;
+		}
+		count++;
+	}
+	
+	close(fd);
+
+	// not found
+	return -1;
 }
