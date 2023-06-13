@@ -23,6 +23,7 @@ static int trivial;	// indicate if is trivial for pipe
 
 static int interactive;
 static int echocmds;
+static int verbose;
 static char* filename;
 
 static void usage(void);
@@ -48,12 +49,24 @@ int main(int argc, char* argv[])
 
 	interactive = iscons(0);
 	echocmds = 0;
+	verbose = 0;
 	filename = NULL;
 
 	if (parse_args(argc, argv) != 0)
 	{
 		usage();
 		return 1;
+	}
+
+	if (filename)
+	{
+		interactive = 0;
+		close(0);
+		if (open(filename, O_RDONLY) < 0)
+		{
+			PASH_ERR("Can't open '%s'\n", filename);
+			return 2;
+		}
 	}
 
 	if (!interactive)
@@ -89,11 +102,11 @@ int main(int argc, char* argv[])
 	{
 		execli("clear", "clear", NULL);
 
-		printf("__________________________________________________\n\n");
-		printf("Pash Host for MOS\n\n");
-		printf("    Copyright (C) Tony's Studio 2023\n\n");
-		printf("Based on PassBash v3.x\n");
-		printf("__________________________________________________\n\n");
+		printfc(FOREGROUND_INTENSE(MAGENTA), "____________________________________________________\n\n");
+		printfc(FOREGROUND_INTENSE(GREEN),   "                  Pash Host for MOS                 \n\n");
+		printfc(FOREGROUND_INTENSE(YELLOW),  "          Copyright (C) Tony's Studio 2023          \n\n");
+		printfc(FOREGROUND_INTENSE(WHITE),   "                Based on PassBash v3.x              \n");
+		printfc(FOREGROUND_INTENSE(MAGENTA), "____________________________________________________\n\n");
 
 		execli("version", "version", NULL);
 
@@ -123,8 +136,8 @@ int main(int argc, char* argv[])
 			printf("#> %s\n", buffer);
 
 		ret = execute(buffer);
-		if (ret != 0)
-			printfc(FOREGROUND(RED), "Command '%s' returned '%d'\n", buffer, ret);
+		if (ret != 0 && verbose)
+			PASH_ERR("Command '%s' returned '%d'\n", buffer, ret);
 	}
 
 	return 0;
@@ -132,7 +145,7 @@ int main(int argc, char* argv[])
 
 static void usage(void)
 {
-	PASH_MSG("Usage: pash [-ix] [command-file]\n");
+	PASH_MSG("Usage: pash [-ixv] [command-file]\n");
 }
 
 static int parse_args(int argc, char* argv[])
@@ -140,7 +153,7 @@ static int parse_args(int argc, char* argv[])
 	int opt;
 	int arg_cnt = 0;
 	int err = 0;
-	while ((opt = getopt(argc, argv, "ix")))
+	while ((opt = getopt(argc, argv, "ixv")))
 	{
 		if (opterr != 0)
 		{
@@ -156,6 +169,9 @@ static int parse_args(int argc, char* argv[])
 			break;
 		case 'x':
 			echocmds = 1;
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 		case '!':
 			arg_cnt++;
@@ -206,10 +222,13 @@ static int execute(char* cmd)
 
 	strstrip(cmd, ' ');
 	ret = _runcmd(cmd);
+
+#ifdef MOS_VERBOSE
 	if (ret != 0)
 		PASH_ERR("Failed to run command '%s': %d\n", cmd, ret);
+#endif
 
-	return 0;
+	return ret;
 }
 
 static int _runcmd(char* cmd)
@@ -259,7 +278,9 @@ static int _runcmd(char* cmd)
 		int child = _execv(argv[0], argv);
 		if (child < 0)
 		{
-			PASH_ERR("Failed to execute '%s'\n", argv[0]);
+			if (child == -E_NOT_FOUND)
+				PASH_ERR("%s: Command not found\n", argv[0]);
+
 			_restore_stream();
 			if (hasNext)
 				continue;

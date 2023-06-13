@@ -738,7 +738,7 @@ static void _clear_screen()
 
 static void _print_version()
 {
-	printfc(FOREGROUND_INTENSE(CYAN), "# Pash Host for MOS Version: %s\n", "1.0.0");
+	printfc(FOREGROUND_INTENSE(CYAN), "# Pash Host for MOS Version: %s\n", "1.1.0");
 }
 
 static void _print_logo()
