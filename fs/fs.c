@@ -1,5 +1,6 @@
 #include "serv.h"
 #include <mmu.h>
+#include <string.h>
 
 struct Super* super;
 
@@ -625,7 +626,9 @@ int dir_alloc_file(struct File* dir, struct File** file)
 		for (j = 0; j < FILE2BLK; j++)
 		{
 			if (f[j].f_name[0] == '\0')
-			{ // found free File structure.
+			{
+				// found free File structure.
+				f[j].f_dir = dir;
 				*file = &f[j];
 				return 0;
 			}
@@ -640,6 +643,7 @@ int dir_alloc_file(struct File* dir, struct File** file)
 		return r;
 	}
 	f = blk;
+	f[0].f_dir = dir;
 	*file = &f[0];
 
 	return 0;
@@ -647,7 +651,7 @@ int dir_alloc_file(struct File* dir, struct File** file)
 
 // Overview:
 //  Skip over slashes.
-char* skip_slash(char* p)
+const char* skip_slash(const char* p)
 {
 	while (*p == '/')
 		p++;
@@ -667,7 +671,7 @@ char* skip_slash(char* p)
 // 2023/05/05 TS: Make pfile nullable.
 // 2023/06/11 TS: Advanced walk_path.
 
-static int _walk_path_aux(char* path, struct File* root, struct File** pdir, struct File** pfile, char* lastelem)
+static int _walk_path_aux(const char* path, struct File* root, struct File** pdir, struct File** pfile, char* lastelem)
 {
 	struct File* fileCursor[MAXFILEDEPTH];
 	struct File* curFile = root;
@@ -676,7 +680,7 @@ static int _walk_path_aux(char* path, struct File* root, struct File** pdir, str
 	fileCursor[0] = root;
 
 	char name[MAXNAMELEN];
-	char* p;
+	const char* p;
 	int ret;
 
 	name[0] = '\0';
@@ -743,12 +747,12 @@ static int _walk_path_aux(char* path, struct File* root, struct File** pdir, str
 	return 0;
 }
 
-int walk_path(char* path, struct File** pdir, struct File** pfile, char* lastelem)
+static int walk_path(const char* path, struct File** pdir, struct File** pfile, char* lastelem)
 {
 	return _walk_path_aux(path, &super->s_root, pdir, pfile, lastelem);
 }
 
-int _walk_fullpath_aux(char* path, struct File* root, char* fullpath)
+static int _walk_fullpath_aux(const char* path, struct File* root, char* fullpath)
 {
 	struct File* fileCursor[MAXFILEDEPTH];
 	struct File* curFile = root;
@@ -757,7 +761,7 @@ int _walk_fullpath_aux(char* path, struct File* root, char* fullpath)
 	fileCursor[0] = root;
 
 	char name[MAXNAMELEN];
-	char* p;
+	const char* p;
 	int ret;
 
 	name[0] = '\0';
@@ -822,7 +826,7 @@ int _walk_fullpath_aux(char* path, struct File* root, char* fullpath)
 	return 0;
 }
 
-int walk_fullpath(char* path, char* fullpath)
+static int walk_fullpath(const char* path, char* fullpath)
 {
 	while (*path && (*path == ' '))
 		path++;
@@ -909,29 +913,30 @@ int file_open(const char* path, struct File** file)
 // Post-Condition:
 //  On success set *file to point at the file and return 0.
 //  On error return < 0.
-int file_create(char* path, struct File** file)
+int file_creat(const char* path, u_int omode, struct File** pfile)
 {
 	char name[MAXNAMELEN];
-	int r;
-	struct File* dir, * f;
+	struct File* dir;
+	struct File* f;
+	int ret;
 
-	if ((r = walk_path(path, &dir, &f, name)) == 0)
-	{
+	if ((ret = walk_path(path, &dir, &f, name)) == 0)
 		return -E_FILE_EXISTS;
-	}
 
-	if (r != -E_NOT_FOUND || dir == 0)
-	{
-		return r;
-	}
+	if ((ret != -E_NOT_FOUND) || (dir == NULL))
+		return ret;
 
-	if (dir_alloc_file(dir, &f) < 0)
-	{
-		return r;
-	}
+	if ((ret = dir_alloc_file(dir, &f)) < 0)
+		return ret;
 
 	strcpy(f->f_name, name);
-	*file = f;
+	f->f_type = (omode & O_MKDIR) ? FTYPE_DIR : FTYPE_REG;
+
+	if (pfile)
+		*pfile = f;
+
+	file_flush(f);
+
 	return 0;
 }
 

@@ -139,6 +139,19 @@ void serve_open(u_int envid, struct Fsreq_open* rq)
 	ipc_send(envid, 0, o->o_ff, PTE_D | PTE_LIBRARY);
 }
 
+void serve_creat(u_int envid, struct Fsreq_creat* rq)
+{
+	int ret = file_creat(rq->req_path, rq->req_omode, NULL);
+
+	if (ret < 0)
+	{
+		ipc_send(envid, ret, NULL, 0);
+		return;
+	}
+
+	ipc_send(envid, 0, NULL, 0);
+}
+
 void serve_fullpath(u_int envid, struct Fsreq_fullpath* rq)
 {
 	int ret = file_fullpath(rq->req_path, (char*)shared);
@@ -295,6 +308,10 @@ void serve(void)
 
 		case FSREQ_FULLPATH:
 			serve_fullpath(whom, (struct Fsreq_fullpath*)REQVA);
+			break;
+
+		case FSREQ_CREAT:
+			serve_creat(whom, (struct Fsreq_creat*)REQVA);
 			break;
 
 		default:

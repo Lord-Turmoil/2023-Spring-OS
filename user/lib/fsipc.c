@@ -5,6 +5,11 @@
 #define debug 0
 
 u_char fsipc_send[BY2PG] __attribute__((aligned(BY2PG)));
+
+/********************************************************************
+** Actually, here only need to specify a virtual address, but... I
+** don't want to bother finding one. :P
+*/
 u_char fsipc_recv[BY2PG] __attribute__((aligned(BY2PG)));
 
 // Overview:
@@ -48,12 +53,27 @@ int fsipc_open(const char* path, u_int omode, struct Fd* fd)
 	if (strlen(path) >= MAXPATHLEN)
 		return -E_BAD_PATH;
 
-	strcpy((char*)req->req_path, path);
+	strcpy(req->req_path, path);
 	req->req_omode = omode;
 
 	return fsipc(FSREQ_OPEN, req, fd, &perm);
 }
 
+int fsipc_creat(const char* path, u_int omode)
+{
+	u_int perm;
+	struct Fsreq_creat* req;
+
+	req = (struct Fsreq_creat*)fsipc_send;
+
+	if (strlen(path) >= MAXPATHLEN)
+		return -E_BAD_PATH;
+
+	strcpy(req->req_path, path);
+	req->req_omode = omode;
+
+	return fsipc(FSREQ_CREAT, req, NULL, &perm);
+}
 
 // request fullpath
 int fsipc_fullpath(const char* filename, char* fullpath)

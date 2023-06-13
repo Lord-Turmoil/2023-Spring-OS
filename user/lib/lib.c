@@ -9,7 +9,7 @@
 #include <lib.h>
 #include <ctype.h>
 
-int access(char* path, int type)
+int access(const char* path, int type)
 {
 	char dir[MAXPATHLEN];
 
@@ -51,6 +51,7 @@ int chdir(const char* path)
 
 	if (strlen(path) >= MAXPATHLEN)
 		return -E_NOT_FOUND;
+
 	while (*path && *path == ' ')
 		path++;
 

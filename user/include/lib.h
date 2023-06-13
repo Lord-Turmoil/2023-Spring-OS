@@ -133,6 +133,7 @@ int printfc(int color, const char* fmt, ...);
 
 // fsipc.c
 int fsipc_open(const char*, u_int, struct Fd*);
+int fsipc_creat(const char*, u_int);
 int fsipc_fullpath(const char*, char*);
 int fsipc_map(u_int, u_int, void*);
 int fsipc_set_size(u_int, u_int);
@@ -156,6 +157,7 @@ int stat(const char* path, struct Stat* stat);
 
 // file.c
 int open(const char* path, int mode);
+int creat(const char* path, int mode);
 int fullpath(const char* filename, char* path);
 int read_map(int fd, u_int offset, void** blk);
 int remove(const char* path);
@@ -183,7 +185,7 @@ int basename(const char* path, char* basename);
 
 // lib.c
 
-int access(char* path, int type);
+int access(const char* path, int type);
 void getcwd(char* path);
 int chdir(const char* path);
 int isdir(const char* path);

@@ -14,8 +14,15 @@
 #define FSREQ_REMOVE   6
 #define FSREQ_SYNC     7
 #define FSREQ_FULLPATH 8
+#define FSREQ_CREAT    9
 
 struct Fsreq_open
+{
+	char req_path[MAXPATHLEN];
+	u_int req_omode;
+};
+
+struct Fsreq_creat
 {
 	char req_path[MAXPATHLEN];
 	u_int req_omode;

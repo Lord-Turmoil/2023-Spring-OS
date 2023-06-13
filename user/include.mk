@@ -34,6 +34,7 @@ ifeq ($(call lab-ge,6), true)
 					ls.b \
 					cat.b \
 					tree.b \
+					mkdir.b \
 					sh.b  \
 					testarg.b \
 					pingpong.b \

@@ -19,6 +19,23 @@ struct Dev devfile = {
 	.dev_stat = file_stat,
 };
 
+static void _make_fullpath(const char* filename, char* path)
+{
+	*path = '\0';
+
+	while (*filename && (*filename == ' '))
+		filename++;
+
+	if (*filename != '/')	// relative
+	{
+		getcwd(path);
+		if (strcmp(path, "/") != 0)
+			strcat(path, "/");
+	}
+
+	strcat(path, filename);
+}
+
 // Overview:
 //  Open a file (or directory).
 //
@@ -44,15 +61,7 @@ int open(const char* path, int mode)
 	 * and send a page of fd to this fd.
 	 */
 	char dir[MAXPATHLEN] = { '\0' };
-	while (*path && (*path == ' '))
-		path++;
-	if (*path != '/')	// relative
-	{
-		getcwd(dir);
-		if (strcmp(dir, "/") != 0)
-			strcat(dir, "/");
-	}
-	strcat(dir, path);
+	_make_fullpath(path, dir);
 
 	if ((r = fsipc_open(dir, mode, fd)) < 0)
 		return r;
@@ -79,19 +88,18 @@ int open(const char* path, int mode)
 	return fd2num(fd);
 }
 
+int creat(const char* path, int mode)
+{
+	char dir[MAXPATHLEN] = { '\0' };
+	_make_fullpath(path, dir);
+
+	return fsipc_creat(dir, (u_int)mode);
+}
+
 int fullpath(const char* filename, char* path)
 {
 	char dir[MAXPATHLEN] = { '\0' };
-
-	while (*filename && (*filename == ' '))
-		filename++;
-	if (filename[0] != '/')
-	{
-		getcwd(dir);
-		if (strcmp(dir, "/") != 0)
-			strcat(dir, "/");
-	}
-	strcat(dir, filename);
+	_make_fullpath(filename, dir);
 
 	return fsipc_fullpath(dir, path);
 }
