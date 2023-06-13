@@ -283,9 +283,11 @@ int remove(const char* path)
 {
 	// Your code here.
 	// Call fsipc_remove.
+	char dir[MAXPATHLEN] = { '\0' };
+	_make_fullpath(path, dir);
 
 	/* Exercise 5.13: Your code here. */
-	return fsipc_remove(path);
+	return fsipc_remove(dir);
 }
 
 // Overview:

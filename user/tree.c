@@ -62,7 +62,7 @@ static int parse_args(int argc, char* argv[])
 	int opt;
 	int arg_cnt = 0;
 	int err = 0;
-	while (opt = getopt(argc, argv, "d"))
+	while ((opt = getopt(argc, argv, "d")))
 	{
 		if (opterr != 0)
 		{

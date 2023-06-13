@@ -43,6 +43,7 @@ USERBINS := init.b \
 			tree.b \
 			mkdir.b \
 			touch.b \
+			rm.b \
 			sh.b
 
 USERLIB      += lib.o
