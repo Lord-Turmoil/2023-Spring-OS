@@ -169,7 +169,7 @@ static void _ls(const char* prefix, u_int isdir, u_int size, const char* name)
 		if (is_ends_with(name, ".b"))
 			color = FOREGROUND_INTENSE(GREEN);
 		else
-			color = FOREGROUND_INTENSE(CYAN);
+			color = FOREGROUND(WHITE);
 	}
 
 	if (prefix)

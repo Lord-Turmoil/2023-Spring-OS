@@ -233,5 +233,5 @@ static void _tree_reg(const char* path, const char* name, const char* leading)
 	if (is_ends_with(name, ".b"))
 		printfc(FOREGROUND_INTENSE(GREEN), " %s\n", name);
 	else
-		printfc(FOREGROUND_INTENSE(CYAN), " %s\n", name);
+		printfc(FOREGROUND(WHITE), " %s\n", name);
 }
