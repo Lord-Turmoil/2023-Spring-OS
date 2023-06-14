@@ -119,9 +119,14 @@ static int parse_args(int argc, char* argv[])
 */
 static void rm(const char* path)
 {
+	if (strchr(path, '.'))
+	{
+		printfc(ERROR_COLOR, "Refusing to remove '.' or '..' directory: skipping '%s'\n", path);
+		return;
+	}
+
 	int ret;
 	struct Stat st;
-
 	if ((ret = stat(path, &st)) < 0)
 	{
 		if (!enableForce)
