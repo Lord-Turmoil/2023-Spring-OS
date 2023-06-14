@@ -935,7 +935,7 @@ int file_creat(const char* path, u_int omode, struct File** pfile)
 	if (pfile)
 		*pfile = f;
 
-	file_flush(f);
+	// file_flush(f);
 
 	return 0;
 }
