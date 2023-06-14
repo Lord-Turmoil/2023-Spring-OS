@@ -501,7 +501,7 @@ static int _execv(char* cmd, char* argv[])
 
 	char prog[PASH_BUFFER_SIZE] = "/bin/";
 
-	if (strchr(cmd, '/') || cmd[0] == '.')	// use directory to call command
+	if (strchr(cmd, '/'))	// use directory to call command
 		strcpy(prog, cmd);
 	else
 		strcat(prog, cmd);
