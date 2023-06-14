@@ -359,6 +359,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			}
 			argv[(*argc)++] = token;
 			break;
+
 		case TK_REDIRECT_LEFT:
 			if ((type = get_token(NULL, &token)) != TK_WORD)
 			{
@@ -378,6 +379,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			redirect = 1;
 			
 			break;
+
 		case TK_REDIRECT_RIGHT:
 			if ((type = get_token(NULL, &token)) != TK_WORD)
 			{
@@ -454,12 +456,15 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 				return 0;
 			}
 			break;
+
 		case TK_SEMI_COLON:
 			// printf("TK_SEMI_COLON\n");
 			return 1;
+
 		case TK_AMPERSAND:
 			// printf("TK_AMPERSAND\n");
 			return 2;
+
 		default:
 			PASH_ERR("Unknown token\n");
 			return -66;
@@ -473,7 +478,7 @@ static int _execv(char* cmd, char* argv[])
 {
 	int ret = execvi(cmd, argv);
 	if (ret != -1)	// execute success or failed
-		return ret;
+		return 0;
 
 	char prog[PASH_BUFFER_SIZE] = "/bin/";
 
