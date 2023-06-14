@@ -88,9 +88,7 @@ typedef struct _input_opt_t
 {
 	int minLen;
 	int maxLen;
-	int interactive;
 	int interruptible;
-
 	input_history_t* history;
 } input_opt_t;
 
