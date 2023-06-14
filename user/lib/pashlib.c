@@ -61,6 +61,7 @@ void init_input_opt(input_opt_t* opt)
 {
 	opt->maxLen = PASH_BUFFER_SIZE - 1;
 	opt->minLen = 1;
+	opt->interactive = 1;
 	opt->interruptible = 0;
 	opt->history = NULL;
 }
@@ -91,16 +92,16 @@ void copy_input_ctx(input_ctx_t* dst, const input_ctx_t* src)
 ** Core Functions
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
-static void _insert_char(int ch);	// insert a character at current caret
-static void _insert_n_char(int ch, int n);
-static void _insert_space();		// insert a space at current caret
-static void _insert_n_space(int n);
-static void _insert_left();		// move caret left by one character
-static void _insert_n_left(int n);
-static void _insert_right();	// move caret right by one character
-static void _insert_n_right(int n);
-static void _insert_backspace();		// delete character before caret
-static void _insert_n_backspace(int n);
+static void _insert_char(const input_opt_t* opt, int ch);	// insert a character at current caret
+static void _insert_n_char(const input_opt_t* opt, int ch, int n);
+static void _insert_space(const input_opt_t* opt);		// insert a space at current caret
+static void _insert_n_space(const input_opt_t* opt, int n);
+static void _insert_left(const input_opt_t* opt);		// move caret left by one character
+static void _insert_n_left(const input_opt_t* opt, int n);
+static void _insert_right(const input_opt_t* opt);	// move caret right by one character
+static void _insert_n_right(const input_opt_t* opt, int n);
+static void _insert_backspace(const input_opt_t* opt);		// delete character before caret
+static void _insert_n_backspace(const input_opt_t* opt, int n);
 
 typedef void _input_action_t(const input_opt_t* opt, input_ctx_t* ctx);
 typedef int _input_handler_t(const input_opt_t* opt, input_ctx_t* ctx);
@@ -212,62 +213,71 @@ int get_string(char* buffer, const input_opt_t* options)
 }
 
 // insert actions
-static void _insert_char(int ch)
+static void _insert_char(const input_opt_t* opt, int ch)
 {
-	if (isprint(ch))
+	if (opt->interactive && isprint(ch))
 		putch(ch);
 }
 
-static void _insert_n_char(int ch, int n)
+static void _insert_n_char(const input_opt_t* opt, int ch, int n)
 {
+	if (opt->interactive)
+	{
+		for (int i = 0; i < n; i++)
+			putch(ch);
+	}
+}
+
+static void _insert_space(const input_opt_t* opt)
+{
+	if (opt->interactive)
+		putch(' ');
+}
+
+static void _insert_n_space(const input_opt_t* opt, int n)
+{
+	if (!opt->interactive)
+		return;
+
 	for (int i = 0; i < n; i++)
-		_insert_char(ch);
+		putch(' ');
 }
 
-static void _insert_space()
+static void _insert_left(const input_opt_t* opt)
 {
-	_insert_char(' ');
+	if (opt->interactive)
+		printf("\033[1D");
 }
 
-static void _insert_n_space(int n)
+static void _insert_n_left(const input_opt_t* opt, int n)
 {
-	for (int i = 0; i < n; i++)
-		_insert_space();
-}
-
-static void _insert_left()
-{
-	printf("\033[1D");
-}
-
-static void _insert_n_left(int n)
-{
-	if (n > 0)
+	if (opt->interactive && (n > 0))
 		printf("\033[%dD", n);
 }
 
-static void _insert_right()
+static void _insert_right(const input_opt_t* opt)
 {
-	printf("\033[1C");
+	if (opt->interactive)
+		printf("\033[1C");
 }
 
-static void _insert_n_right(int n)
+static void _insert_n_right(const input_opt_t* opt, int n)
 {
-	if (n > 0)
+	if (opt->interactive && (n > 0))
 		printf("\033[%dC", n);
 }
 
-static void _insert_backspace()
+static void _insert_backspace(const input_opt_t* opt)
 {
-	_insert_left();
-	_insert_space();
-	_insert_left();
+	_insert_left(opt);
+	_insert_space(opt);
+	_insert_left(opt);
 }
 
-static void _insert_n_backspace(int n)
+static void _insert_n_backspace(const input_opt_t* opt, int n)
 {
 	for (int i = 0; i < n; i++)
-		_insert_backspace();
+		_insert_backspace(opt);
 }
 
 // input actions
@@ -282,9 +292,9 @@ void _input_char(const input_opt_t* opt, input_ctx_t* ctx)
 	ctx->length++;
 	ctx->buffer[ctx->length] = '\0';
 	for (int i = ctx->pos; i < ctx->length; i++)
-		_insert_char(ctx->buffer[i]);
+		_insert_char(opt, ctx->buffer[i]);
 	ctx->pos++;
-	_insert_n_left(ctx->length - ctx->pos);
+	_insert_n_left(opt, ctx->length - ctx->pos);
 }
 
 
@@ -294,14 +304,14 @@ void _input_backspace(const input_opt_t* opt, input_ctx_t* ctx)
 	if (ctx->pos <= 0)
 		return;
 
-	_insert_backspace();
+	_insert_backspace(opt);
 	for (int i = ctx->pos; i < ctx->length; i++)
 	{
-		_insert_char(ctx->buffer[i]);
+		_insert_char(opt, ctx->buffer[i]);
 		ctx->buffer[i - 1] = ctx->buffer[i];
 	}
-	_insert_space();
-	_insert_n_left(ctx->length - ctx->pos + 1);
+	_insert_space(opt);
+	_insert_n_left(opt, ctx->length - ctx->pos + 1);
 	ctx->pos--;
 	ctx->length--;
 	ctx->buffer[ctx->length] = '\0';
@@ -311,7 +321,7 @@ void _input_arrow_left(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (ctx->pos > 0)
 	{
-		_insert_left();
+		_insert_left(opt);
 		ctx->pos--;
 	}
 }
@@ -320,7 +330,7 @@ void _input_arrow_right(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (ctx->pos < ctx->length)
 	{
-		_insert_right();
+		_insert_right(opt);
 		ctx->pos++;
 	}
 }
@@ -363,23 +373,23 @@ void _input_delete(const input_opt_t* opt, input_ctx_t* ctx)
 	for (int i = ctx->pos + 1; i < ctx->length; i++)
 	{
 		ctx->buffer[i - 1] = ctx->buffer[i];
-		_insert_char(ctx->buffer[i]);
+		_insert_char(opt, ctx->buffer[i]);
 	}
-	_insert_space();
-	_insert_n_left(ctx->length - ctx->pos);
+	_insert_space(opt);
+	_insert_n_left(opt, ctx->length - ctx->pos);
 	ctx->length--;
 	ctx->buffer[ctx->length] = '\0';
 }
 
 void _input_home(const input_opt_t* opt, input_ctx_t* ctx)
 {
-	_insert_n_left(ctx->pos);
+	_insert_n_left(opt, ctx->pos);
 	ctx->pos = 0;
 }
 
 void _input_end(const input_opt_t* opt, input_ctx_t* ctx)
 {
-	_insert_n_right(ctx->length - ctx->pos);
+	_insert_n_right(opt, ctx->length - ctx->pos);
 	ctx->pos = ctx->length;
 }
 
@@ -395,12 +405,12 @@ static void _input_arrow_ctrl_left(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	while ((ctx->pos > 0) && !isalnum(ctx->buffer[ctx->pos - 1]))
 	{
-		_insert_left();
+		_insert_left(opt);
 		ctx->pos--;
 	}
 	while ((ctx->pos > 0) && isalnum(ctx->buffer[ctx->pos - 1]))
 	{
-		_insert_left();
+		_insert_left(opt);
 		ctx->pos--;
 	}
 }
@@ -409,12 +419,12 @@ static void _input_arrow_ctrl_right(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	while ((ctx->pos < ctx->length) && isalnum(ctx->buffer[ctx->pos]))
 	{
-		_insert_char(ctx->buffer[ctx->pos]);
+		_insert_char(opt, ctx->buffer[ctx->pos]);
 		ctx->pos++;
 	}
 	while ((ctx->pos < ctx->length) && !isalnum(ctx->buffer[ctx->pos]))
 	{
-		_insert_char(ctx->buffer[ctx->pos]);
+		_insert_char(opt, ctx->buffer[ctx->pos]);
 		ctx->pos++;
 	}
 }
@@ -437,7 +447,7 @@ static void _reset_input(const input_opt_t* opt, input_ctx_t* ctx)
 
 	// clear current input
 	_input_end(opt, ctx);
-	_insert_n_backspace(ctx->length);
+	_insert_n_backspace(opt, ctx->length);
 	ctx->pos = 0;
 	ctx->length = 0;
 

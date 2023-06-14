@@ -27,7 +27,7 @@ ifeq ($(call lab-ge,5),true)
 	targets         += fs-image
 endif
 
-gxemul_flags            += -T -C R3000 -M 256
+gxemul_flags            += -T -C R3000 -M 32
 CFLAGS                  += -DLAB=$(shell echo $(lab) | cut -f1 -d_)
 # CFLAGS                  += -DLAB=$(shell echo $(lab) | cut -f1 -d_) -DMOS_VERBOSE
 

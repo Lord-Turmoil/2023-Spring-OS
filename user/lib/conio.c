@@ -15,7 +15,10 @@ int getch()
 	struct Fd* fd;
 	int ret;
 	if ((ret = fd_lookup(0, &fd)) < 0)
+	{
+		debugf("Invalid fd for stdin");
 		return EOF;
+	}
 
 	int ch;
 	if (fd->fd_dev_id == devcons.dev_id)
