@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
 			print_prompt();
 
 		ret = get_string(buffer, &opt);
-		printf("\n");
+		putch('\n');
 
 		if (ret == EOF)
 		{

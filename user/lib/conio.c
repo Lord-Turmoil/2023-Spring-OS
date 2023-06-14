@@ -15,10 +15,7 @@ int getch()
 	struct Fd* fd;
 	int ret;
 	if ((ret = fd_lookup(0, &fd)) < 0)
-	{
-		debugf("Invalid fd for stdin");
 		return EOF;
-	}
 
 	int ch;
 	if (fd->fd_dev_id == devcons.dev_id)
@@ -38,5 +35,10 @@ int getch()
 
 void putch(int ch)
 {
-	syscall_putchar(ch);
+	struct Fd* fd;
+	if (fd_lookup(0, &fd) < 0)
+		return;
+
+	if (fd->fd_dev_id == devcons.dev_id)
+		syscall_putchar(ch);
 }
