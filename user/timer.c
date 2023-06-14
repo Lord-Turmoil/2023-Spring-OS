@@ -1,9 +1,10 @@
 /********************************************************************
-** amp.c
+** timer.c
 **
 **     Copyright (C) Tony's Studio. All rights reserved.
 **
-**   This file is used to demonstrate '&' in command.
+**   This file implements a function to output a message after
+** given time.
 */
 
 #include <lib.h>
@@ -13,7 +14,7 @@ int main(int argc, char* argv[])
 {
 	if (argc != 3)
 	{
-		printf("Usage: amp n c\n");
+		printf("Usage: timer [-h] delay message\n");
 		return 1;
 	}
 
