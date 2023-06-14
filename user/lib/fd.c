@@ -291,6 +291,17 @@ int seek(int fdnum, u_int offset)
 	return 0;
 }
 
+int ftell(int fdnum)
+{
+	int ret;
+	struct Fd* fd;
+
+	if ((ret = fd_lookup(fdnum, &fd)) < 0)
+		return (size_t)ret;
+
+	return (int)(fd->fd_offset);
+}
+
 int fstat(int fdnum, struct Stat* stat)
 {
 	int r;

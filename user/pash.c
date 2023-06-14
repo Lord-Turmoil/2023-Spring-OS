@@ -41,7 +41,7 @@ static int init_history();
 static int append_history(const char* record);
 static int get_history(int index, char* record);
 
-input_history_t history;
+static input_history_t history;
 
 int main(int argc, char* argv[])
 {
@@ -78,16 +78,12 @@ int main(int argc, char* argv[])
 	}
 
 	// init history, only enable when interactive
+	init_input_history(&history);
 	if (interactive)
 	{
+		history.init = init_history;
 		history.get = get_history;
 		history.append = append_history;
-		history.count = init_history();
-		if (history.count < 0)
-		{
-			printfc(ERROR_COLOR, "Failed to initialize history!\n");
-			printfc(MSG_COLOR, "History disabled.\n");
-		}
 	}
 
 	input_opt_t opt;
@@ -352,9 +348,10 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			argv[(*argc)++] = token;
 			break;
 		case TK_REDIRECT_LEFT:
-			if (get_token(NULL, &token) != TK_WORD)
+			type = get_token(NULL, &token);
+			if (type != TK_WORD)
 			{
-				PASH_ERR("Syntax error near unexpected token `<'\n");
+				PASH_ERR("Syntax error near unexpected token `%s'\n", get_token_str(type));
 				PASH_MSG("`<' not followed by word\n");
 				return -3;
 			}
@@ -506,24 +503,47 @@ static void _restore_stream()
 */
 static const char HISTORY_FILE[] = "/home/tony/.history";
 
+static int _get_history_count(int fd)
+{
+	int ret = 0;
+	char buf;
+
+	int offset = ftell(fd);
+	if (offset < 0)
+		return 0;
+
+	seek(fd, 0);
+	while (read(fd, &buf, 1) == 1)
+	{
+		if (buf == '\n')
+			ret++;
+	}
+	seek(fd, (u_int)offset);
+
+	return ret;
+}
+
+static int _get_history_size(int fd)
+{
+	struct Stat st;
+
+	if (fstat(fd, &st) == 0)
+		return st.st_size;
+	else
+		return 0;
+}
+
 static int init_history()
 {
 	int fd = open(HISTORY_FILE, O_RDONLY | O_CREAT);
 	if (fd < 0)
 		return fd;
 
-	int count = 0;
-	char buffer;
-
-	while (read(fd, &buffer, 1) == 1)
-	{
-		if (buffer == '\n')
-			count++;
-	}
+	history.count = _get_history_count(fd);
 
 	close(fd);
 
-	return count;
+	return 0;
 }
 
 static int append_history(const char* record)

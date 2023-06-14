@@ -148,6 +148,7 @@ int close(int fd);
 int read(int fd, void* buf, u_int nbytes);
 int write(int fd, const void* buf, u_int nbytes);
 int seek(int fd, u_int offset);
+int ftell(int fd);
 void close_all(void);
 int readn(int fd, void* buf, u_int nbytes);
 int dup(int oldfd, int newfd);

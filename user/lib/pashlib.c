@@ -26,6 +26,11 @@
 ** Input history
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
+static int _default_init(void)
+{
+	return 0;
+}
+
 static int _default_append(const char* record)
 {
 	return 0;
@@ -41,6 +46,7 @@ void init_input_history(input_history_t* history)
 	history->count = 0;
 
 	// initialize handler to avoid NULL exception.
+	history->init = _default_init;
 	history->append = _default_append;
 	history->get = _default_get;
 }
@@ -159,7 +165,10 @@ int get_string(char* buffer, const input_opt_t* options)
 	ctx.buffer = buffer;
 	ctx.buffer[0] = '\0';
 	if (opt.history)
+	{
+		opt.history->init();
 		ctx.index = opt.history->count;
+	}
 
 	// Get string, huh?
 	int ret;
