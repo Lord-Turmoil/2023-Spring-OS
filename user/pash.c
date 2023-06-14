@@ -367,6 +367,12 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 				PASH_MSG("`<' not followed by word\n");
 				return -3;
 			}
+			if (isdir(token))
+			{
+				PASH_ERR("'%s': Is a directory\n", token);
+				return -4;
+			}
+
 			fd = open(token, O_RDONLY);
 			if (fd < 0)
 			{
@@ -387,6 +393,12 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 				PASH_MSG("`>' not followed by word\n");
 				return -3;
 			}
+			if (isdir(token))
+			{
+				PASH_ERR("'%s': Is a directory\n", token);
+				return -4;
+			}
+
 			// create new file if not exists
 			fd = open(token, O_WRONLY | O_CREAT);
 			if (fd < 0)
@@ -408,6 +420,13 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 				PASH_MSG("`>>' not followed by word\n");
 				return -3;
 			}
+
+			if (isdir(token))
+			{
+				PASH_ERR("'%s': Is a directory\n", token);
+				return -4;
+			}
+
 			// create new file if not exists
 			fd = open(token, O_WRONLY | O_CREAT | O_APPEND);
 			if (fd < 0)
