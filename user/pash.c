@@ -512,7 +512,7 @@ static void _restore_stream()
 ** History
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
-static const char HISTORY_FILE[] = "/home/tony/.history";
+static const char HISTORY_FILE[] = "/home/.history";
 
 static int _get_history_count(int fd)
 {
@@ -532,16 +532,6 @@ static int _get_history_count(int fd)
 	seek(fd, (u_int)offset);
 
 	return ret;
-}
-
-static int _get_history_size(int fd)
-{
-	struct Stat st;
-
-	if (fstat(fd, &st) == 0)
-		return st.st_size;
-	else
-		return 0;
 }
 
 static int init_history()

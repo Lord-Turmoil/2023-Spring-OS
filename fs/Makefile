@@ -49,7 +49,7 @@ image: $(tools_dir)/fsformat
 	dd if=/dev/zero of=../target/fs.img bs=4096 count=1024 2>/dev/null
 	# using awk to remove paths with identical basename from FSIMGFILES
 	mkdir -p rootfs/usr/bin
-	mkdir -p rootfs/home/tony
+	mkdir -p rootfs/home
 	mkdir -p rootfs/bin
 
 	cp -vf $(USERAPPS) -t rootfs/usr/bin

@@ -9,7 +9,7 @@
 #include <lib.h>
 #include <arguments.h>
 
-static const char HISTORY_FILE[] = "/home/tony/.history";
+static const char HISTORY_FILE[] = "/home/.history";
 
 static int enableClear;
 static int showHelp;
