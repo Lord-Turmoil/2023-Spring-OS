@@ -14,6 +14,8 @@ static int enableLonglist;
 static int selfOnly;
 static int hasTarget;
 
+static int showHelp;
+
 static void init();
 static void usage();
 static int parse_args(int argc, char* argv[]);
@@ -29,6 +31,11 @@ int main(int argc, char* argv[])
 	{
 		usage();
 		return 1;
+	}
+	if (showHelp)
+	{
+		usage();
+		return 0;
 	}
 
 	if (!hasTarget)
@@ -62,18 +69,19 @@ static void init()
 	enableLonglist = 0;
 	selfOnly = 0;
 	hasTarget = 0;
+	showHelp = 0;
 }
 
 static void usage()
 {
-	printfc(MSG_COLOR, "Usage: ls [-d -F -l] [path]\n");
+	printfc(MSG_COLOR, "Usage: ls [-dFlh] [path]\n");
 }
 
 static int parse_args(int argc, char* argv[])
 {
 	int opt;
 	int err = 0;
-	while ((opt = getopt(argc, argv, "dFl")))
+	while ((opt = getopt(argc, argv, "dFlh")))
 	{
 		if (opterr != 0)
 		{
@@ -92,6 +100,9 @@ static int parse_args(int argc, char* argv[])
 			break;
 		case 'l':
 			enableLonglist = 1;
+			break;
+		case 'h':
+			showHelp = 1;
 			break;
 		case '!':
 			hasTarget = 1;

@@ -13,6 +13,7 @@
 static int enableForce;
 static int enableVerbose;
 static int enableRecursive;
+static int showHelp;
 
 static void init();
 static void usage();
@@ -28,6 +29,11 @@ int main(int argc, char* argv[])
 	{
 		usage();
 		return 1;
+	}
+	if (showHelp)
+	{
+		usage();
+		return 0;
 	}
 
 	for (int i = 1; i < argc; i++)
@@ -53,18 +59,19 @@ static void init()
 	enableForce = 0;
 	enableRecursive = 0;
 	enableVerbose = 0;
+	showHelp = 0;
 }
 
 static void usage()
 {
-	printfc(MSG_COLOR, "Usage: rm [-v -f -r] path [path ...]\n");
+	printfc(MSG_COLOR, "Usage: rm [-vfrh] path [path ...]\n");
 }
 
 static int parse_args(int argc, char* argv[])
 {
 	int opt;
 	int err = 0;
-	while ((opt = getopt(argc, argv, "fvr")))
+	while ((opt = getopt(argc, argv, "fvrh")))
 	{
 		if (opterr != 0)
 		{
@@ -83,6 +90,9 @@ static int parse_args(int argc, char* argv[])
 			break;
 		case 'r':
 			enableRecursive = 1;
+			break;
+		case 'h':
+			showHelp = 1;
 			break;
 		case '!':
 			break;

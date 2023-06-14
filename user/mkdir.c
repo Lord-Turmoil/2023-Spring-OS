@@ -11,6 +11,7 @@
 
 static int enableParents;
 static int enableVerbose;
+static int showHelp;
 
 static void init();
 static void usage();
@@ -26,6 +27,11 @@ int main(int argc, char* argv[])
 	{
 		usage();
 		return 1;
+	}
+	if (showHelp)
+	{
+		usage();
+		return 0;
 	}
 
 	for (int i = 1; i < argc; i++)
@@ -43,18 +49,19 @@ static void init()
 {
 	enableParents = 0;
 	enableVerbose = 0;
+	showHelp = 0;
 }
 
 static void usage()
 {
-	printfc(MSG_COLOR, "Usage: mkdir [-p -v] path [path ...]\n");
+	printfc(MSG_COLOR, "Usage: mkdir [-pvh] path [path ...]\n");
 }
 
 static int parse_args(int argc, char* argv[])
 {
 	int opt;
 	int err = 0;
-	while ((opt = getopt(argc, argv, "pv")))
+	while ((opt = getopt(argc, argv, "pvh")))
 	{
 		if (opterr != 0)
 		{
@@ -70,6 +77,9 @@ static int parse_args(int argc, char* argv[])
 			break;
 		case 'v':
 			enableVerbose = 1;
+			break;
+		case 'h':
+			showHelp = 1;
 			break;
 		case '!':
 			break;

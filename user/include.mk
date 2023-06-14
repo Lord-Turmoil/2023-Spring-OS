@@ -27,11 +27,7 @@ ifeq ($(call lab-ge,6), true)
 	INITAPPS     += icode.x
 
 	USERLIB      += wait.o spawn.o pipe.o
-	USERAPPS     :=	testarg.b \
-					pingpong.b \
-					testconio.b \
-					tokentest.b \
-					ampersand.b
+	USERAPPS     :=	amp.b
 endif
 
 USERBINS := init.b \

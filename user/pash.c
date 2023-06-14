@@ -26,6 +26,8 @@ static int echocmds;
 static int verbose;
 static char* filename;
 
+static int showHelp;
+
 static void usage(void);
 static int parse_args(int argc, char* argv[]);
 
@@ -51,11 +53,17 @@ int main(int argc, char* argv[])
 	echocmds = 0;
 	verbose = 0;
 	filename = NULL;
+	showHelp = 0;
 
 	if (parse_args(argc, argv) != 0)
 	{
 		usage();
 		return 1;
+	}
+	if (showHelp)
+	{
+		usage();
+		return 0;
 	}
 
 	if (filename)
@@ -141,7 +149,7 @@ int main(int argc, char* argv[])
 
 static void usage(void)
 {
-	PASH_MSG("Usage: pash [-ixv] [command-file]\n");
+	PASH_MSG("Usage: pash [-ixvh] [command-file]\n");
 }
 
 static int parse_args(int argc, char* argv[])
@@ -149,7 +157,7 @@ static int parse_args(int argc, char* argv[])
 	int opt;
 	int arg_cnt = 0;
 	int err = 0;
-	while ((opt = getopt(argc, argv, "ixv")))
+	while ((opt = getopt(argc, argv, "ixvh")))
 	{
 		if (opterr != 0)
 		{
@@ -168,6 +176,9 @@ static int parse_args(int argc, char* argv[])
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case 'h':
+			showHelp = 1;
 			break;
 		case '!':
 			arg_cnt++;

@@ -11,7 +11,8 @@
 
 static const char HISTORY_FILE[] = "/home/tony/.history";
 
-int enableClear;
+static int enableClear;
+static int showHelp;
 
 static void usage();
 static int parse_args(int argc, char* argv[]);
@@ -28,6 +29,11 @@ int main(int argc, char* argv[])
 		usage();
 		return 1;
 	}
+	if (showHelp)
+	{
+		usage();
+		return 0;
+	}
 
 	if (enableClear)
 	{
@@ -42,14 +48,14 @@ int main(int argc, char* argv[])
 
 static void usage()
 {
-	printfc(MSG_COLOR, "Usage: history [-c]\n");
+	printfc(MSG_COLOR, "Usage: history [-ch]\n");
 }
 
 static int parse_args(int argc, char* argv[])
 {
 	int opt;
 	int err = 0;
-	while ((opt = getopt(argc, argv, "c")))
+	while ((opt = getopt(argc, argv, "ch")))
 	{
 		if (opterr != 0)
 		{
@@ -62,6 +68,9 @@ static int parse_args(int argc, char* argv[])
 		{
 		case 'c':
 			enableClear = 1;
+			break;
+		case 'h':
+			showHelp = 1;
 			break;
 		case '!':
 			break;

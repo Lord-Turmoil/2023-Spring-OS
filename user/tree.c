@@ -13,8 +13,9 @@
 #include <arguments.h>
 
 
-static int dirOnly;
 static char targetPath[MAXPATHLEN];
+static int dirOnly;
+static int showHelp;
 
 static void init();
 static void usage();
@@ -32,11 +33,15 @@ static void _tree_reg(const char* path, const char* name, const char* leading);
 int main(int argc, char* argv[])
 {
 	init();
-
 	if (parse_args(argc, argv) != 0)
 	{
 		usage();
 		return 1;
+	}
+	if (showHelp)
+	{
+		usage();
+		return 0;
 	}
 
 	if (!is_the_same(targetPath, "/"))
@@ -49,12 +54,13 @@ int main(int argc, char* argv[])
 static void init()
 {
 	dirOnly = 0;
+	showHelp = 0;
 	strcpy(targetPath, ".");
 }
 
 static void usage()
 {
-	printfc(MSG_COLOR, "Usage: tree [-d] [path]\n");
+	printfc(MSG_COLOR, "Usage: tree [-dh] [path]\n");
 }
 
 static int parse_args(int argc, char* argv[])
@@ -62,7 +68,7 @@ static int parse_args(int argc, char* argv[])
 	int opt;
 	int arg_cnt = 0;
 	int err = 0;
-	while ((opt = getopt(argc, argv, "d")))
+	while ((opt = getopt(argc, argv, "dh")))
 	{
 		if (opterr != 0)
 		{
@@ -75,6 +81,9 @@ static int parse_args(int argc, char* argv[])
 		{
 		case 'd':
 			dirOnly = 1;
+			break;
+		case 'h':
+			showHelp = 1;
 			break;
 		case '!':
 			arg_cnt++;

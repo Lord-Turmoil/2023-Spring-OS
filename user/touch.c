@@ -11,6 +11,7 @@
 
 static int enableParents;
 static int enableVerbose;
+static int showHelp;
 
 static void init();
 static void usage();
@@ -20,11 +21,15 @@ static int touch(const char* path);
 int main(int argc, char* argv[])
 {
 	init();
-
 	if (parse_args(argc, argv) != 0)
 	{
 		usage();
 		return 1;
+	}
+	if (showHelp)
+	{
+		usage();
+		return 0;
 	}
 
 	for (int i = 1; i < argc; i++)
@@ -46,14 +51,14 @@ static void init()
 
 static void usage()
 {
-	printfc(MSG_COLOR, "Usage: touch path [path ...]\n");
+	printfc(MSG_COLOR, "Usage: touch [-vh] path [path ...]\n");
 }
 
 static int parse_args(int argc, char* argv[])
 {
 	int opt;
 	int err = 0;
-	while ((opt = getopt(argc, argv, "v")))
+	while ((opt = getopt(argc, argv, "vh")))
 	{
 		if (opterr != 0)
 		{
@@ -66,6 +71,9 @@ static int parse_args(int argc, char* argv[])
 		{
 		case 'v':
 			enableVerbose = 1;
+			break;
+		case 'h':
+			showHelp = 1;
 			break;
 		case '!':
 			break;
