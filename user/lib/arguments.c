@@ -293,9 +293,9 @@ static token_t _get_token_type(char ch)
 	}
 }
 
-const char* get_token_str(token_t token)
+const char* get_token_str(token_t type)
 {
-	switch (token)
+	switch (type)
 	{
 	case TK_REDIRECT_LEFT:
 		return "<";

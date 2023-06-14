@@ -249,7 +249,8 @@ static int _runcmd(char* cmd)
 		ret = _parsecmd(cmd, &argc, argv, &rightpipe);
 		if (ret < 0)
 		{
-			PASH_ERR(SYNTAX_ERR_MSG "Failed to parse command: %d\n", ret);
+			if (verbose)
+				PASH_ERR(SYNTAX_ERR_MSG "Failed to parse command: %d\n", ret);
 			_restore_stream();
 			return ret;
 		}
@@ -348,8 +349,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			argv[(*argc)++] = token;
 			break;
 		case TK_REDIRECT_LEFT:
-			type = get_token(NULL, &token);
-			if (type != TK_WORD)
+			if ((type = get_token(NULL, &token)) != TK_WORD)
 			{
 				PASH_ERR("Syntax error near unexpected token `%s'\n", get_token_str(type));
 				PASH_MSG("`<' not followed by word\n");
@@ -368,9 +368,9 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			
 			break;
 		case TK_REDIRECT_RIGHT:
-			if (get_token(NULL, &token) != TK_WORD)
+			if ((type = get_token(NULL, &token)) != TK_WORD)
 			{
-				PASH_ERR("Syntax error near unexpected token `>'\n");
+				PASH_ERR("Syntax error near unexpected token `%s'\n", get_token_str(type));
 				PASH_MSG("`>' not followed by word\n");
 				return -3;
 			}
@@ -389,9 +389,9 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			break;
 
 		case TK_REDIRECT_DOUBLE:
-			if (get_token(NULL, &token) != TK_WORD)
+			if ((type = get_token(NULL, &token)) != TK_WORD)
 			{
-				PASH_ERR("Syntax error near unexpected token `>>'\n");
+				PASH_ERR("Syntax error near unexpected token `%s'\n", get_token_str(type));
 				PASH_MSG("`>>' not followed by word\n");
 				return -3;
 			}

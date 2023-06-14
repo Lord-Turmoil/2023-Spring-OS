@@ -66,6 +66,7 @@
 typedef struct _input_history_t
 {
 	int count;
+	int (*init)(void);
 	int (*append)(const char*);
 	int (*get)(int, char*);
 } input_history_t;
