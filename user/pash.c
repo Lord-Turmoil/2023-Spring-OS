@@ -749,8 +749,11 @@ int completer(const char* input, char* completion, int* revert)
 		}
 		if (pos != *candidate)	// partial match
 		{
-			if (!match)
+			if (!match)	        // accept first match
+			{
 				match = pos;
+				break;
+			}
 			else
 				return 0;	// ignore multiple possible match
 		}

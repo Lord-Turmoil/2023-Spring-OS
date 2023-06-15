@@ -785,7 +785,17 @@ static void _clear_screen()
 
 static void _print_version()
 {
-	printfc(FOREGROUND_INTENSE(CYAN), "# Pash Host for MOS Version: %s\n", "1.1.0");
+	char buffer[128];
+
+	int fd = open("/etc/version", O_RDONLY);
+	if (fd < 0)
+		strcpy(buffer, "N/A");
+
+	readline(fd, buffer);
+	strstripr(buffer, '\n');
+	printfc(FOREGROUND_INTENSE(CYAN), "# Pash Host for MOS Version: %s\n", buffer);
+	
+	close(fd);
 }
 
 static void _print_logo()
