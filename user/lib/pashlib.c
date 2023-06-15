@@ -912,10 +912,15 @@ static int _cd(int argc, char* argv[])
 		return 0;
 	}
 
-	if (!access(argv[1], FTYPE_DIR))
+	if (!access(argv[1], -1))
 	{
 		PASH_ERR("No such file or directory\n");
 		return -3;
+	}
+	if (!access(argv[1], FTYPE_DIR))
+	{
+		PASH_ERR("%s: Not a directory\n", argv[1]);
+		return -4;
 	}
 
 	char dir[MAXPATHLEN];
