@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 {
 	if (argc != 3)
 	{
-		printf("Usage: timer [-h] delay message\n");
+		printfc(MSG_COLOR, "Usage: timer [-h] delay message\n");
 		return 1;
 	}
 
