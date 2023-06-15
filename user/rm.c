@@ -117,13 +117,31 @@ static int parse_args(int argc, char* argv[])
 /********************************************************************
 ** This is similar to tree.
 */
+static char* RESTRICTED_PATHS[] = {
+	"/../",
+	"/./",
+	"../",
+	"./",
+	"/..",
+	"/."
+};
+
 static void rm(const char* path)
 {
-	if (strchr(path, '.'))
+	for (int i = 0; i < 6; i++)
+	{
+		if (strstr(path, RESTRICTED_PATHS[i]))
+		{
+			printfc(ERROR_COLOR, "Refusing to remove '.' or '..' directory: skipping '%s'\n", path);
+			return;
+		}
+	}
+	if (is_the_same(path, "..") || is_the_same(path, "."))
 	{
 		printfc(ERROR_COLOR, "Refusing to remove '.' or '..' directory: skipping '%s'\n", path);
 		return;
 	}
+
 
 	int ret;
 	struct Stat st;

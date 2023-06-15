@@ -100,6 +100,32 @@ const char* strchr(const char* s, int c)
 	return 0;
 }
 
+// Simple O(n^2) algorithm.
+const char* strstr(const char* src, const char* pattern)
+{
+	const char* base = src;
+	const char* p1 = base;
+	const char* p2 = pattern;
+
+	while (*p1 && *p2)
+	{
+		if (*p1 == *p2)
+		{
+			p1++;
+			p2++;
+		}
+		else
+		{
+			p1 = ++base;
+			p2 = pattern;
+		}
+	}
+
+	if (*p2)
+		return NULL;
+	return base;
+}
+
 int strcmp(const char* p, const char* q)
 {
 	while (*p && *p == *q)
