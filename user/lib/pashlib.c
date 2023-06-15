@@ -575,7 +575,7 @@ int _special_direct_handler(const input_opt_t* opt, input_ctx_t* ctx)
 		_input_arrow_left(opt, ctx);
 		break;
 	case SPECIAL_ARROW_RIGHT:
-		_input_arrow_ctrl_right(opt, ctx);
+		_input_arrow_right(opt, ctx);
 		break;
 	case SPECIAL_HOME:
 		_input_home(opt, ctx);
