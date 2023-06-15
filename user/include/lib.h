@@ -166,6 +166,7 @@ int remove(const char* path);
 int ftruncate(int fd, u_int size);
 int sync(void);
 int basename(const char* path, char* basename);
+int parentpath(const char* path, char* parent);
 
 #define user_assert(x)                                                                             \
 	do {                                                                                       \

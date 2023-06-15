@@ -10,9 +10,11 @@
 **   - https://gitee.com/tonys-studio/pass-bash-pro
 */
 
+#include <lib.h>
 #include <pash.h>
 #include <conio.h>
 #include <arguments.h>
+#include <ctype.h>
 
 static char buffer[PASH_BUFFER_SIZE];
 
@@ -39,12 +41,18 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe);
 static int _execv(char* cmd, char* argv[]);
 static void _restore_stream();
 
+
+// History management
 static int init_history();
 static int append_history(const char* record);
 static int get_history(int index, char* record);
 
 static input_history_t history;
 
+// Completion
+int completer(const char* input, char* completion, int* revert);
+
+// main function
 int main(int argc, char* argv[])
 {
 	trivial = 0;
@@ -70,7 +78,7 @@ int main(int argc, char* argv[])
 	{
 		interactive = 0;
 		close(0);
-		if (open(filename, O_RDONLY) < 0)
+		if (open(filename, O_RDONLY) != 0)
 		{
 			PASH_ERR("Can't open '%s'\n", filename);
 			return 2;
@@ -79,9 +87,9 @@ int main(int argc, char* argv[])
 
 	if (!interactive)
 	{
-		backupfd[0] = dup(0, 10);
+		backupfd[0] = dup(0, 3);
 		panic_on(backupfd[0] < 0);
-		backupfd[1] = dup(1, 11);
+		backupfd[1] = dup(1, 4);
 		panic_on(backupfd[1] < 0);
 	}
 
@@ -126,7 +134,7 @@ int main(int argc, char* argv[])
 		if (interactive)
 			print_prompt();
 
-		ret = get_string(buffer, &opt);
+		ret = get_string(buffer, &opt, completer);
 		putch('\n');
 
 		if (ret == EOF)
@@ -615,4 +623,145 @@ static int get_history(int index, char* record)
 
 	// not found
 	return -1;
+}
+
+
+/*
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+** Completion
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+*/
+#define MAX_CANDIDATES 32
+
+static char _candidates[MAX_CANDIDATES][MAXNAMELEN];
+
+static void _get_candidates(const char* path)
+{
+	int fd = open(path, O_RDONLY);
+	if (fd < 0)
+	{
+		_candidates[0][0] = '\0';
+		return;
+	}
+
+	int size;
+	struct File file;
+	char (*candidate)[MAXNAMELEN] = _candidates;
+	while ((size = readn(fd, &file, sizeof(struct File))) == sizeof(struct File))
+	{
+		if (file.f_name[0])
+		{
+			strcpy(*candidate, file.f_name);
+			candidate++;
+		}
+	}
+	(*candidate)[0] = '\0';
+
+	close(fd);
+}
+
+// This tricky one comes from PassBash... I don't know how I
+// came up with this before. :P
+static const char* _begins_with(const char* str, const char* prefix)
+{
+	if (is_null_or_empty(str) || is_null_or_empty(prefix))
+		return str;
+
+	const char* original_str = str;
+	while (*prefix && *str)
+	{
+		if (*prefix != *str)
+			return original_str;
+		prefix++;
+		str++;
+	}
+
+	return str;
+}
+
+/********************************************************************
+** Return:
+**   0: no match
+**   1: match
+*/
+int completer(const char* input, char* completion, int* revert)
+{
+	*completion = '\0';
+
+	if (strstr(input, "//"))	// bad path
+		return 0;
+	if (is_ends_with(input, "/"))	// empty path
+		return 0;
+
+	// skip leading white spaces
+	while (*input && isspace(*input))
+		input++;
+	if (!*input)
+		return 0;
+
+	// Get last substring to complete.
+	const char* last = input;
+	while (*last)
+	{
+		while (*last && !isspace(*last))
+			last++;
+		while (*last && isspace(*last))
+			last++;
+		if (*last)
+			input = last;
+	}
+
+	char parent[MAXPATHLEN];
+	char name[MAXNAMELEN];
+	parentpath(input, parent);
+	basename(input, name);
+
+	// debugf("[P: %s - B: %s]", parent, name);
+
+	_get_candidates(parent);
+	if (_candidates[0][0] == '\0')
+		return 0;
+
+	const char* match = NULL;
+	char (*candidate)[MAXNAMELEN] = _candidates;
+
+	/*
+	while ((*candidate)[0] != '\0')
+	{
+		debugf("<%s>", *candidate);
+		candidate++;
+	}
+	candidate = _candidates;
+	*/
+
+	if (revert)
+		*revert = 0;
+	while ((*candidate)[0] != '\0')
+	{
+		const char* pos = _begins_with(*candidate, name);
+		if (!*pos)	// full match
+		{
+			candidate++;
+			match = (*candidate)[0] ? *candidate : _candidates[0];
+			if (revert)
+				*revert = (int)strlen(name);
+			break;
+		}
+		if (pos != *candidate)	// partial match
+		{
+			if (!match)
+				match = pos;
+			else
+				return 0;	// ignore multiple possible match
+		}
+
+		candidate++;
+	}
+
+	if (!match)
+		return 0;
+
+	strcpy(completion, match);
+	
+	return 1;
 }

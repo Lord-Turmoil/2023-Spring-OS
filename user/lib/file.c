@@ -320,11 +320,46 @@ int basename(const char* path, char* basename)
 	while ((p > path) && (*p != '/'))
 		p--;
 
-	strcpy(basename, path);
+	if (*p == '/')
+		strcpy(basename, p + 1);
+	else
+		strcpy(basename, p);
 	strstrip(basename, '/');
 
 	if (basename[0] == '\0')
 		strcpy(basename, "/");
+
+	return 0;
+}
+
+// will not reserve last '/'
+int parentpath(const char* path, char* parent)
+{
+	char dir[MAXPATHLEN];
+
+	strcpy(dir, path);
+	strstripr(dir, '/');
+	if (dir[0] == '\0')
+	{
+		strcpy(parent, "/");
+		return 0;
+	}
+
+	char* p = dir + strlen(dir);
+	while ((p > dir) && (*p != '/'))
+		p--;
+	if (*p == '/')
+	{
+		if (p == dir)
+			strcpy(parent, "/");
+		else
+		{
+			*p = '\0';
+			strcpy(parent, dir);
+		}
+	}
+	else
+		strcpy(parent, "");
 
 	return 0;
 }

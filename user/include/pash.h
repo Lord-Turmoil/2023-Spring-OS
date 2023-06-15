@@ -75,6 +75,14 @@ void init_input_history(input_history_t* history);
 
 /*
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+** Input completer
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+*/
+
+typedef int (*input_competer_t)(const char*, char*, int*);
+
+/*
+**+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ** Input Options & Context
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
@@ -99,12 +107,9 @@ void copy_input_opt(input_opt_t* dst, const input_opt_t* src);
 typedef struct _input_ctx_t
 {
 	char* buffer;	// where the display string stored
-
 	int pos;        // current cursor position
 	int length;     // current input length
-
 	int ch;	        // next character to put into buffer
-
 	int index;		// history index
 } input_ctx_t;
 
@@ -120,7 +125,7 @@ void copy_input_ctx(input_ctx_t* dst, const input_ctx_t* src);
 */
 
 // Ahh... C does not support override... :'(
-int get_string(char* buffer, const input_opt_t* options);
+int get_string(char* buffer, const input_opt_t* options, input_competer_t completer);
 
 
 /*

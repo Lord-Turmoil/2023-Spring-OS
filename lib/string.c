@@ -90,14 +90,13 @@ char* strcpy(char* dst, const char* src)
 
 const char* strchr(const char* s, int c)
 {
-	for (; *s; s++)
+	for (const char* p = s; *p; p++)
 	{
-		if (*s == c)
-		{
-			return s;
-		}
+		if (*p == c)
+			return p;
 	}
-	return 0;
+
+	return NULL;
 }
 
 // Simple O(n^2) algorithm.
@@ -189,11 +188,13 @@ char* strstripr(char* str, int c)
 	char* left = base;
 	char* right = base + strlen(str) - 1;
 
-	while ((left <= right) && (*right == c))
+	while ((left < right) && (*right == c))
 	{
 		*right = '\0';
 		right--;
 	}
+	if (*right == c)
+		*right = '\0';
 
 	return str;
 }

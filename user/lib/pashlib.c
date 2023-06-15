@@ -71,6 +71,11 @@ void copy_input_opt(input_opt_t* dst, const input_opt_t* src)
 		*dst = *src;
 }
 
+static int _default_completer(const char* input, char* completion, int* revert)
+{
+	return 0;
+}
+
 void init_input_ctx(input_ctx_t* ctx)
 {
 	ctx->buffer = NULL;
@@ -119,6 +124,8 @@ static _input_action_t _input_delete;
 static _input_action_t _input_home;
 static _input_action_t _input_end;
 
+static _input_action_t _input_tab;
+
 // control input action
 static _input_action_t _input_ctrl_backspace;
 
@@ -148,7 +155,9 @@ static char last_record[PASH_BUFFER_SIZE];
 static char current_record[PASH_BUFFER_SIZE];
 static int reserve_history;	// whether keep history index
 
-int get_string(char* buffer, const input_opt_t* options)
+static input_competer_t complete_handler = NULL;
+
+int get_string(char* buffer, const input_opt_t* options, input_competer_t completer)
 {
 	// initialize options and context
 	input_opt_t opt;
@@ -169,6 +178,8 @@ int get_string(char* buffer, const input_opt_t* options)
 		opt.history->init();
 		ctx.index = opt.history->count;
 	}
+
+	complete_handler = completer ? completer : _default_completer;
 
 	// Get string, huh?
 	int ret;
@@ -272,7 +283,7 @@ static void _insert_n_backspace(int n)
 }
 
 // input actions
-void _input_char(const input_opt_t* opt, input_ctx_t* ctx)
+static void _input_char(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (!((ctx->length < opt->maxLen) && isprint(ctx->ch)))
 		return;
@@ -290,7 +301,7 @@ void _input_char(const input_opt_t* opt, input_ctx_t* ctx)
 
 
 // input actions
-void _input_backspace(const input_opt_t* opt, input_ctx_t* ctx)
+static void _input_backspace(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (ctx->pos <= 0)
 		return;
@@ -308,7 +319,7 @@ void _input_backspace(const input_opt_t* opt, input_ctx_t* ctx)
 	ctx->buffer[ctx->length] = '\0';
 }
 
-void _input_arrow_left(const input_opt_t* opt, input_ctx_t* ctx)
+static void _input_arrow_left(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (ctx->pos > 0)
 	{
@@ -317,7 +328,7 @@ void _input_arrow_left(const input_opt_t* opt, input_ctx_t* ctx)
 	}
 }
 
-void _input_arrow_right(const input_opt_t* opt, input_ctx_t* ctx)
+static void _input_arrow_right(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (ctx->pos < ctx->length)
 	{
@@ -326,7 +337,7 @@ void _input_arrow_right(const input_opt_t* opt, input_ctx_t* ctx)
 	}
 }
 
-void _input_arrow_up(const input_opt_t* opt, input_ctx_t* ctx)
+static void _input_arrow_up(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (!opt->history)
 		return;
@@ -343,7 +354,7 @@ void _input_arrow_up(const input_opt_t* opt, input_ctx_t* ctx)
 	}
 }
 
-void _input_arrow_down(const input_opt_t* opt, input_ctx_t* ctx)
+static void _input_arrow_down(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (!opt->history)
 		return;
@@ -357,7 +368,7 @@ void _input_arrow_down(const input_opt_t* opt, input_ctx_t* ctx)
 	}
 }
 
-void _input_delete(const input_opt_t* opt, input_ctx_t* ctx)
+static void _input_delete(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (ctx->pos >= ctx->length)
 		return;
@@ -372,16 +383,41 @@ void _input_delete(const input_opt_t* opt, input_ctx_t* ctx)
 	ctx->buffer[ctx->length] = '\0';
 }
 
-void _input_home(const input_opt_t* opt, input_ctx_t* ctx)
+static void _input_home(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	_insert_n_left(ctx->pos);
 	ctx->pos = 0;
 }
 
-void _input_end(const input_opt_t* opt, input_ctx_t* ctx)
+static void _input_end(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	_insert_n_right(ctx->length - ctx->pos);
 	ctx->pos = ctx->length;
+}
+
+static void _input_tab(const input_opt_t* opt, input_ctx_t* ctx)
+{
+	char buffer[MAXPATHLEN];
+	int revert;
+	int ret = complete_handler(ctx->buffer, buffer, &revert);
+
+	// debugf("[%d - %s - %d]", ret, buffer, revert);
+
+	if (ret == 0)
+		return;
+
+
+	_input_end(opt, ctx); // set cursor to the end of input
+	while (revert-- > 0)
+		_input_backspace(opt, ctx);
+
+	const char* completion = buffer;
+	while (*completion)
+	{
+		ctx->ch = *completion;
+		_input_char(opt, ctx);
+		completion++;
+	}
 }
 
 static void _input_ctrl_backspace(const input_opt_t* opt, input_ctx_t* ctx)
@@ -496,6 +532,7 @@ int _input_handler(const input_opt_t* opt, input_ctx_t* ctx)
 		break;
 	case TAB:
 		// do completion
+		_input_tab(opt, ctx);
 		break;
 	default:
 		if (ctx->length < opt->maxLen)
