@@ -227,7 +227,7 @@ static void print_prompt()
 {
 	char pwd[MAXPATHLEN];
 
-	printfc(FOREGROUND_INTENSE(GREEN), "tony");
+	printfc(FOREGROUND_INTENSE(GREEN), "mos");
 	printfc(FOREGROUND_INTENSE(WHITE), ":");
 	getcwd(pwd);
 	printfc(FOREGROUND_INTENSE(BLUE), "%s", pwd);
@@ -755,7 +755,7 @@ int completer(const char* input, char* completion, int* revert)
 				break;
 			}
 			else
-				return 0;	// ignore multiple possible match
+				return 0;	// ignore multiple possible matches
 		}
 
 		candidate++;
