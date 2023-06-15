@@ -114,14 +114,14 @@ int main(int argc, char* argv[])
 	{
 		execli("clear", "clear", NULL);
 
-		printfc(FOREGROUND_INTENSE(MAGENTA), " __________________________________________________ \n");
-		printfc(FOREGROUND_INTENSE(MAGENTA), "/                                                  \\\n");
-		printfc(FOREGROUND_INTENSE(GREEN),   "|                 Pash Host for MOS                |\n");
-		printfc(FOREGROUND_INTENSE(YELLOW),  "|                                                  |\n");
-		printfc(FOREGROUND_INTENSE(YELLOW),  "|         Copyright (C) Tony's Studio 2023         |\n");
-		printfc(FOREGROUND_INTENSE(YELLOW),  "|                                                  |\n");
-		printfc(FOREGROUND_INTENSE(WHITE),   "|               Based on PassBash v3.x             |\n");
-		printfc(FOREGROUND_INTENSE(MAGENTA), "\\__________________________________________________/\n\n");
+		printfc(FOREGROUND_INTENSE(MAGENTA), " __________________________________________________________ \n");
+		printfc(FOREGROUND_INTENSE(MAGENTA), "/                                                          \\\n");
+		printfc(FOREGROUND_INTENSE(GREEN),   "|                     Pash Host for MOS                    |\n");
+		printfc(FOREGROUND_INTENSE(YELLOW),  "|                                                          |\n");
+		printfc(FOREGROUND_INTENSE(YELLOW),  "|             Copyright (C) Tony's Studio 2023             |\n");
+		printfc(FOREGROUND_INTENSE(YELLOW),  "|                                                          |\n");
+		printfc(FOREGROUND_INTENSE(WHITE),   "|                  Based on PassBash v3.x                  |\n");
+		printfc(FOREGROUND_INTENSE(MAGENTA), "\\__________________________________________________________/\n\n");
 
 		execli("version", "version", NULL);
 
