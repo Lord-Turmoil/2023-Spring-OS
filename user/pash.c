@@ -17,6 +17,8 @@
 #include <ctype.h>
 
 static char buffer[PASH_BUFFER_SIZE];
+static char username[64];
+static char historyFile[MAXPATHLEN];
 
 static int redirect;
 static int backupfd[2];
@@ -30,7 +32,9 @@ static char* filename;
 
 static int showHelp;
 
-static void usage(void);
+static void init();
+
+static void usage();
 static int parse_args(int argc, char* argv[]);
 
 static void print_prompt();
@@ -56,12 +60,7 @@ int completer(const char* input, char* completion, int* revert);
 int main(int argc, char* argv[])
 {
 	trivial = 0;
-
 	interactive = iscons(0);
-	echocmds = 0;
-	verbose = 0;
-	filename = NULL;
-	showHelp = 0;
 
 	if (parse_args(argc, argv) != 0)
 	{
@@ -85,13 +84,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	if (!interactive)
-	{
-		backupfd[0] = dup(0, 3);
-		panic_on(backupfd[0] < 0);
-		backupfd[1] = dup(1, 4);
-		panic_on(backupfd[1] < 0);
-	}
+	init();
 
 	// init history, only enable when interactive
 	init_input_history(&history);
@@ -112,7 +105,7 @@ int main(int argc, char* argv[])
 
 	if (interactive)
 	{
-		execli("clear", "clear", NULL);
+		// execli("clear", "clear", NULL);
 
 		printfc(FOREGROUND_INTENSE(MAGENTA), " __________________________________________________________ \n");
 		printfc(FOREGROUND_INTENSE(MAGENTA), "/                                                          \\\n");
@@ -158,7 +151,31 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-static void usage(void)
+static void init()
+{
+	echocmds = 0;
+	verbose = 0;
+	filename = NULL;
+	showHelp = 0;
+
+	if (interactive)
+	{
+		panic_on(profile(username, historyFile, 0));
+		if (!is_ends_with(historyFile, "/"))
+			strcat(historyFile, "/");
+		strcat(historyFile, ".history");
+	}
+	else
+	{
+		trivial = 1;
+		backupfd[0] = dup(0, 3);
+		panic_on(backupfd[0] < 0);
+		backupfd[1] = dup(1, 4);
+		panic_on(backupfd[1] < 0);
+	}
+}
+
+static void usage()
 {
 	PASH_MSG("Usage: pash [-ixvh] [command-file]\n");
 }
@@ -227,7 +244,7 @@ static void print_prompt()
 {
 	char pwd[MAXPATHLEN];
 
-	printfc(FOREGROUND_INTENSE(GREEN), "mos");
+	printfc(FOREGROUND_INTENSE(GREEN), "%s", username);
 	printfc(FOREGROUND_INTENSE(WHITE), ":");
 	getcwd(pwd);
 	printfc(FOREGROUND_INTENSE(BLUE), "%s", pwd);
@@ -542,8 +559,6 @@ static void _restore_stream()
 ** History
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
-static const char HISTORY_FILE[] = "/home/.history";
-
 static int _get_history_count(int fd)
 {
 	int ret = 0;
@@ -566,7 +581,7 @@ static int _get_history_count(int fd)
 
 static int init_history()
 {
-	int fd = open(HISTORY_FILE, O_RDONLY | O_CREAT);
+	int fd = open(historyFile, O_RDONLY | O_CREAT);
 	if (fd < 0)
 		return fd;
 
@@ -579,7 +594,7 @@ static int init_history()
 
 static int append_history(const char* record)
 {
-	int fd = open(HISTORY_FILE, O_WRONLY | O_CREAT | O_APPEND);
+	int fd = open(historyFile, O_WRONLY | O_CREAT | O_APPEND);
 	if (fd < 0)
 		return fd;
 
@@ -595,7 +610,7 @@ static int append_history(const char* record)
 
 static int get_history(int index, char* record)
 {
-	int fd = open(HISTORY_FILE, O_RDONLY | O_CREAT);
+	int fd = open(historyFile, O_RDONLY | O_CREAT);
 	if (fd < 0)
 		return fd;
 

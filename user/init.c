@@ -8,7 +8,66 @@ struct
 
 char bss[6000];
 
-int sum(char* s, int n)
+static int sum(char* s, int n);
+static int self_diagnose();
+
+int main(int argc, char** argv)
+{
+	int r;
+
+	debugf("init: running\n");
+
+	self_diagnose();
+
+	debugf("init: args:");
+	for (int i = 0; i < argc; i++)
+	{
+		debugf(" '%s'", argv[i]);
+	}
+	debugf("\n");
+
+	debugf("init: running sh\n");
+
+	// stdin should be 0, because no file descriptors are open yet
+	if ((r = opencons()) != 0)
+		user_panic("opencons: %d", r);
+	// stdout
+	if ((r = dup(0, 1)) < 0)
+		user_panic("dup: %d", r);
+
+	char username[64];
+	char home[MAXPATHLEN];
+
+	strcpy(username, "mos");
+	strcpy(home, "/home/mos");
+	panic_on(profile(username, home, 1));	// create if not exists
+
+	debugf("\nUsername: %s\n", username);
+	debugf("Home Dir: %s\n\n", home);
+	panic_on(chdir(home));
+
+	char pwd[MAXPATHLEN];
+	getcwd(pwd);
+	if (!is_the_same(home, pwd))
+	{
+		user_panic("Present directory error: %s\n", pwd);
+	}
+
+	while (1)
+	{
+		debugf("init: starting sh\n");
+		// r = spawnl("sh.b", "sh", NULL);
+		r = spawnl("/bin/pash.b", "pash", "-i", NULL);
+		if (r < 0)
+		{
+			debugf("init: spawn sh: %d\n", r);
+			return r;
+		}
+		wait(r);
+	}
+}
+
+static int sum(char* s, int n)
 {
 	int i, tot;
 
@@ -20,11 +79,9 @@ int sum(char* s, int n)
 	return tot;
 }
 
-int main(int argc, char** argv)
+static int self_diagnose()
 {
-	int i, r, x, want;
-
-	debugf("init: running\n");
+	int x, want;
 
 	want = 0xf989e;
 	if ((x = sum((char*)&data, sizeof data)) != want)
@@ -44,38 +101,5 @@ int main(int argc, char** argv)
 		debugf("init: bss seems okay\n");
 	}
 
-	debugf("init: args:");
-	for (i = 0; i < argc; i++)
-	{
-		debugf(" '%s'", argv[i]);
-	}
-	debugf("\n");
-
-	debugf("init: running sh\n");
-
-	// stdin should be 0, because no file descriptors are open yet
-	if ((r = opencons()) != 0)
-	{
-		user_panic("opencons: %d", r);
-	}
-	// stdout
-	if ((r = dup(0, 1)) < 0)
-	{
-		user_panic("dup: %d", r);
-	}
-
-	chdir("/home");
-
-	while (1)
-	{
-		debugf("init: starting sh\n");
-		// r = spawnl("sh.b", "sh", NULL);
-		r = spawnl("/bin/pash.b", "pash", "-i", NULL);
-		if (r < 0)
-		{
-			debugf("init: spawn sh: %d\n", r);
-			return r;
-		}
-		wait(r);
-	}
+	return 0;
 }

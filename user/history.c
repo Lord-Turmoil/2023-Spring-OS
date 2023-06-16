@@ -9,13 +9,15 @@
 #include <lib.h>
 #include <arguments.h>
 
-static const char HISTORY_FILE[] = "/home/.history";
+static char historyFile[MAXPATHLEN];
 
 static int enableClear;
 static int showHelp;
 
 static void usage();
 static int parse_args(int argc, char* argv[]);
+
+static int init();
 
 static int clear_history();
 static int show_history();
@@ -35,6 +37,13 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
+	int ret = init();
+	if (ret != 0)
+	{
+		printfc(ERROR_COLOR, "Failed to get history: %d\n", ret);
+		return ret;
+	}
+
 	if (enableClear)
 	{
 		if (clear_history() == 0)
@@ -44,6 +53,8 @@ int main(int argc, char* argv[])
 	}
 	else
 		show_history();
+
+	return 0;
 }
 
 static void usage()
@@ -92,9 +103,22 @@ static int parse_args(int argc, char* argv[])
 	return 0;
 }
 
+static int init()
+{
+	int ret = profile(NULL, historyFile, 0);
+	if (ret != 0)
+		return ret;
+
+	if (!is_ends_with(historyFile, "/"))
+		strcat(historyFile, "/");
+	strcat(historyFile, ".history");
+
+	return 0;
+}
+
 static int clear_history()
 {
-	int fd = open(HISTORY_FILE, O_WRONLY | O_CREAT);
+	int fd = open(historyFile, O_WRONLY | O_CREAT);
 	if (fd < 0)
 		return fd;
 	
@@ -105,7 +129,7 @@ static int clear_history()
 
 static int show_history()
 {
-	int fd = open(HISTORY_FILE, O_RDONLY);
+	int fd = open(historyFile, O_RDONLY);
 	if (fd < 0)
 		return fd;
 

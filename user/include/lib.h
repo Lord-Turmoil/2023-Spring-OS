@@ -208,4 +208,6 @@ int is_ends_with(const char* str, const char* suffix);
 int execl(const char* path, ...);
 int execv(const char* path, char* argv[]);
 
+int profile(char* username, char* path, int create);
+
 #endif

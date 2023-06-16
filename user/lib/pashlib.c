@@ -871,6 +871,17 @@ static void _print_logo()
 static char oldPath[MAXPATHLEN];
 
 // cd
+static int _cd_home()
+{
+	char home[MAXPATHLEN];
+
+	panic_on(profile(NULL, home, 0));
+
+	chdir(home);
+
+	return 0;
+}
+
 static int _cd(int argc, char* argv[])
 {
 	if (argc > 2)
@@ -897,27 +908,22 @@ static int _cd(int argc, char* argv[])
 	getcwd(oldPath);
 
 	if (argc == 1)
-	{
-		chdir("/home");
-		return 0;
-	}
+		return _cd_home();
 	if (is_the_same(argv[1], "~"))
-	{
-		chdir("/home");
-		return 0;
-	}
+		return _cd_home();
 	else if (is_the_same(argv[1], "/"))
 	{
 		chdir("/");
 		return 0;
 	}
 
-	if (!access(argv[1], -1))
+	struct Stat st;
+	if (stat(argv[1], &st) != 0)
 	{
 		PASH_ERR("No such file or directory\n");
 		return -3;
 	}
-	if (!access(argv[1], FTYPE_DIR))
+	if (!st.st_isdir)
 	{
 		PASH_ERR("%s: Not a directory\n", argv[1]);
 		return -4;

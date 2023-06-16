@@ -28,9 +28,14 @@ int access(const char* path, int type)
 		strcat(dir, path);
 	}
 
+	// debugf("Access: %s\n", dir);
+	
 	ret = stat(dir, &st);
 	if (ret < 0)
+	{
+		// debugf("Acess error: %d\n", ret);
 		return 0;
+	}
 
 	if (type == FTYPE_DIR)
 		return st.st_isdir;
@@ -60,7 +65,7 @@ int chdir(const char* path)
 		syscall_get_pwd(dir);
 
 		if (strlen(dir) + strlen(path) + 1 >= MAXPATHLEN)
-			return -E_NOT_FOUND;
+			return -E_BAD_PATH;
 
 		strcat(dir, "/");
 		strcat(dir, path);
@@ -69,7 +74,7 @@ int chdir(const char* path)
 		strcpy(dir, path);
 
 	if (!access(dir, FTYPE_DIR))
-		return -E_NOT_FOUND;
+		return -E_NOT_DIR;
 
 	if (strcmp(dir, "/") != 0)
 		strstripr(dir, '/');    // remove trailing '/'
@@ -231,4 +236,64 @@ int execv(const char* path, char* argv[])
 		strcat(prog, ".b");
 
 	return spawn(prog, argv);
+}
+
+
+// get user profile
+static const char PROFILE_PATH[] = "/etc/passwd";
+
+// will create old data
+static int _creat_profile(const char* username, const char* path)
+{
+	if (!username || !path)
+		return -1;
+
+	int fd = open(PROFILE_PATH, O_WRONLY | O_CREAT);
+	if (fd < 0)
+		return -E_NOT_FOUND;
+
+	write(fd, username, strlen(username));
+	write(fd, ":", 1);
+	write(fd, path, strlen(path));
+	write(fd, "\n", 1);
+
+	close(fd);
+
+	return 0;
+}
+
+int profile(char* username, char* path, int create)
+{
+	int fd = open(PROFILE_PATH, O_RDONLY);
+	if (fd < 0)
+	{
+		if (create)
+			return _creat_profile(username, path);
+		return fd;
+	}
+
+	char buffer[MAXPATHLEN];
+	readline(fd, buffer);
+	close(fd);
+
+	strstripr(buffer, '\n');	// MUST!!!
+
+	char* p;
+	for (p = buffer; *p; p++)
+	{
+		if (*p == ':')
+		{
+			*(p++) = '\0';
+			break;
+		}
+	}
+	if (!*p)
+		return -2;	// bad profile
+
+	if (username)
+		strcpy(username, buffer);
+	if (path)
+		strcpy(path, p);
+
+	return 0;
 }
