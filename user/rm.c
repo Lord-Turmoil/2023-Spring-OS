@@ -117,32 +117,23 @@ static int parse_args(int argc, char* argv[])
 /********************************************************************
 ** This is similar to tree.
 */
-static char* RESTRICTED_PATHS[] = {
-	"/../",
-	"/./",
-	"../",
-	"./",
-	"/..",
-	"/."
-};
+
+static int _check_path(const char* path)
+{
+	char dir[MAXPATHLEN];
+	char pwd[MAXPATHLEN];
+
+	fullpath(path, dir);
+	getcwd(pwd);
+
+	if (is_begins_with(pwd, dir))
+		return 0;
+
+	return 1;
+}
 
 static void rm(const char* path)
 {
-	for (int i = 0; i < 6; i++)
-	{
-		if (strstr(path, RESTRICTED_PATHS[i]))
-		{
-			printfc(ERROR_COLOR, "Refusing to remove '.' or '..' directory: skipping '%s'\n", path);
-			return;
-		}
-	}
-	if (is_the_same(path, "..") || is_the_same(path, "."))
-	{
-		printfc(ERROR_COLOR, "Refusing to remove '.' or '..' directory: skipping '%s'\n", path);
-		return;
-	}
-
-
 	int ret;
 	struct Stat st;
 	if ((ret = stat(path, &st)) < 0)
@@ -155,6 +146,12 @@ static void rm(const char* path)
 	if (st.st_isdir && !enableRecursive)
 	{
 		printfc(ERROR_COLOR, "Cannot remove '%s': Is a directory\n", path);
+		return;
+	}
+
+	if (!_check_path(path))
+	{
+		printfc(ERROR_COLOR, "Refusing to remove current or parent directory: skipping '%s'\n", path);
 		return;
 	}
 
