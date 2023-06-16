@@ -26,10 +26,18 @@ static void _make_fullpath(const char* filename, char* path)
 	while (*filename && (*filename == ' '))
 		filename++;
 
-	if (*filename != '/')	// relative
+	if (filename[0] != '/')	// relative
 	{
 		getcwd(path);
-		if (strcmp(path, "/") != 0)
+		if (filename[0] == '~')	 // home dir
+		{
+			if (profile(NULL, path, 0) != 0)
+				strcpy(path, "~/");
+			filename++;
+			while (*filename && (*filename == '/'))
+				filename++;
+		}
+		if (!is_ends_with(path, "/"))
 			strcat(path, "/");
 	}
 
@@ -62,6 +70,8 @@ int open(const char* path, int mode)
 	 */
 	char dir[MAXPATHLEN] = { '\0' };
 	_make_fullpath(path, dir);
+
+	// debugf("open: %s\n", dir);
 
 	if ((r = fsipc_open(dir, mode, fd)) < 0)
 	{

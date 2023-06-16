@@ -18,6 +18,7 @@
 
 static char buffer[PASH_BUFFER_SIZE];
 static char username[64];
+static char homeDir[MAXPATHLEN];
 static char historyFile[MAXPATHLEN];
 
 static int redirect;
@@ -84,14 +85,13 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	if (interactive)
-	{
-		panic_on(profile(username, historyFile, 0));
-		if (!is_ends_with(historyFile, "/"))
-			strcat(historyFile, "/");
-		strcat(historyFile, ".history");
-	}
-	else
+	panic_on(profile(username, homeDir, 0));
+	strcpy(historyFile, homeDir);
+	if (!is_ends_with(historyFile, "/"))
+		strcat(historyFile, "/");
+	strcat(historyFile, ".history");
+
+	if (!interactive)
 	{
 		trivial = 1;
 		backupfd[0] = dup(0, 3);
@@ -330,7 +330,7 @@ static int _runcmd(char* cmd)
 
 		// why this has to be placed before wait?
 		_restore_stream();
-		
+
 		if ((child > 0) && needWait)
 			wait(child);
 
@@ -419,7 +419,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			close(fd);
 
 			redirect = 1;
-			
+
 			break;
 
 		case TK_REDIRECT_RIGHT:
@@ -484,7 +484,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 				PASH_ERR("Failed to create pipe\n");
 				return -5;
 			}
-			
+
 			redirect = 1;
 
 			ret = fork();
@@ -544,7 +544,7 @@ static void _restore_stream()
 		return;
 
 	// debugf("restore %d", interactive);
-	
+
 	if (!interactive)
 	{
 		dup(backupfd[0], 0);
@@ -629,7 +629,7 @@ static int get_history(int index, char* record)
 		}
 		count++;
 	}
-	
+
 	close(fd);
 
 	// reset history
@@ -665,7 +665,7 @@ static void _get_candidates(const char* path)
 
 	int size;
 	struct File file;
-	char (*candidate)[MAXNAMELEN] = _candidates;
+	char(*candidate)[MAXNAMELEN] = _candidates;
 	while ((size = readn(fd, &file, sizeof(struct File))) == sizeof(struct File))
 	{
 		if (file.f_name[0])
@@ -713,7 +713,7 @@ int completer(const char* input, char* completion, int* revert)
 	// skip leading white spaces
 	while (*input && isspace(*input))
 		input++;
-	
+
 	/*
 	if (!*input)
 		return 0;
@@ -734,16 +734,17 @@ int completer(const char* input, char* completion, int* revert)
 	char parent[MAXPATHLEN];
 	char name[MAXNAMELEN];
 
+	name[0] = '\0';
 	if (input[0] == '\0')
-	{
 		strcpy(parent, "./");
-		name[0] = '\0';
+	else if (is_begins_with(input, "~/"))
+	{
+		strcpy(parent, homeDir);
+		if (!is_ends_with(input, "/"))
+			basename(input, name);
 	}
 	else if (is_ends_with(input, "/"))	// empty path
-	{
 		strcpy(parent, input);
-		name[0] = '\0';
-	}
 	else
 	{
 		parentpath(input, parent);
@@ -757,7 +758,7 @@ int completer(const char* input, char* completion, int* revert)
 		return 0;
 
 	const char* match = NULL;
-	char (*candidate)[MAXNAMELEN] = _candidates;
+	char(*candidate)[MAXNAMELEN] = _candidates;
 
 	/*
 	while ((*candidate)[0] != '\0')
@@ -806,6 +807,6 @@ int completer(const char* input, char* completion, int* revert)
 		return 0;
 
 	strcpy(completion, match);
-	
+
 	return 1;
 }
