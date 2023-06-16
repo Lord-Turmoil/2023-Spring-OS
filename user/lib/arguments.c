@@ -130,6 +130,7 @@ static void _initopt()
 const char ENTITIES[] = "<>;&|";	// for now, we do not support brackets
 
 static const char QUOTES[] = "\"\'";
+static const char ERR_QUOTE_NOT_CLOSED[] = "quote not closed";
 
 static int _is_redirect_double(const char* p);
 static token_t _get_token_type(char ch);
@@ -138,7 +139,7 @@ const char* get_token_str(token_t token);
 static char* nextc;
 static char cache = 0;
 
-token_t get_token(char* str, char** token)
+token_t get_token(char* str, char** token, const char** err)
 {
 	if (str)
 	{
@@ -254,7 +255,9 @@ token_t get_token(char* str, char** token)
 
 	if (quote)	// quote not closed
 	{
-		// then the caller decide whether to use this token
+		// then the caller decides whether to use this token
+		if (err)
+			err = ERR_QUOTE_NOT_CLOSED;
 		return TK_INVALID;
 	}
 	

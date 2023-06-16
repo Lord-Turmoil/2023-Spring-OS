@@ -332,6 +332,8 @@ static int _runcmd(char* cmd)
 */
 static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 {
+	const char* err = NULL;
+
 	// initialize default value
 	*argc = 0;
 	argv[0] = NULL;
@@ -339,7 +341,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 
 	// get first token
 	char* token;
-	token_t type = get_token(cmd, &token);
+	token_t type = get_token(cmd, &token, &err);
 	if (type == TK_EMPTY)
 		return 0;
 	if (type != TK_WORD)
@@ -359,7 +361,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 	// get rest tokens
 	for (; ; )
 	{
-		type = get_token(NULL, &token);
+		type = get_token(NULL, &token, &err);
 		if (type == TK_EMPTY)
 			return 0;
 		switch (type)
@@ -374,7 +376,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			break;
 
 		case TK_REDIRECT_LEFT:
-			if ((type = get_token(NULL, &token)) != TK_WORD)
+			if ((type = get_token(NULL, &token, &err)) != TK_WORD)
 			{
 				PASH_ERR("Syntax error near unexpected token `%s'\n", get_token_str(type));
 				PASH_MSG("`<' not followed by word\n");
@@ -400,7 +402,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			break;
 
 		case TK_REDIRECT_RIGHT:
-			if ((type = get_token(NULL, &token)) != TK_WORD)
+			if ((type = get_token(NULL, &token, &err)) != TK_WORD)
 			{
 				PASH_ERR("Syntax error near unexpected token `%s'\n", get_token_str(type));
 				PASH_MSG("`>' not followed by word\n");
@@ -427,7 +429,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			break;
 
 		case TK_REDIRECT_DOUBLE:
-			if ((type = get_token(NULL, &token)) != TK_WORD)
+			if ((type = get_token(NULL, &token, &err)) != TK_WORD)
 			{
 				PASH_ERR("Syntax error near unexpected token `%s'\n", get_token_str(type));
 				PASH_MSG("`>>' not followed by word\n");
@@ -498,7 +500,7 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			return 2;
 
 		default:
-			PASH_ERR("Unknown token\n");
+			PASH_ERR("Syntax error: %s\n", err ? err : "unknown token");
 			return -66;
 		}	// switch (type)
 	}
@@ -512,16 +514,7 @@ static int _execv(char* cmd, char* argv[])
 	if (ret != -1)	// execute success or failed
 		return 0;
 
-	char prog[PASH_BUFFER_SIZE] = "/bin/";
-
-	if (strchr(cmd, '/'))	// use directory to call command
-		strcpy(prog, cmd);
-	else
-		strcat(prog, cmd);
-	if (!is_ends_with(prog, ".b"))
-		strcat(prog, ".b");
-
-	return spawn(prog, argv);
+	return execv(cmd, argv);
 }
 
 static void _restore_stream()

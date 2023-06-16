@@ -54,6 +54,6 @@ typedef enum _token_t
 } token_t;
 
 const char* get_token_str(token_t token);
-token_t get_token(char* str, char** token);
+token_t get_token(char* str, char** token, const char** err);
 
 #endif

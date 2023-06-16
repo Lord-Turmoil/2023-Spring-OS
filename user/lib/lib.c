@@ -185,3 +185,50 @@ int is_ends_with(const char* str, const char* suffix)
 
 	return suffix_end < suffix;
 }
+
+
+/********************************************************************
+** Execute external command.
+*/
+
+int execl(const char* path, ...)
+{
+	char* argv[64];
+	int argc = 0;
+	char* arg;
+	va_list args;
+
+	// should assign path in argument again
+
+	va_start(args, path);
+	arg = va_arg(args, char*);
+	while (arg)
+	{
+		argv[argc++] = arg;
+		arg = va_arg(args, char*);
+	}
+	argv[argc] = NULL;
+
+	return execv(path, argv);
+}
+
+int execv(const char* path, char* argv[])
+{
+	char prog[1024] = "/bin/";
+
+	if (strchr(path, '/'))	// use directory to call command
+		strcpy(prog, path);
+	else
+		strcat(prog, path);
+
+	if (is_ends_with(prog, ".sh"))	// shell
+	{
+		// argv is abandoned
+		return execl("pash", "pash", prog, NULL);
+	}
+
+	if (!is_ends_with(prog, ".b"))
+		strcat(prog, ".b");
+
+	return spawn(prog, argv);
+}
