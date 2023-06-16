@@ -26,8 +26,10 @@
 ** Input history
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
-static int _default_init(void)
+static int _default_init(int* count)
 {
+	if (count)
+		*count = 0;
 	return 0;
 }
 
@@ -43,8 +45,6 @@ static int _default_get(int index, char* record)
 
 void init_input_history(input_history_t* history)
 {
-	history->count = 0;
-
 	// initialize handler to avoid NULL exception.
 	history->init = _default_init;
 	history->append = _default_append;
@@ -61,7 +61,7 @@ void init_input_opt(input_opt_t* opt)
 {
 	opt->maxLen = PASH_BUFFER_SIZE - 1;
 	opt->minLen = 1;
-	// opt->interruptible = 0;
+	opt->interruptible = 0;
 	opt->history = NULL;
 	opt->completer = NULL;
 }
@@ -84,6 +84,7 @@ void init_input_ctx(input_ctx_t* ctx)
 	ctx->pos = 0;
 	ctx->ch = 0;
 	ctx->index = 0;
+	ctx->count = 0;
 }
 
 void copy_input_ctx(input_ctx_t* dst, const input_ctx_t* src)
@@ -176,8 +177,7 @@ int get_string(char* buffer, const input_opt_t* options)
 	ctx.buffer[0] = '\0';
 	if (opt.history)
 	{
-		opt.history->init();
-		ctx.index = opt.history->count;
+		opt.history->init(&(ctx.count));
 	}
 	if (!opt.completer)
 		opt.completer = _default_completer;
@@ -348,7 +348,7 @@ static void _input_arrow_up(const input_opt_t* opt, input_ctx_t* ctx)
 	if (ctx->index > 0)
 	{
 		// first leave, record history for backup
-		if (ctx->index == opt->history->count)
+		if (ctx->index == ctx->count)
 			strcpy(current_record, ctx->buffer);
 		ctx->index--;
 		_reset_input(opt, ctx);
@@ -362,7 +362,7 @@ static void _input_arrow_down(const input_opt_t* opt, input_ctx_t* ctx)
 
 	reserve_history = 1;
 
-	if (ctx->index < opt->history->count)
+	if (ctx->index < ctx->count)
 	{
 		ctx->index++;
 		_reset_input(opt, ctx);
@@ -466,7 +466,7 @@ static void _input_arrow_ctrl_up(const input_opt_t* opt, input_ctx_t* ctx)
 	if (ctx->index > 0)
 	{
 		// first leave, record history for backup
-		if (ctx->index == opt->history->count)
+		if (ctx->index == ctx->count)
 			strcpy(current_record, ctx->buffer);
 		ctx->index = 0;	// set to front
 		_reset_input(opt, ctx);
@@ -480,9 +480,9 @@ static void _input_arrow_ctrl_down(const input_opt_t* opt, input_ctx_t* ctx)
 
 	reserve_history = 1;
 
-	if (ctx->index < opt->history->count)
+	if (ctx->index < ctx->count)
 	{
-		ctx->index = opt->history->count;	// set to back
+		ctx->index = ctx->count;	// set to back
 		_reset_input(opt, ctx);
 	}
 }
@@ -510,7 +510,7 @@ static void _reset_input(const input_opt_t* opt, input_ctx_t* ctx)
 	ctx->length = 0;
 
 	// restore history
-	if (ctx->index < opt->history->count)
+	if (ctx->index < ctx->count)
 	{
 		// fetch history
 		if (opt->history->get(ctx->index, ctx->buffer) != 0)
@@ -530,7 +530,7 @@ static void _reset_input(const input_opt_t* opt, input_ctx_t* ctx)
 static void _reset_history(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (opt->history)
-		ctx->index = opt->history->count;
+		ctx->index = ctx->count;
 }
 
 // special handlers
@@ -545,8 +545,8 @@ int _input_handler(const input_opt_t* opt, input_ctx_t* ctx)
 	{
 		if (ctx->length >= opt->minLen)
 			return ctx->length;	// good exit
-		//else if (opt->interruptible)
-		//	return -1;			// bad exit
+		else if (opt->interruptible)
+			return -1;			// bad exit
 		else
 			return 0;			// continue
 	}

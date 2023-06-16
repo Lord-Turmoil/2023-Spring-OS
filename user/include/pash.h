@@ -51,6 +51,13 @@
 
 #define CTRL_D 0x04
 
+/********************************************************************
+** WARNING:
+**   Although I have no idea how MOS handles byte alignment, here,
+** as a painful experience, I have to set struct alignment manually,
+** or unexpected error WILL, not might, happen.
+*/
+
 /*
 **+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ** Input History
@@ -65,11 +72,10 @@
 
 typedef struct _input_history_t
 {
-	int count;
-	int (*init)(void);
+	int (*init)(int*);
 	int (*append)(const char*);
 	int (*get)(int, char*);
-} input_history_t;
+} input_history_t __attribute__((aligned(16)));
 
 void init_input_history(input_history_t* history);
 
@@ -96,10 +102,10 @@ typedef struct _input_opt_t
 {
 	int minLen;
 	int maxLen;
-	//int interruptible;
+	int interruptible;
 	input_history_t* history;
 	input_competer_t completer;
-} input_opt_t;
+} input_opt_t __attribute__((aligned(32)));
 
 void init_input_opt(input_opt_t* opt);
 void copy_input_opt(input_opt_t* dst, const input_opt_t* src);
@@ -112,7 +118,8 @@ typedef struct _input_ctx_t
 	int length;     // current input length
 	int ch;	        // next character to put into buffer
 	int index;		// history index
-} input_ctx_t;
+	int count;
+} input_ctx_t __attribute__((aligned(32)));
 
 void init_input_ctx(input_ctx_t* ctx);
 void copy_input_ctx(input_ctx_t* dst, const input_ctx_t* src);

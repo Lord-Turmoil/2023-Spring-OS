@@ -49,11 +49,9 @@ static void _restore_stream();
 
 
 // History management
-static int init_history();
+static int init_history(int* count);
 static int append_history(const char* record);
 static int get_history(int index, char* record);
-
-static input_history_t history;
 
 // Completion
 int completer(const char* input, char* completion, int* revert);
@@ -101,6 +99,7 @@ int main(int argc, char* argv[])
 	}
 
 	// init history, only enable when interactive
+	input_history_t history;
 	init_input_history(&history);
 	if (interactive)
 	{
@@ -109,12 +108,13 @@ int main(int argc, char* argv[])
 		history.append = append_history;
 	}
 
+	// init input options
 	input_opt_t opt;
 	init_input_opt(&opt);
 	opt.minLen = 1;
 	opt.maxLen = PASH_BUFFER_SIZE - 1;
-	// opt.interruptible = 1;
-	if (interactive && (history.count >= 0))
+	opt.interruptible = 1;
+	if (interactive)
 		opt.history = &history;
 	opt.completer = completer;
 
@@ -584,13 +584,16 @@ static int _get_history_count(int fd)
 	return ret;
 }
 
-static int init_history()
+static int init_history(int* count)
 {
+	if (!count)
+		return 0;
+
 	int fd = open(historyFile, O_RDONLY | O_CREAT);
 	if (fd < 0)
 		return fd;
 
-	history.count = _get_history_count(fd);
+	*count = _get_history_count(fd);
 
 	close(fd);
 
@@ -607,8 +610,6 @@ static int append_history(const char* record)
 	write(fd, "\n", 1);
 
 	close(fd);
-
-	history.count++;
 
 	return 0;
 }
@@ -632,9 +633,6 @@ static int get_history(int index, char* record)
 	}
 
 	close(fd);
-
-	// reset history
-	history.count = count;
 
 	// not found
 	return -1;
