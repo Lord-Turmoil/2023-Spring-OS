@@ -37,6 +37,7 @@ static void init();
 static void usage();
 static int parse_args(int argc, char* argv[]);
 
+static void print_splash();
 static void print_prompt();
 
 static int execute(char* cmd);
@@ -59,8 +60,7 @@ int completer(const char* input, char* completion, int* revert);
 // main function
 int main(int argc, char* argv[])
 {
-	trivial = 0;
-	interactive = iscons(0);
+	init();
 
 	if (parse_args(argc, argv) != 0)
 	{
@@ -84,7 +84,21 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	init();
+	if (interactive)
+	{
+		panic_on(profile(username, historyFile, 0));
+		if (!is_ends_with(historyFile, "/"))
+			strcat(historyFile, "/");
+		strcat(historyFile, ".history");
+	}
+	else
+	{
+		trivial = 1;
+		backupfd[0] = dup(0, 3);
+		panic_on(backupfd[0] < 0);
+		backupfd[1] = dup(1, 4);
+		panic_on(backupfd[1] < 0);
+	}
 
 	// init history, only enable when interactive
 	init_input_history(&history);
@@ -104,22 +118,7 @@ int main(int argc, char* argv[])
 		opt.history = &history;
 
 	if (interactive)
-	{
-		// execli("clear", "clear", NULL);
-
-		printfc(FOREGROUND_INTENSE(MAGENTA), " __________________________________________________________ \n");
-		printfc(FOREGROUND_INTENSE(MAGENTA), "/                                                          \\\n");
-		printfc(FOREGROUND_INTENSE(GREEN),   "|                     Pash Host for MOS                    |\n");
-		printfc(FOREGROUND_INTENSE(YELLOW),  "|                                                          |\n");
-		printfc(FOREGROUND_INTENSE(YELLOW),  "|             Copyright (C) Tony's Studio 2023             |\n");
-		printfc(FOREGROUND_INTENSE(YELLOW),  "|                                                          |\n");
-		printfc(FOREGROUND_INTENSE(WHITE),   "|                  Based on PassBash v3.x                  |\n");
-		printfc(FOREGROUND_INTENSE(MAGENTA), "\\__________________________________________________________/\n\n");
-
-		execli("version", "version", NULL);
-
-		printf("\n");
-	}
+		print_splash();
 
 	int ret;
 	for (; ; )
@@ -153,26 +152,13 @@ int main(int argc, char* argv[])
 
 static void init()
 {
+	trivial = 0;
+	interactive = iscons(0);
+
 	echocmds = 0;
 	verbose = 0;
 	filename = NULL;
 	showHelp = 0;
-
-	if (interactive)
-	{
-		panic_on(profile(username, historyFile, 0));
-		if (!is_ends_with(historyFile, "/"))
-			strcat(historyFile, "/");
-		strcat(historyFile, ".history");
-	}
-	else
-	{
-		trivial = 1;
-		backupfd[0] = dup(0, 3);
-		panic_on(backupfd[0] < 0);
-		backupfd[1] = dup(1, 4);
-		panic_on(backupfd[1] < 0);
-	}
 }
 
 static void usage()
@@ -234,6 +220,24 @@ static int parse_args(int argc, char* argv[])
 	}
 
 	return 0;
+}
+
+static void print_splash()
+{
+	// execli("clear", "clear", NULL);
+
+	printfc(FOREGROUND_INTENSE(MAGENTA), " __________________________________________________________ \n");
+	printfc(FOREGROUND_INTENSE(MAGENTA), "/                                                          \\\n");
+	printfc(FOREGROUND_INTENSE(GREEN), "|                     Pash Host for MOS                    |\n");
+	printfc(FOREGROUND_INTENSE(YELLOW), "|                                                          |\n");
+	printfc(FOREGROUND_INTENSE(YELLOW), "|             Copyright (C) Tony's Studio 2023             |\n");
+	printfc(FOREGROUND_INTENSE(YELLOW), "|                                                          |\n");
+	printfc(FOREGROUND_INTENSE(WHITE), "|                  Based on PassBash v3.x                  |\n");
+	printfc(FOREGROUND_INTENSE(MAGENTA), "\\__________________________________________________________/\n\n");
+
+	execli("version", "version", NULL);
+
+	printf("\n");
 }
 
 /********************************************************************
