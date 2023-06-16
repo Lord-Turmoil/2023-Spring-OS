@@ -113,9 +113,10 @@ int main(int argc, char* argv[])
 	init_input_opt(&opt);
 	opt.minLen = 1;
 	opt.maxLen = PASH_BUFFER_SIZE - 1;
-	opt.interruptible = 1;
+	// opt.interruptible = 1;
 	if (interactive && (history.count >= 0))
 		opt.history = &history;
+	opt.completer = completer;
 
 	if (interactive)
 		print_splash();
@@ -126,7 +127,7 @@ int main(int argc, char* argv[])
 		if (interactive)
 			print_prompt();
 
-		ret = get_string(buffer, &opt, completer);
+		ret = get_string(buffer, &opt);
 		putch('\n');
 
 		if (ret == EOF)

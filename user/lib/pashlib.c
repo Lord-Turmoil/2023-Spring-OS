@@ -61,8 +61,9 @@ void init_input_opt(input_opt_t* opt)
 {
 	opt->maxLen = PASH_BUFFER_SIZE - 1;
 	opt->minLen = 1;
-	opt->interruptible = 0;
+	// opt->interruptible = 0;
 	opt->history = NULL;
+	opt->completer = NULL;
 }
 
 void copy_input_opt(input_opt_t* dst, const input_opt_t* src)
@@ -157,9 +158,7 @@ static char last_record[PASH_BUFFER_SIZE];
 static char current_record[PASH_BUFFER_SIZE];
 static int reserve_history;	// whether keep history index
 
-static input_competer_t complete_handler = NULL;
-
-int get_string(char* buffer, const input_opt_t* options, input_competer_t completer)
+int get_string(char* buffer, const input_opt_t* options)
 {
 	// initialize options and context
 	input_opt_t opt;
@@ -180,8 +179,8 @@ int get_string(char* buffer, const input_opt_t* options, input_competer_t comple
 		opt.history->init();
 		ctx.index = opt.history->count;
 	}
-
-	complete_handler = completer ? completer : _default_completer;
+	if (!opt.completer)
+		opt.completer = _default_completer;
 
 	// Get string, huh?
 	int ret;
@@ -401,13 +400,12 @@ static void _input_tab(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	char buffer[MAXPATHLEN];
 	int revert;
-	int ret = complete_handler(ctx->buffer, buffer, &revert);
+	int ret = opt->completer(ctx->buffer, buffer, &revert);
 
 	// debugf("[%d - %s - %d]", ret, buffer, revert);
 
 	if (ret == 0)
 		return;
-
 
 	_input_end(opt, ctx); // set cursor to the end of input
 	while (revert-- > 0)
@@ -547,8 +545,8 @@ int _input_handler(const input_opt_t* opt, input_ctx_t* ctx)
 	{
 		if (ctx->length >= opt->minLen)
 			return ctx->length;	// good exit
-		else if (opt->interruptible)
-			return -1;			// bad exit
+		//else if (opt->interruptible)
+		//	return -1;			// bad exit
 		else
 			return 0;			// continue
 	}

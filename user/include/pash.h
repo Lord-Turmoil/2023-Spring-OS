@@ -96,8 +96,9 @@ typedef struct _input_opt_t
 {
 	int minLen;
 	int maxLen;
-	int interruptible;
+	//int interruptible;
 	input_history_t* history;
+	input_competer_t completer;
 } input_opt_t;
 
 void init_input_opt(input_opt_t* opt);
@@ -125,7 +126,7 @@ void copy_input_ctx(input_ctx_t* dst, const input_ctx_t* src);
 */
 
 // Ahh... C does not support override... :'(
-int get_string(char* buffer, const input_opt_t* options, input_competer_t completer);
+int get_string(char* buffer, const input_opt_t* options);
 
 
 /*
