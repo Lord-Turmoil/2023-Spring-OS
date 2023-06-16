@@ -344,7 +344,9 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 		return 0;
 	if (type != TK_WORD)
 	{
-		PASH_ERR(SYNTAX_ERR_MSG "syntax error near unexpected token `%s'\n", get_token_str(type));
+		// If first token is a separator, ignore it.
+		if ((type != TK_SEMI_COLON) && (type != TK_AMPERSAND))
+			PASH_ERR(SYNTAX_ERR_MSG "syntax error near unexpected token `%s'\n", get_token_str(type));
 		return 0;
 	}
 	argv[(*argc)++] = token;	// command name
