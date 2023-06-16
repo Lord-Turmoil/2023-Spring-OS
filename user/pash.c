@@ -637,12 +637,17 @@ static char _candidates[MAX_CANDIDATES][MAXNAMELEN];
 
 static void _get_candidates(const char* path)
 {
+	_candidates[0][0] = '\0';	// clear candidates
+
 	int fd = open(path, O_RDONLY);
 	if (fd < 0)
-	{
-		_candidates[0][0] = '\0';
 		return;
-	}
+
+	struct Stat st;
+	if (fstat(fd, &st) < 0)
+		return;
+	if (!st.st_isdir)
+		return;
 
 	int size;
 	struct File file;
@@ -690,14 +695,15 @@ int completer(const char* input, char* completion, int* revert)
 
 	if (strstr(input, "//"))	// bad path
 		return 0;
-	if (is_ends_with(input, "/"))	// empty path
-		return 0;
 
 	// skip leading white spaces
 	while (*input && isspace(*input))
 		input++;
+	
+	/*
 	if (!*input)
 		return 0;
+	*/
 
 	// Get last substring to complete.
 	const char* last = input;
@@ -713,8 +719,22 @@ int completer(const char* input, char* completion, int* revert)
 
 	char parent[MAXPATHLEN];
 	char name[MAXNAMELEN];
-	parentpath(input, parent);
-	basename(input, name);
+
+	if (input[0] == '\0')
+	{
+		strcpy(parent, "./");
+		name[0] = '\0';
+	}
+	else if (is_ends_with(input, "/"))	// empty path
+	{
+		strcpy(parent, input);
+		name[0] = '\0';
+	}
+	else
+	{
+		parentpath(input, parent);
+		basename(input, name);
+	}
 
 	// debugf("[P: %s - B: %s]", parent, name);
 
@@ -736,6 +756,13 @@ int completer(const char* input, char* completion, int* revert)
 
 	if (revert)
 		*revert = 0;
+	if (name[0] == '\0')	// empty path will take first feasible candidate
+	{
+		match = *candidate;
+		strcpy(completion, match);
+		return 1;
+	}
+
 	while ((*candidate)[0] != '\0')
 	{
 		const char* pos = _begins_with(*candidate, name);
