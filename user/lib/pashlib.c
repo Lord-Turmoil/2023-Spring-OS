@@ -131,6 +131,8 @@ static _input_action_t _input_ctrl_backspace;
 
 static _input_action_t _input_arrow_ctrl_left;
 static _input_action_t _input_arrow_ctrl_right;
+static _input_action_t _input_arrow_ctrl_up;
+static _input_action_t _input_arrow_ctrl_down;
 
 static _input_action_t _input_ctrl_delete;
 
@@ -456,6 +458,37 @@ static void _input_arrow_ctrl_right(const input_opt_t* opt, input_ctx_t* ctx)
 	}
 }
 
+static void _input_arrow_ctrl_up(const input_opt_t* opt, input_ctx_t* ctx)
+{
+	if (!opt->history)
+		return;
+
+	reserve_history = 1;
+
+	if (ctx->index > 0)
+	{
+		// first leave, record history for backup
+		if (ctx->index == opt->history->count)
+			strcpy(current_record, ctx->buffer);
+		ctx->index = 0;	// set to front
+		_reset_input(opt, ctx);
+	}
+}
+
+static void _input_arrow_ctrl_down(const input_opt_t* opt, input_ctx_t* ctx)
+{
+	if (!opt->history)
+		return;
+
+	reserve_history = 1;
+
+	if (ctx->index < opt->history->count)
+	{
+		ctx->index = opt->history->count;	// set to back
+		_reset_input(opt, ctx);
+	}
+}
+
 static void _input_ctrl_delete(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (isalnum(ctx->buffer[ctx->pos]))
@@ -657,10 +690,10 @@ int _special_ctrl_direct_handler(const input_opt_t* opt, input_ctx_t* ctx)
 	switch (ch)
 	{
 	case SPECIAL_ARROW_UP:
-		_input_arrow_up(opt, ctx);
+		_input_arrow_ctrl_up(opt, ctx);
 		break;
 	case SPECIAL_ARROW_DOWN:
-		_input_arrow_down(opt, ctx);
+		_input_arrow_ctrl_down(opt, ctx);
 		break;
 	case SPECIAL_ARROW_LEFT:
 		_input_arrow_ctrl_left(opt, ctx);
