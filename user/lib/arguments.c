@@ -257,7 +257,7 @@ token_t get_token(char* str, char** token, const char** err)
 	{
 		// then the caller decides whether to use this token
 		if (err)
-			err = ERR_QUOTE_NOT_CLOSED;
+			*err = ERR_QUOTE_NOT_CLOSED;
 		return TK_INVALID;
 	}
 	
