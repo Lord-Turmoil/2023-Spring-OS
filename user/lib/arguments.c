@@ -127,7 +127,7 @@ static void _initopt()
 */
 
 // const char ENTITIES[] = "<>();&|";
-const char ENTITIES[] = "<>;&|";	// for now, we do not support brackets
+const char ENTITIES[] = "<>;&|#";	// for now, we do not support brackets
 
 static const char QUOTES[] = "\"\'";
 static const char ERR_QUOTE_NOT_CLOSED[] = "quote not closed";
@@ -201,6 +201,12 @@ token_t get_token(char* str, char** token, const char** err)
 						nextc += 2;
 						return _get_token_type('}');
 					}
+					else if (*nextc == '#')
+					{
+						while (*nextc)	// ignore following
+							*(nextc++) = '\0';
+						return TK_EMPTY;
+					}
 					else
 						return _get_token_type(*(nextc++));
 				}
@@ -212,6 +218,12 @@ token_t get_token(char* str, char** token, const char** err)
 						*nextc = '\0';
 						*(nextc + 1) = '\0';
 						nextc += 2;
+					}
+					else if (*nextc == '#')
+					{
+						while (*nextc)	// ignore following
+							*(nextc++) = '\0';
+						return TK_EMPTY;
 					}
 					else
 					{
