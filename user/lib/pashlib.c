@@ -178,6 +178,7 @@ int get_string(char* buffer, const input_opt_t* options)
 	if (opt.history)
 	{
 		opt.history->init(&(ctx.count));
+		ctx.index = ctx.count;
 	}
 	if (!opt.completer)
 		opt.completer = _default_completer;
