@@ -308,7 +308,7 @@ static void _input_backspace(const input_opt_t* opt, input_ctx_t* ctx)
 	if (ctx->pos <= 0)
 		return;
 
-	_insert_backspace(opt);
+	_insert_backspace();
 	for (int i = ctx->pos; i < ctx->length; i++)
 	{
 		_insert_char(ctx->buffer[i]);
@@ -325,7 +325,7 @@ static void _input_arrow_left(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (ctx->pos > 0)
 	{
-		_insert_left(opt);
+		_insert_left();
 		ctx->pos--;
 	}
 }
@@ -334,7 +334,7 @@ static void _input_arrow_right(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	if (ctx->pos < ctx->length)
 	{
-		_insert_right(opt);
+		_insert_right();
 		ctx->pos++;
 	}
 }
@@ -433,12 +433,12 @@ static void _input_arrow_ctrl_left(const input_opt_t* opt, input_ctx_t* ctx)
 {
 	while ((ctx->pos > 0) && !isalnum(ctx->buffer[ctx->pos - 1]))
 	{
-		_insert_left(opt);
+		_insert_left();
 		ctx->pos--;
 	}
 	while ((ctx->pos > 0) && isalnum(ctx->buffer[ctx->pos - 1]))
 	{
-		_insert_left(opt);
+		_insert_left();
 		ctx->pos--;
 	}
 }
