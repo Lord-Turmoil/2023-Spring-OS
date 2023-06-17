@@ -174,6 +174,9 @@ int parentpath(const char* path, char* parent);
 			user_panic("assertion failed: %s", #x);                                    \
 	} while (0)
 
+
+#define EOF -4
+
 // File open modes
 #define O_RDONLY  0x0000  /* open for reading only */
 #define O_WRONLY  0x0001  /* open for writing only */

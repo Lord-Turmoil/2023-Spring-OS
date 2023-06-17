@@ -125,10 +125,16 @@ int main(int argc, char* argv[])
 	for (; ; )
 	{
 		if (interactive)
+		{
 			print_prompt();
-
-		ret = get_string(buffer, &opt);
-		putch('\n');
+			ret = get_string(buffer, &opt);
+			putch('\n');
+		}
+		else
+		{
+			ret = readline(0, buffer);
+			strstripr(buffer, '\n');
+		}
 
 		if (ret == EOF)
 		{

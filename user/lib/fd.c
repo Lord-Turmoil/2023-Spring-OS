@@ -339,6 +339,19 @@ int readline(int fd, char* buffer)
 	char ch;
 	int ret = 0;
 
+	*buffer = '\0';
+
+	if (read(fd, &ch, 1) != 1)
+		return EOF;
+
+	*(buffer++) = ch;
+	ret++;
+	if (ch == '\n')
+	{
+		*buffer = '\0';
+		return ret;
+	}
+
 	while (read(fd, &ch, 1) == 1)
 	{
 		*(buffer++) = ch;
