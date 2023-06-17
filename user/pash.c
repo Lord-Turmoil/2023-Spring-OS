@@ -339,8 +339,10 @@ static int _runcmd(char* cmd)
 			wait(rightpipe);
 	} while (hasNext);
 
+	/*
 	if (trivial)
 		exit();
+	*/
 
 	return 0;
 }

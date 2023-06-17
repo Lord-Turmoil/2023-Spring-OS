@@ -26,7 +26,7 @@ int getch()
 	}
 	else
 	{
-		if (readn(0, &ch, 1) != 1)
+		if (read(0, &ch, 1) != 1)
 			return EOF;
 	}
 
