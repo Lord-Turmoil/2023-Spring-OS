@@ -31,9 +31,6 @@ struct Open opentab[MAXOPEN] = { { 0, 0, 1 } };
 // Virtual address at which to receive page mappings containing client requests.
 #define REQVA 0x0ffff000
 
-// return value
-u_char shared[BY2PG] __attribute__((aligned(BY2PG)));
-
 // Overview:
 //  Initialize file system server process.
 void serve_init(void)
@@ -154,11 +151,15 @@ void serve_creat(u_int envid, struct Fsreq_creat* rq)
 
 void serve_fullpath(u_int envid, struct Fsreq_fullpath* rq)
 {
-	int ret = file_fullpath(rq->req_path, (char*)shared);
+	char dir[MAXPATHLEN];
+
+	int ret = file_fullpath(rq->req_path, dir);
 	if (ret != 0)
 		ipc_send(envid, ret, NULL, 0);
 	
-	ipc_send(envid, 0, shared, PTE_D | PTE_LIBRARY);
+	strcpy(rq->req_path, dir);
+
+	ipc_send(envid, 0, NULL, 0);
 }
 
 void serve_map(u_int envid, struct Fsreq_map* rq)
