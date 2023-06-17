@@ -7,6 +7,7 @@ pwd
 
 echo "----- Creating Directories -----"
 mkdir -p -v aaaaa/bbbbb/ccccc/../CCCCC/DDDDD/../../ccccc/ddddd
+touch -v aaaaa/bbbbb.txt
 echo "This is directory bbbbb" > aaaaa/bbbbb.txt
 echo "This is directory DDDDD" > aaaaa/bbbbb/CCCCC/DDDDD.txt
 echo "This is directory ddddd" > aaaaa/bbbbb/ccccc/ddddd.txt
