@@ -72,11 +72,6 @@ void copy_input_opt(input_opt_t* dst, const input_opt_t* src)
 		*dst = *src;
 }
 
-static int _default_completer(const char* input, char* completion, int* revert)
-{
-	return 0;
-}
-
 void init_input_ctx(input_ctx_t* ctx)
 {
 	ctx->buffer = NULL;
@@ -180,8 +175,6 @@ int get_string(char* buffer, const input_opt_t* options)
 		opt.history->init(&(ctx.count));
 		ctx.index = ctx.count;
 	}
-	if (!opt.completer)
-		opt.completer = _default_completer;
 
 	// Get string, huh?
 	int ret;
@@ -399,6 +392,9 @@ static void _input_end(const input_opt_t* opt, input_ctx_t* ctx)
 
 static void _input_tab(const input_opt_t* opt, input_ctx_t* ctx)
 {
+	if (!opt->completer)
+		return;
+
 	char buffer[MAXPATHLEN];
 	int revert;
 	int ret = opt->completer(ctx->buffer, buffer, &revert);
