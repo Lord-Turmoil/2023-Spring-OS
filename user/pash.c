@@ -713,11 +713,6 @@ int completer(const char* input, char* completion, int* revert)
 	while (*input && isspace(*input))
 		input++;
 
-	/*
-	if (!*input)
-		return 0;
-	*/
-
 	// Get last substring to complete.
 	const char* last = input;
 	while (*last)
@@ -735,7 +730,10 @@ int completer(const char* input, char* completion, int* revert)
 
 	name[0] = '\0';
 	if (input[0] == '\0')
-		strcpy(parent, "./");
+	{
+		// strcpy(parent, "./");
+		return 0;
+	}
 	else if (is_begins_with(input, "~/"))
 	{
 		strcpy(parent, homeDir);
