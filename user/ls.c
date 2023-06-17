@@ -43,6 +43,8 @@ int main(int argc, char* argv[])
 		char dir[MAXPATHLEN];
 		getcwd(dir);
 		ls(dir, "");
+		if (!enableLonglist)
+			printf("\n");
 	}
 	else
 	{
@@ -54,11 +56,11 @@ int main(int argc, char* argv[])
 				ls(argv[i], argv[i]);
 			else
 				ls(argv[i], strstripr(argv[i], '/'));
+			if (!enableLonglist)
+				printf("\n");
 		}
 	}
 
-	if (!enableLonglist)
-		printf("\n");
 
 	return 0;
 }
@@ -132,7 +134,9 @@ static void ls(const char* path, const char* prefix)
 
 	if ((ret = stat(path, &st)) < 0)
 	{
-		printfc(ERROR_COLOR, "Cannot access '%s': No such file or directory\n", path);
+		printfc(ERROR_COLOR, "Cannot access '%s': No such file or directory", path);
+		if (enableLonglist)
+			printf("\n");
 		return;
 	}
 
