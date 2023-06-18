@@ -96,13 +96,13 @@ static void duppage(u_int envid, u_int vpn)
 	/* Step 2: If the page is writable, and not shared with children, and not
 	 * marked as COW yet, then map it as copy-on-write, both in the parent (0)
 	 * and the child (envid). */
-	 /* Hint: The page should be first mapped to the child before remapped in the
-	  * parent. (Why?)
-	  * Because if we map to parent first, the page will not be writable anymore,
-	  * which will cause it not mappable to child and invoke TLB Mod exception.
-	  * But is there a write operation? YES, write on function calling stack!!!
-	  */
-	  /* Exercise 4.10: Your code here. (2/2) */
+	/* Hint: The page should be first mapped to the child before remapped in the
+	 * parent. (Why?)
+	 * Because if we map to parent first, the page will not be writable anymore,
+	 * which will cause it not mappable to child and invoke TLB Mod exception.
+	 * But is there a write operation? YES, write on function calling stack!!!
+	 */
+	 /* Exercise 4.10: Your code here. (2/2) */
 	int remap = 0;
 	if ((perm & PTE_D) && !(perm & PTE_LIBRARY))
 	{

@@ -411,7 +411,7 @@ int sys_ipc_recv(u_int dstva)
 
 	/* Step 5: Give up the CPU and block until a message is received. */
 	((struct Trapframe*)KSTACKTOP - 1)->regs[2] = 0;
-	schedule(1);	// with yeild set
+	schedule(1);	// with yield set
 }
 
 /* Overview:
