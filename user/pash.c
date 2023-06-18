@@ -24,8 +24,6 @@ static char historyFile[MAXPATHLEN];
 static int redirect;
 static int backupfd[2];
 
-static int trivial;	// indicate if is trivial for pipe
-
 static int interactive;
 static int echocmds;
 static int verbose;
@@ -91,7 +89,6 @@ int main(int argc, char* argv[])
 
 	if (!interactive)
 	{
-		trivial = 1;
 		backupfd[0] = dup(0, 3);
 		panic_on(backupfd[0] < 0);
 		backupfd[1] = dup(1, 4);
@@ -159,7 +156,6 @@ int main(int argc, char* argv[])
 
 static void init()
 {
-	trivial = 0;
 	interactive = iscons(0);
 
 	echocmds = 0;
@@ -233,14 +229,14 @@ static void print_splash()
 {
 	// execli("clear", "clear", NULL);
 
-	printfc(FOREGROUND_INTENSE(MAGENTA), " __________________________________________________________ \n");
-	printfc(FOREGROUND_INTENSE(MAGENTA), "/                                                          \\\n");
-	printfc(FOREGROUND_INTENSE(GREEN), "|                     Pash Host for MOS                    |\n");
-	printfc(FOREGROUND_INTENSE(YELLOW), "|                                                          |\n");
-	printfc(FOREGROUND_INTENSE(YELLOW), "|             Copyright (C) Tony's Studio 2023             |\n");
-	printfc(FOREGROUND_INTENSE(YELLOW), "|                                                          |\n");
-	printfc(FOREGROUND_INTENSE(WHITE), "|                  Based on PassBash v3.x                  |\n");
-	printfc(FOREGROUND_INTENSE(MAGENTA), "\\__________________________________________________________/\n\n");
+	printfc(FOREGROUND_INTENSE(MAGENTA), "  __________________________________________________________ \n");
+	printfc(FOREGROUND_INTENSE(MAGENTA), " /                                                          \\\n");
+	printfc(FOREGROUND_INTENSE(GREEN),   " |                     Pash Host for MOS                    |\n");
+	printfc(FOREGROUND_INTENSE(YELLOW),  " |                                                          |\n");
+	printfc(FOREGROUND_INTENSE(YELLOW),  " |             Copyright (C) Tony's Studio 2023             |\n");
+	printfc(FOREGROUND_INTENSE(YELLOW),  " |                                                          |\n");
+	printfc(FOREGROUND_INTENSE(WHITE),   " |                  Based on PassBash v3.x                  |\n");
+	printfc(FOREGROUND_INTENSE(MAGENTA), " \\__________________________________________________________/\n\n");
 
 	execli("version", "version", NULL);
 
@@ -344,11 +340,6 @@ static int _runcmd(char* cmd)
 		if (rightpipe)
 			wait(rightpipe);
 	} while (hasNext);
-
-	/*
-	if (trivial)
-		exit();
-	*/
 
 	return 0;
 }
@@ -505,7 +496,6 @@ static int _parsecmd(char* cmd, int* argc, char* argv[], int* rightpipe)
 			*rightpipe = ret;
 			if (ret == 0)
 			{
-				trivial = 1;
 				dup(pipefd[0], 0);
 				close(pipefd[0]);
 				close(pipefd[1]);
