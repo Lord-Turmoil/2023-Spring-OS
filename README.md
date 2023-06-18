@@ -4,7 +4,7 @@ BUAA 2023 Spring Operating System
 
 ---
 
-<img src="README/image-20230618234200231.png" alt="image-20230618234200231" style="zoom:80%;" />
+![image-20230618234200231](README/image-20230618234200231.png)
 
 For more information, please take a look at:
 
