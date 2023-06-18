@@ -4,8 +4,6 @@ BUAA 2023 Spring Operating System
 
 ---
 
-![image-20230618234200231](README/image-20230618234200231.png)
-
 For more information, please take a look at:
 
 - [Lab 6 Challenge](http://www.tonys-studio.top/2023/06/18/Lab-6-Challenge/)
